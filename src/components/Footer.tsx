@@ -1,10 +1,12 @@
+import logoFull from "@/assets/logo-full.jpg";
+
 export const Footer = () => {
   return (
     <footer id="sobre" className="bg-primary text-primary-foreground py-12">
       <div className="container">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="space-y-3">
-            <h3 className="font-heading text-xl font-bold">Traçando Memórias</h3>
+            <img src={logoFull} alt="Traçando Memórias - afetivas & especiais" className="h-20 w-auto rounded-lg" />
             <p className="text-sm opacity-80 leading-relaxed">
               Transformamos seus momentos mais especiais em peças personalizadas e únicas.
             </p>
