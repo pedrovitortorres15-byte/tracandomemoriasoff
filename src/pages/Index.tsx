@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { ProductGrid } from "@/components/ProductGrid";
 import { Footer } from "@/components/Footer";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 
 const Index = () => {
   return (
@@ -12,6 +13,7 @@ const Index = () => {
         <ProductGrid />
       </main>
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 };
