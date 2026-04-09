@@ -37,16 +37,15 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   return (
     <Link
       to={`/produto/${product.id}`}
-      className="group block rounded-none overflow-hidden bg-card transition-all duration-300 hover:shadow-lg"
+      className="group block rounded-lg overflow-hidden bg-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
     >
-      {/* Image with hover swap */}
       <div className="relative aspect-[4/5] overflow-hidden bg-muted">
         {image ? (
           <>
             <img
               src={image}
               alt={name}
-              className={`w-full h-full object-cover transition-opacity duration-500 ${secondImage ? 'group-hover:opacity-0' : 'group-hover:scale-105 transition-transform'}`}
+              className={`w-full h-full object-cover transition-all duration-500 ${secondImage ? 'group-hover:opacity-0' : 'group-hover:scale-105'}`}
               loading="lazy"
             />
             {secondImage && (
@@ -64,24 +63,28 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </div>
         )}
 
-        {/* Quick add button */}
+        {originalPrice && originalPrice > price && (
+          <span className="absolute top-3 left-3 bg-destructive text-destructive-foreground text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
+            Oferta
+          </span>
+        )}
+
         <Button
           size="sm"
           onClick={handleAddToCart}
-          className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-primary text-primary-foreground hover:bg-primary/90 rounded-full h-10 w-10 p-0"
+          className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all bg-primary text-primary-foreground hover:bg-primary/90 rounded-full h-10 w-10 p-0 shadow-lg"
         >
           <ShoppingCart className="h-4 w-4" />
         </Button>
       </div>
 
-      {/* Info */}
-      <div className="p-4 space-y-1.5">
+      <div className="p-4 space-y-2">
         {category && (
-          <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+          <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium">
             {category}
           </span>
         )}
-        <h3 className="font-heading text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 uppercase tracking-wide">
+        <h3 className="font-heading text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
           {name}
         </h3>
         <div className="flex items-center gap-2 pt-1">

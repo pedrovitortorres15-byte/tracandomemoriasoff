@@ -6,51 +6,51 @@
 
 @layer base {
   :root {
-    --background: 40 30% 96%;
-    --foreground: 90 20% 18%;
+    --background: 30 25% 96%;
+    --foreground: 25 30% 12%;
 
-    --card: 40 25% 98%;
-    --card-foreground: 90 20% 18%;
+    --card: 30 20% 98%;
+    --card-foreground: 25 30% 12%;
 
-    --popover: 40 25% 98%;
-    --popover-foreground: 90 20% 18%;
+    --popover: 30 20% 98%;
+    --popover-foreground: 25 30% 12%;
 
-    --primary: 82 30% 28%;
-    --primary-foreground: 40 30% 96%;
+    --primary: 25 45% 30%;
+    --primary-foreground: 30 25% 96%;
 
-    --secondary: 40 20% 91%;
-    --secondary-foreground: 82 25% 22%;
+    --secondary: 30 18% 90%;
+    --secondary-foreground: 25 40% 20%;
 
-    --muted: 40 15% 93%;
-    --muted-foreground: 80 10% 45%;
+    --muted: 30 12% 92%;
+    --muted-foreground: 25 10% 45%;
 
-    --accent: 30 40% 78%;
-    --accent-foreground: 82 30% 18%;
+    --accent: 30 35% 75%;
+    --accent-foreground: 25 45% 18%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 40 18% 86%;
-    --input: 40 18% 86%;
-    --ring: 82 30% 28%;
+    --border: 30 15% 85%;
+    --input: 30 15% 85%;
+    --ring: 25 45% 30%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --olive-50: 80 25% 96%;
-    --olive-100: 80 20% 90%;
-    --olive-200: 82 18% 78%;
-    --olive-300: 82 15% 62%;
-    --olive-400: 82 20% 45%;
-    --olive-500: 82 25% 35%;
-    --olive-600: 82 30% 28%;
-    --olive-700: 82 35% 22%;
-    --olive-800: 82 30% 16%;
-    --olive-900: 82 25% 10%;
+    --brown-50: 30 30% 97%;
+    --brown-100: 28 25% 92%;
+    --brown-200: 26 22% 82%;
+    --brown-300: 25 20% 68%;
+    --brown-400: 25 28% 50%;
+    --brown-500: 25 35% 38%;
+    --brown-600: 25 45% 30%;
+    --brown-700: 25 50% 22%;
+    --brown-800: 25 45% 16%;
+    --brown-900: 25 40% 10%;
 
-    --cream-50: 40 35% 98%;
-    --cream-100: 38 30% 95%;
-    --cream-200: 36 25% 90%;
-    --cream-300: 34 20% 82%;
+    --beige-50: 35 40% 98%;
+    --beige-100: 33 35% 95%;
+    --beige-200: 30 28% 90%;
+    --beige-300: 28 22% 82%;
 
     --warm-50: 33 30% 97%;
     --warm-100: 30 25% 93%;
@@ -63,14 +63,14 @@
     --warm-800: 25 45% 15%;
     --warm-900: 25 40% 10%;
 
-    --sidebar-background: 40 25% 98%;
-    --sidebar-foreground: 82 25% 22%;
-    --sidebar-primary: 82 30% 28%;
-    --sidebar-primary-foreground: 40 30% 96%;
-    --sidebar-accent: 40 20% 91%;
-    --sidebar-accent-foreground: 82 30% 18%;
-    --sidebar-border: 40 18% 86%;
-    --sidebar-ring: 82 30% 28%;
+    --sidebar-background: 30 20% 98%;
+    --sidebar-foreground: 25 40% 20%;
+    --sidebar-primary: 25 45% 30%;
+    --sidebar-primary-foreground: 30 25% 96%;
+    --sidebar-accent: 30 18% 90%;
+    --sidebar-accent-foreground: 25 45% 18%;
+    --sidebar-border: 30 15% 85%;
+    --sidebar-ring: 25 45% 30%;
 
     --font-heading: 'Playfair Display', serif;
     --font-body: 'Inter', sans-serif;

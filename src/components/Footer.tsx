@@ -2,18 +2,18 @@ import logoFull from "@/assets/logo-full.jpg";
 
 export const Footer = () => {
   return (
-    <footer id="sobre" className="bg-primary text-primary-foreground py-12">
+    <footer id="sobre" className="bg-primary text-primary-foreground py-14">
       <div className="container">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           <div className="space-y-4">
-            <img src={logoFull} alt="Traçando Memórias" className="h-20 w-auto rounded-lg" />
+            <img src={logoFull} alt="Traçando Memórias" className="h-20 w-auto rounded-lg shadow-md" />
             <p className="text-sm opacity-80 leading-relaxed">
               Transformamos seus momentos mais especiais em peças personalizadas e únicas.
             </p>
           </div>
           <div className="space-y-4">
             <h4 className="font-heading text-lg font-semibold">Navegação</h4>
-            <div className="w-10 h-0.5 bg-primary-foreground/30" />
+            <div className="w-10 h-0.5 bg-primary-foreground/30 rounded-full" />
             <ul className="space-y-2 text-sm opacity-80">
               <li><a href="/" className="hover:opacity-100 transition-opacity">Início</a></li>
               <li><a href="#produtos" className="hover:opacity-100 transition-opacity">Produtos</a></li>
@@ -22,7 +22,7 @@ export const Footer = () => {
           </div>
           <div className="space-y-4">
             <h4 className="font-heading text-lg font-semibold">Contato</h4>
-            <div className="w-10 h-0.5 bg-primary-foreground/30" />
+            <div className="w-10 h-0.5 bg-primary-foreground/30 rounded-full" />
             <ul className="space-y-2 text-sm opacity-80">
               <li>
                 <a href="https://wa.me/558287060860" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity">
@@ -33,7 +33,7 @@ export const Footer = () => {
             </ul>
           </div>
         </div>
-        <div className="border-t border-primary-foreground/20 mt-8 pt-6 text-center text-sm opacity-60">
+        <div className="border-t border-primary-foreground/20 mt-10 pt-6 text-center text-sm opacity-60">
           &copy; {new Date().getFullYear()} Traçando Memórias. Todos os direitos reservados.
         </div>
       </div>
