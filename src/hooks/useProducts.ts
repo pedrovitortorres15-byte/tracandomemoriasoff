@@ -1,12 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { storefrontApiRequest, STOREFRONT_PRODUCTS_QUERY, type ShopifyProduct } from '@/lib/shopify';
+import { fetchProducts, type FirebaseProduct } from '@/lib/firebase';
 
-export function useProducts(first = 20) {
+export function useProducts() {
   return useQuery({
-    queryKey: ['shopify-products', first],
-    queryFn: async (): Promise<ShopifyProduct[]> => {
-      const data = await storefrontApiRequest(STOREFRONT_PRODUCTS_QUERY, { first });
-      return data?.data?.products?.edges || [];
-    },
+    queryKey: ['firebase-products'],
+    queryFn: fetchProducts,
   });
 }
+
+export type { FirebaseProduct };
