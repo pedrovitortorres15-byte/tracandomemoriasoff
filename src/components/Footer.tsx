@@ -5,24 +5,30 @@ export const Footer = () => {
     <footer id="sobre" className="bg-primary text-primary-foreground py-12">
       <div className="container">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="space-y-3">
-            <img src={logoFull} alt="Traçando Memórias - afetivas & especiais" className="h-20 w-auto rounded-lg" />
+          <div className="space-y-4">
+            <img src={logoFull} alt="Traçando Memórias" className="h-20 w-auto rounded-lg" />
             <p className="text-sm opacity-80 leading-relaxed">
               Transformamos seus momentos mais especiais em peças personalizadas e únicas.
             </p>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <h4 className="font-heading text-lg font-semibold">Navegação</h4>
+            <div className="w-10 h-0.5 bg-primary-foreground/30" />
             <ul className="space-y-2 text-sm opacity-80">
-              <li><a href="#" className="hover:opacity-100 transition-opacity">Início</a></li>
+              <li><a href="/" className="hover:opacity-100 transition-opacity">Início</a></li>
               <li><a href="#produtos" className="hover:opacity-100 transition-opacity">Produtos</a></li>
               <li><a href="#sobre" className="hover:opacity-100 transition-opacity">Sobre</a></li>
             </ul>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <h4 className="font-heading text-lg font-semibold">Contato</h4>
+            <div className="w-10 h-0.5 bg-primary-foreground/30" />
             <ul className="space-y-2 text-sm opacity-80">
-              <li>contato@tracandoms.com</li>
+              <li>
+                <a href="https://wa.me/558287060860" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity">
+                  WhatsApp: +55 82 8706-0860
+                </a>
+              </li>
               <li>Instagram: @tracandomemorias</li>
             </ul>
           </div>

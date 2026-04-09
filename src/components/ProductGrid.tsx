@@ -6,13 +6,14 @@ export const ProductGrid = () => {
   const { data: products, isLoading, error } = useProducts();
 
   return (
-    <section id="produtos" className="py-16 md:py-24">
+    <section id="produtos" className="py-12 md:py-20">
       <div className="container">
-        <div className="text-center mb-12">
-          <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-4">
+        <div className="text-center mb-10">
+          <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-3">
             Nossos Produtos
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <div className="w-16 h-0.5 bg-primary mx-auto mb-4" />
+          <p className="text-muted-foreground max-w-2xl mx-auto text-sm">
             Cada peça é criada com amor e atenção aos detalhes para guardar suas memórias mais preciosas.
           </p>
         </div>
@@ -42,7 +43,7 @@ export const ProductGrid = () => {
         )}
 
         {!isLoading && products && products.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
