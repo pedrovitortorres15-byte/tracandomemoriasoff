@@ -6,9 +6,10 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, ShoppingCart, Minus, Plus, ChevronRight, ChevronLeft, Upload } from "lucide-react";
+import { ArrowLeft, Loader2, ShoppingCart, Minus, Plus, ChevronRight, ChevronLeft, Upload, CreditCard } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const ProductDetail = () => {
   const { handle } = useParams<{ handle: string }>();
@@ -366,11 +367,36 @@ const ProductDetail = () => {
 
               {/* Action buttons */}
               <div className="space-y-3">
-                <Button onClick={handleAddToCart} size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-sm font-semibold">
+                <Button onClick={handleAddToCart} size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-sm font-semibold rounded-full">
                   <ShoppingCart className="h-5 w-5 mr-2" />
                   Adicionar ao Carrinho
                 </Button>
-                <Button onClick={handleWhatsAppOrder} size="lg" variant="outline" className="w-full border-green-600 text-green-700 hover:bg-green-50 uppercase tracking-wider text-sm font-semibold">
+                <Button
+                  onClick={async () => {
+                    try {
+                      const { data, error } = await supabase.functions.invoke('mercadopago-checkout', {
+                        body: {
+                          items: [{
+                            title: name,
+                            quantity,
+                            unit_price: price,
+                            picture_url: images[0] || '',
+                          }],
+                        },
+                      });
+                      if (error) throw error;
+                      if (data?.init_point) window.open(data.init_point, '_blank');
+                    } catch {
+                      toast.error('Erro ao processar pagamento.');
+                    }
+                  }}
+                  size="lg"
+                  className="w-full bg-[hsl(210,80%,50%)] hover:bg-[hsl(210,80%,45%)] text-[hsl(0,0%,100%)] uppercase tracking-wider text-sm font-semibold rounded-full"
+                >
+                  <CreditCard className="h-5 w-5 mr-2" />
+                  Pagar com Mercado Pago
+                </Button>
+                <Button onClick={handleWhatsAppOrder} size="lg" variant="outline" className="w-full border-[hsl(140,60%,35%)] text-[hsl(140,60%,30%)] hover:bg-[hsl(140,60%,95%)] uppercase tracking-wider text-sm font-semibold rounded-full">
                   Pedir pelo WhatsApp
                 </Button>
               </div>
