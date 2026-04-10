@@ -1,16 +1,28 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchProducts, type FirebaseProduct } from '@/lib/firebase';
 import { supabase } from '@/integrations/supabase/client';
 
-async function fetchAllProducts(): Promise<FirebaseProduct[]> {
-  // Fetch from both sources in parallel
-  const [firebaseProducts, { data: supabaseProducts }] = await Promise.all([
-    fetchProducts(),
-    supabase.from('products').select('*').eq('active', true),
-  ]);
+export interface FirebaseProduct {
+  id: string;
+  nome: string;
+  descricao?: string;
+  preco: number;
+  imagem?: string;
+  imagens?: string[];
+  categoria?: string;
+  ativo?: boolean;
+  estoque?: number;
+  [key: string]: unknown;
+}
 
-  // Map Supabase products to the same shape
-  const mapped: FirebaseProduct[] = (supabaseProducts || []).map((p) => ({
+async function fetchAllProducts(): Promise<FirebaseProduct[]> {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('active', true);
+
+  if (error) throw error;
+
+  return (data || []).map((p) => ({
     id: p.id,
     nome: p.name,
     descricao: p.description || '',
@@ -20,8 +32,6 @@ async function fetchAllProducts(): Promise<FirebaseProduct[]> {
     ativo: p.active,
     estoque: p.stock,
   }));
-
-  return [...firebaseProducts, ...mapped];
 }
 
 export function useProducts() {
@@ -30,5 +40,3 @@ export function useProducts() {
     queryFn: fetchAllProducts,
   });
 }
-
-export type { FirebaseProduct };
