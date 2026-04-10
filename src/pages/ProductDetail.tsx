@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { fetchProductById } from "@/lib/firebase";
+import { type FirebaseProduct } from "@/hooks/useProducts";
 import { useCartStore } from "@/stores/cartStore";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -21,8 +21,25 @@ const ProductDetail = () => {
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File | null>>({});
 
   const { data: product, isLoading } = useQuery({
-    queryKey: ['firebase-product', handle],
-    queryFn: () => fetchProductById(handle!),
+    queryKey: ['supabase-product', handle],
+    queryFn: async (): Promise<FirebaseProduct | null> => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', handle!)
+        .single();
+      if (error || !data) return null;
+      return {
+        id: data.id,
+        nome: data.name,
+        descricao: data.description || '',
+        preco: data.price,
+        imagem: data.image_url || '',
+        categoria: data.category || '',
+        ativo: data.active,
+        estoque: data.stock,
+      };
+    },
     enabled: !!handle,
   });
 

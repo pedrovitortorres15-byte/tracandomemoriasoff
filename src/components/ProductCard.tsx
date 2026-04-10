@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cartStore";
-import type { FirebaseProduct } from "@/lib/firebase";
+import type { FirebaseProduct } from "@/hooks/useProducts";
 import { toast } from "sonner";
 
 interface ProductCardProps {
