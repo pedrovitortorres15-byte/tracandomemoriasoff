@@ -53,8 +53,29 @@ const ProductDetail = () => {
       });
     }
 
-    // Always add personalization fields
+    // Standard customization options
     s.push(
+      {
+        id: 'tipo_azulejo',
+        title: 'Tipo de Azulejo',
+        type: 'select',
+        options: ['Informações do Nascimento', 'Foto + Frase', 'Monograma do Bebê'],
+        description: 'Escolha o modelo de azulejo para o seu produto.',
+      },
+      {
+        id: 'cor_box',
+        title: 'Cor Predominante da Box',
+        type: 'select',
+        options: ['Rosa Chá', 'Verde Oliva', 'Bege', 'Marrom', 'Azul Claro'],
+        description: 'Escolha a cor predominante da sua caixinha.',
+      },
+      {
+        id: 'balao_frase',
+        title: 'Balão de Frase',
+        type: 'select',
+        options: ['Feliz Aniversário', 'Eu Te Amo', 'Feliz Dia', 'Nós Te Amamos', 'Apenas Inicial'],
+        description: 'Escolha a frase que vai no balão.',
+      },
       { id: 'nome_presenteado', title: 'Nome/Apelido', type: 'text', placeholder: 'Nome de quem vai receber', description: 'Coloque o nome ou apelido da pessoa que irá receber o produto.' },
       { id: 'mensagem', title: 'Mensagem Personalizada', type: 'textarea', placeholder: 'Escreva sua mensagem aqui...', description: 'Uma mensagem especial para acompanhar o presente.' },
       { id: 'foto', title: 'Foto para Personalização', type: 'file', description: 'Envie a foto que deseja usar na personalização do produto.' },
