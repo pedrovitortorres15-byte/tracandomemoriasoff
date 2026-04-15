@@ -40,6 +40,8 @@ Deno.serve(async (req) => {
 
     const { items } = parsed.data;
 
+    const siteUrl = Deno.env.get("SITE_URL") || "https://id-preview--355065c3-fed8-4564-8b72-9da947c21db8.lovable.app";
+
     const preference = {
       items: items.map((item) => ({
         title: item.title,
@@ -48,6 +50,11 @@ Deno.serve(async (req) => {
         currency_id: "BRL",
         picture_url: item.picture_url || undefined,
       })),
+      back_urls: {
+        success: `${siteUrl}/?payment=success`,
+        failure: `${siteUrl}/?payment=failure`,
+        pending: `${siteUrl}/?payment=pending`,
+      },
       payment_methods: {
         excluded_payment_types: [],
         installments: 3,
