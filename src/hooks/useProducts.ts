@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface FirebaseProduct {
+export interface Product {
   id: string;
   nome: string;
   descricao?: string;
@@ -14,7 +14,9 @@ export interface FirebaseProduct {
   [key: string]: unknown;
 }
 
-async function fetchAllProducts(): Promise<FirebaseProduct[]> {
+export type FirebaseProduct = Product;
+
+async function fetchAllProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from('products')
     .select('*')
