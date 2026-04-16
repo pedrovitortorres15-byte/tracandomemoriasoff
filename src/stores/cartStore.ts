@@ -7,6 +7,7 @@ export interface CartItem {
   price: number;
   image: string;
   quantity: number;
+  personalization?: string;
 }
 
 interface CartStore {
@@ -14,8 +15,10 @@ interface CartStore {
   isLoading: boolean;
   addItem: (item: CartItem) => void;
   updateQuantity: (id: string, quantity: number) => void;
+  updatePersonalization: (id: string, text: string) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
+  allPersonalized: () => boolean;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -35,12 +38,14 @@ export const useCartStore = create<CartStore>()(
       },
 
       updateQuantity: (id, quantity) => {
-        if (quantity <= 0) {
-          get().removeItem(id);
-          return;
-        }
+        if (quantity <= 0) { get().removeItem(id); return; }
         const { items } = get();
         set({ items: items.map(i => i.id === id ? { ...i, quantity } : i) });
+      },
+
+      updatePersonalization: (id, text) => {
+        const { items } = get();
+        set({ items: items.map(i => i.id === id ? { ...i, personalization: text } : i) });
       },
 
       removeItem: (id) => {
@@ -49,6 +54,11 @@ export const useCartStore = create<CartStore>()(
       },
 
       clearCart: () => set({ items: [] }),
+
+      allPersonalized: () => {
+        const { items } = get();
+        return items.length > 0 && items.every(i => i.personalization && i.personalization.trim().length > 0);
+      },
     }),
     {
       name: 'tracando-cart',
