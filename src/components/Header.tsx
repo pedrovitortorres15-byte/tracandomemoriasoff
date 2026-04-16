@@ -1,11 +1,14 @@
 import { Link } from "react-router-dom";
 import { CartDrawer } from "./CartDrawer";
-import { Search } from "lucide-react";
+import { Search, User, Shield } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 import logoIcon from "@/assets/logo-icon.jpg";
 
 export const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
+  const { user, isAdmin } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 w-full bg-beige-50/95 backdrop-blur-md shadow-sm">
@@ -30,10 +33,22 @@ export const Header = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button className="md:hidden text-foreground" onClick={() => setSearchOpen(!searchOpen)}>
             <Search className="h-5 w-5" />
           </button>
+          {isAdmin && (
+            <Link to="/admin">
+              <Button variant="ghost" size="icon" className="rounded-full text-primary">
+                <Shield className="h-5 w-5" />
+              </Button>
+            </Link>
+          )}
+          <Link to={user ? "/" : "/auth"}>
+            <Button variant="ghost" size="icon" className="rounded-full" onClick={user ? undefined : undefined}>
+              <User className="h-5 w-5" />
+            </Button>
+          </Link>
           <CartDrawer />
         </div>
       </div>
