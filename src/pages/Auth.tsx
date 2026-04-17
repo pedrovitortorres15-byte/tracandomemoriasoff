@@ -41,11 +41,22 @@ const Auth = () => {
   };
 
   const handleGoogle = async () => {
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      toast.error("Erro ao entrar com Google");
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: `${window.location.origin}/`,
+        extraParams: { prompt: "select_account" },
+      });
+      if (result.error) {
+        console.error("Google OAuth error:", result.error);
+        toast.error("Não foi possível entrar com Google. Use e-mail e senha abaixo.");
+        return;
+      }
+      if (!result.redirected) {
+        navigate("/");
+      }
+    } catch (err: any) {
+      console.error("Google OAuth exception:", err);
+      toast.error("Erro inesperado no login Google. Tente e-mail e senha.");
     }
   };
 
