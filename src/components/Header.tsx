@@ -13,10 +13,10 @@ export const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full bg-beige-50/95 backdrop-blur-md shadow-sm">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center gap-3">
-          <img src={logoIcon} alt="Traçando Memórias" className="h-11 w-11 rounded-full object-cover border-2 border-primary/20 shadow-sm" />
-          <span className="font-heading text-xl md:text-2xl font-bold text-primary tracking-tight hidden sm:block">
-            Traçando Memórias
+        <Link to="/" className="flex items-center gap-3" aria-label="Loja Traçando Memórias - Início">
+          <img src={logoIcon} alt="Logo Loja Traçando Memórias" className="h-11 w-11 rounded-full object-cover border-2 border-primary/20 shadow-sm" />
+          <span className="font-heading text-base md:text-xl font-bold text-primary tracking-tight">
+            Loja <span className="hidden sm:inline">Traçando </span>Memórias
           </span>
         </Link>
 
@@ -27,25 +27,25 @@ export const Header = () => {
               placeholder="Pesquisar produtos..."
               className="w-full pl-4 pr-10 py-2.5 rounded-full border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-shadow"
             />
-            <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+            <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" aria-label="Pesquisar">
               <Search className="h-4 w-4" />
             </button>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="md:hidden text-foreground" onClick={() => setSearchOpen(!searchOpen)}>
+          <button className="md:hidden text-foreground" onClick={() => setSearchOpen(!searchOpen)} aria-label="Abrir busca">
             <Search className="h-5 w-5" />
           </button>
           {isAdmin && (
-            <Link to="/admin">
-              <Button variant="ghost" size="icon" className="rounded-full text-primary">
+            <Link to="/admin" aria-label="Painel da dona">
+              <Button variant="ghost" size="icon" className="rounded-full text-primary" title="Painel da dona">
                 <Shield className="h-5 w-5" />
               </Button>
             </Link>
           )}
-          <Link to={user ? "/" : "/auth"}>
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={user ? undefined : undefined}>
+          <Link to={user ? "/" : "/auth"} aria-label={user ? "Conta" : "Entrar"}>
+            <Button variant="ghost" size="icon" className="rounded-full">
               <User className="h-5 w-5" />
             </Button>
           </Link>

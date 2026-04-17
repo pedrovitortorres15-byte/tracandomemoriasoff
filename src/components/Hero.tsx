@@ -16,13 +16,13 @@ export const Hero = () => {
       <div className="container relative z-10 py-24 md:py-36 lg:py-44">
         <div className="max-w-xl space-y-8 animate-fade-in">
           <span className="inline-block text-xs uppercase tracking-[0.3em] text-beige-200 font-medium">
-            Presentes que contam histórias
+            Loja Traçando Memórias · Presentes que contam histórias
           </span>
           <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-beige-50 leading-tight">
             Transformando momentos em memórias
           </h1>
           <p className="text-lg md:text-xl text-beige-200 leading-relaxed max-w-lg">
-            Canecas e produtos personalizados feitos com carinho para eternizar suas histórias mais especiais.
+            Canecas, caixas e produtos personalizados feitos à mão para eternizar suas histórias mais especiais.
           </p>
           <a
             href="#produtos"

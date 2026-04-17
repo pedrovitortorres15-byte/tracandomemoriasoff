@@ -67,9 +67,15 @@ export type Database = {
           customer_phone: string | null
           id: string
           notes: string | null
+          payment_id: string | null
+          payment_method: string | null
           personalization: string | null
           shipping_address: string
           shipping_city: string | null
+          shipping_complement: string | null
+          shipping_country: string | null
+          shipping_neighborhood: string | null
+          shipping_number: string | null
           shipping_state: string | null
           shipping_zip: string | null
           status: string
@@ -83,9 +89,15 @@ export type Database = {
           customer_phone?: string | null
           id?: string
           notes?: string | null
+          payment_id?: string | null
+          payment_method?: string | null
           personalization?: string | null
           shipping_address: string
           shipping_city?: string | null
+          shipping_complement?: string | null
+          shipping_country?: string | null
+          shipping_neighborhood?: string | null
+          shipping_number?: string | null
           shipping_state?: string | null
           shipping_zip?: string | null
           status?: string
@@ -99,9 +111,15 @@ export type Database = {
           customer_phone?: string | null
           id?: string
           notes?: string | null
+          payment_id?: string | null
+          payment_method?: string | null
           personalization?: string | null
           shipping_address?: string
           shipping_city?: string | null
+          shipping_complement?: string | null
+          shipping_country?: string | null
+          shipping_neighborhood?: string | null
+          shipping_number?: string | null
           shipping_state?: string | null
           shipping_zip?: string | null
           status?: string
@@ -118,10 +136,12 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
+          media_urls: string[] | null
           name: string
           price: number
           stock: number
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           active?: boolean
@@ -130,10 +150,12 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          media_urls?: string[] | null
           name: string
           price?: number
           stock?: number
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           active?: boolean
@@ -142,10 +164,12 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          media_urls?: string[] | null
           name?: string
           price?: number
           stock?: number
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: []
       }
