@@ -14,7 +14,7 @@ export const Hero = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-brown-900/90 via-brown-800/70 to-transparent" />
       </div>
       <div className="container relative z-10 py-24 md:py-36 lg:py-44">
-        <div class="max-w-xl space-y-8 animate-fade-in">
+        <div className="max-w-xl space-y-8 animate-fade-in">
           <span className="inline-block text-xs uppercase tracking-[0.3em] text-beige-200 font-medium">
             Loja Traçando Memórias · Presentes que contam histórias
           </span>
