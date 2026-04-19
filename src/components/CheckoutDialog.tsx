@@ -8,8 +8,11 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCartStore, isPersonalizationValid } from "@/stores/cartStore";
+import { useDeliverySettings } from "@/hooks/useDeliverySettings";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+const OWNER_WHATSAPP = "558287060860";
 
 const checkoutSchema = z.object({
   customer_name: z.string().trim().min(2, "Nome obrigatório").max(120),
@@ -33,6 +36,9 @@ interface Props {
 
 export const CheckoutDialog = ({ open, onOpenChange, onSuccess }: Props) => {
   const { items, clearCart } = useCartStore();
+  const { data: settings } = useDeliverySettings();
+  const pixActive = settings?.pix_discount_active ?? true;
+  const pixPct = settings?.pix_discount_percent ?? 10;
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     customer_name: "", customer_email: "", customer_phone: "",
@@ -126,6 +132,38 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess }: Props) => {
       });
       if (payErr) throw payErr;
       if (!pay?.init_point) throw new Error("Falha ao iniciar pagamento");
+
+      // Notifica a dona pelo WhatsApp com o resumo do pedido (cartão MP)
+      try {
+        const itemsText = items
+          .map((i) => `• ${i.name} x${i.quantity} — R$ ${(i.price * i.quantity).toFixed(2)}\n  Personalização: ${i.personalization}`)
+          .join("\n");
+        const dateStr = farthestDelivery
+          ? format(new Date(farthestDelivery + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })
+          : "—";
+        const ownerMsg =
+          `🛒 *NOVO PEDIDO — Loja Traçando Memórias*\n` +
+          `\n💳 Pagamento: Cartão (Mercado Pago)\n` +
+          `📦 Pedido: ${order.id.slice(0, 8)}\n` +
+          `\n👤 *Cliente*\n${parsed.data.customer_name}\n` +
+          `📱 ${parsed.data.customer_phone}\n` +
+          `📧 ${parsed.data.customer_email}\n` +
+          `\n📍 *Entrega em ${dateStr}*\n` +
+          `${parsed.data.shipping_address}, ${parsed.data.shipping_number}` +
+          `${parsed.data.shipping_complement ? ` — ${parsed.data.shipping_complement}` : ""}\n` +
+          `${parsed.data.shipping_neighborhood}\n` +
+          `${parsed.data.shipping_city}/${parsed.data.shipping_state.toUpperCase()} • CEP ${parsed.data.shipping_zip}\n` +
+          `\n🛍️ *Itens*\n${itemsText}\n` +
+          `\n💰 Total: R$ ${totalPrice.toFixed(2)}` +
+          (parsed.data.notes ? `\n\n📝 Obs: ${parsed.data.notes}` : "");
+        // abre nova aba para a dona ser notificada (também útil em testes locais)
+        window.open(
+          `https://wa.me/${OWNER_WHATSAPP}?text=${encodeURIComponent(ownerMsg)}`,
+          "_blank"
+        );
+      } catch (notifyErr) {
+        console.warn("Falha ao abrir WhatsApp da dona:", notifyErr);
+      }
 
       clearCart();
       onSuccess();

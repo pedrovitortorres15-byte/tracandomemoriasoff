@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { CartDrawer } from "./CartDrawer";
 import { Search, User, Shield } from "lucide-react";
 import { useState } from "react";
@@ -6,9 +6,41 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import logoIcon from "@/assets/logo-icon.jpg";
 
+const CATEGORIES: { label: string; value: string }[] = [
+  { label: "Início", value: "" },
+  { label: "Todos", value: "todos" },
+  { label: "Canecas", value: "canecas" },
+  { label: "Presentes", value: "presentes" },
+  { label: "Personalizados", value: "personalizados" },
+];
+
 export const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const activeCat = searchParams.get("cat") || "";
+
+  const goCategory = (value: string) => {
+    if (!value) {
+      navigate("/");
+    } else {
+      navigate(`/?cat=${encodeURIComponent(value)}#produtos`);
+      setTimeout(() => {
+        document.getElementById("produtos")?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+  };
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchTerm.trim();
+    if (q) {
+      navigate(`/?q=${encodeURIComponent(q)}#produtos`);
+      setTimeout(() => document.getElementById("produtos")?.scrollIntoView({ behavior: "smooth" }), 100);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full bg-beige-50/95 backdrop-blur-md shadow-sm">
@@ -20,18 +52,20 @@ export const Header = () => {
           </span>
         </Link>
 
-        <div className="hidden md:flex flex-1 max-w-md mx-8">
+        <form onSubmit={submitSearch} className="hidden md:flex flex-1 max-w-md mx-8">
           <div className="relative w-full">
             <input
               type="text"
               placeholder="Pesquisar produtos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-4 pr-10 py-2.5 rounded-full border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-shadow"
             />
-            <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" aria-label="Pesquisar">
+            <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" aria-label="Pesquisar">
               <Search className="h-4 w-4" />
             </button>
           </div>
-        </div>
+        </form>
 
         <div className="flex items-center gap-2">
           <button className="md:hidden text-foreground" onClick={() => setSearchOpen(!searchOpen)} aria-label="Abrir busca">
@@ -54,39 +88,48 @@ export const Header = () => {
       </div>
 
       {searchOpen && (
-        <div className="md:hidden px-4 pb-3">
+        <form onSubmit={submitSearch} className="md:hidden px-4 pb-3">
           <input
             type="text"
             placeholder="Pesquisar produtos..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-4 pr-10 py-2.5 rounded-full border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
-        </div>
+        </form>
       )}
 
       <nav className="border-t border-border/60 bg-beige-50/80 backdrop-blur-sm">
         <div className="container flex items-center justify-between overflow-x-auto">
           <div className="flex items-center gap-1">
-            {["Início", "Todos", "Canecas", "Presentes", "Personalizados"].map((cat) => (
-              <a
-                key={cat}
-                href={cat === "Início" ? "/" : "#produtos"}
-                className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-foreground/70 hover:text-primary hover:bg-primary/5 rounded-full transition-all whitespace-nowrap"
-              >
-                {cat}
-              </a>
-            ))}
+            {CATEGORIES.map((cat) => {
+              const isActive =
+                activeCat === cat.value ||
+                (cat.value === "" && !activeCat && typeof window !== "undefined" && window.location.pathname === "/");
+              return (
+                <button
+                  key={cat.label}
+                  onClick={() => goCategory(cat.value)}
+                  className={`px-4 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-full transition-all whitespace-nowrap ${
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "text-foreground/70 hover:text-primary hover:bg-primary/5"
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
           </div>
           <div className="hidden lg:flex items-center gap-1">
-            {["Contato", "Sobre"].map((item) => (
-              <a
-                key={item}
-                href={item === "Contato" ? "https://wa.me/558287060860" : "#sobre"}
-                target={item === "Contato" ? "_blank" : undefined}
-                className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-foreground/70 hover:text-primary hover:bg-primary/5 rounded-full transition-all whitespace-nowrap"
-              >
-                {item}
-              </a>
-            ))}
+            <a
+              href="https://wa.me/558287060860"
+              target="_blank"
+              rel="noopener"
+              className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-foreground/70 hover:text-primary hover:bg-primary/5 rounded-full transition-all whitespace-nowrap"
+            >
+              Contato
+            </a>
           </div>
         </div>
       </nav>

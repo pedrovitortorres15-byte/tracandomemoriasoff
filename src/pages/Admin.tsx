@@ -11,7 +11,7 @@ import { MediaUploader } from "@/components/MediaUploader";
 import logoIcon from "@/assets/logo-icon.jpg";
 import {
   Package, ShoppingBag, Users, Plus, ArrowLeft, Trash2, Edit2,
-  Eye, ChevronDown, ChevronUp, LogOut, Save, X, Search
+  Eye, ChevronDown, ChevronUp, LogOut, Save, X, Search, Settings as SettingsIcon
 } from "lucide-react";
 
 interface Order {
@@ -75,8 +75,49 @@ const Admin = () => {
     if (isAdmin) {
       loadOrders();
       loadProducts();
+      loadSettings();
     }
   }, [isAdmin]);
+
+  const loadSettings = async () => {
+    const { data } = await (supabase as any).from("delivery_settings").select("*").limit(1).maybeSingle();
+    if (data) {
+      setSettingsId(data.id);
+      setSettingsForm({
+        daily_order_limit: data.daily_order_limit,
+        min_business_days: data.min_business_days,
+        pix_discount_percent: data.pix_discount_percent,
+        pix_discount_active: data.pix_discount_active,
+        delivery_window_text: data.delivery_window_text || "",
+      });
+    }
+  };
+
+  const saveSettings = async () => {
+    setSaving(true);
+    try {
+      const payload = {
+        daily_order_limit: Number(settingsForm.daily_order_limit) || 10,
+        min_business_days: Number(settingsForm.min_business_days) || 5,
+        pix_discount_percent: Number(settingsForm.pix_discount_percent) || 10,
+        pix_discount_active: !!settingsForm.pix_discount_active,
+        delivery_window_text: settingsForm.delivery_window_text || null,
+      };
+      if (settingsId) {
+        const { error } = await (supabase as any).from("delivery_settings").update(payload).eq("id", settingsId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await (supabase as any).from("delivery_settings").insert(payload).select().single();
+        if (error) throw error;
+        if (data) setSettingsId(data.id);
+      }
+      toast.success("Configurações salvas!");
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao salvar configurações");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const loadOrders = async () => {
     const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
@@ -237,8 +278,8 @@ const Admin = () => {
 
         {/* Tabs + busca */}
         <div className="flex flex-col sm:flex-row gap-2 mb-6">
-          <div className="flex gap-2">
-            {([["orders", "Pedidos", ShoppingBag], ["products", "Produtos", Package], ["customers", "Clientes", Users]] as const).map(([key, label, Icon]) => (
+          <div className="flex gap-2 flex-wrap">
+            {([["orders", "Pedidos", ShoppingBag], ["products", "Produtos", Package], ["customers", "Clientes", Users], ["settings", "Configurações", SettingsIcon]] as const).map(([key, label, Icon]) => (
               <Button
                 key={key}
                 variant={tab === key ? "default" : "outline"}
@@ -472,6 +513,85 @@ const Admin = () => {
                 ));
               })()
             )}
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {tab === "settings" && (
+          <div className="max-w-2xl space-y-4">
+            <div className="bg-card border rounded-lg p-5 space-y-4">
+              <div className="flex items-center gap-2">
+                <SettingsIcon className="h-5 w-5 text-primary" />
+                <h3 className="font-heading text-lg font-semibold">Entrega & Pagamento</h3>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Ajuste estas regras a qualquer momento sem mexer no código. As mudanças valem para todo o site na hora.
+              </p>
+
+              <div className="space-y-3 pt-2">
+                <div>
+                  <label className="text-sm font-medium block mb-1.5">Limite diário de pedidos</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={500}
+                    value={settingsForm.daily_order_limit}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, daily_order_limit: parseInt(e.target.value) || 0 })}
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">Quantos pedidos no máximo por data de entrega (atual: 10).</p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium block mb-1.5">Prazo mínimo (dias úteis)</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={60}
+                    value={settingsForm.min_business_days}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, min_business_days: parseInt(e.target.value) || 0 })}
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">A partir de quantos dias úteis o cliente pode escolher entrega (atual: 5).</p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium block mb-1.5">Texto da janela de entrega</label>
+                  <Input
+                    value={settingsForm.delivery_window_text}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, delivery_window_text: e.target.value })}
+                    placeholder="Entregas no período da tarde (14h às 17h)"
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">Aparece para o cliente no checkout.</p>
+                </div>
+
+                <div className="border-t pt-3 space-y-3">
+                  <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settingsForm.pix_discount_active}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, pix_discount_active: e.target.checked })}
+                      className="h-4 w-4 rounded"
+                    />
+                    Ativar desconto no PIX
+                  </label>
+                  <div>
+                    <label className="text-sm font-medium block mb-1.5">% de desconto no PIX</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={settingsForm.pix_discount_percent}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, pix_discount_percent: parseInt(e.target.value) || 0 })}
+                      disabled={!settingsForm.pix_discount_active}
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">Atual: 10%. Aplica em todo o site (carrinho, produto e checkout).</p>
+                  </div>
+                </div>
+
+                <Button onClick={saveSettings} disabled={saving} className="w-full">
+                  <Save className="h-4 w-4 mr-2" /> {saving ? "Salvando..." : "Salvar configurações"}
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </div>
