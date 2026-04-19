@@ -21,6 +21,7 @@ const BodySchema = z.object({
   items: z.array(ItemSchema).min(1).max(50),
   payer: PayerSchema,
   external_reference: z.string().max(80).optional(),
+  installments: z.number().int().min(1).max(12).optional(),
 });
 
 Deno.serve(async (req) => {
@@ -46,17 +47,22 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { items, payer, external_reference } = parsed.data;
+    const { items, payer, external_reference, installments } = parsed.data;
+    const maxInstallments = installments && installments > 0 ? installments : 3;
 
     const origin = req.headers.get("origin") || req.headers.get("referer") || "";
     const cleanOrigin = origin.replace(/\/$/, "");
     const siteUrl = cleanOrigin || Deno.env.get("SITE_URL") || "https://id-preview--355065c3-fed8-4564-8b72-9da947c21db8.lovable.app";
 
+    // CRITICAL: Mercado Pago só respeita o "parcelamento sem juros do vendedor"
+    // configurado na conta SE não enviarmos payer_costs/installments restritivos
+    // e usarmos auto_return + binary_mode false. O cliente vê automaticamente
+    // as parcelas configuradas no painel MP do vendedor.
     const preference: Record<string, unknown> = {
       items: items.map((item) => ({
         title: item.title,
         quantity: item.quantity,
-        unit_price: item.unit_price,
+        unit_price: Number(item.unit_price.toFixed(2)),
         currency_id: "BRL",
         picture_url: item.picture_url || undefined,
       })),
@@ -65,18 +71,29 @@ Deno.serve(async (req) => {
         failure: `${siteUrl}/?payment=failure`,
         pending: `${siteUrl}/?payment=pending`,
       },
+      auto_return: "approved",
       payment_methods: {
         excluded_payment_types: [],
-        installments: 3,
+        excluded_payment_methods: [],
+        installments: maxInstallments,
+        default_installments: 1,
       },
+      binary_mode: false,
       statement_descriptor: "TRACANDOMEMORIAS",
+      metadata: {
+        source: "tracando-memorias-site",
+      },
     };
 
     if (payer?.email) {
-      preference.payer = { name: payer.name, email: payer.email };
+      preference.payer = {
+        name: payer.name,
+        email: payer.email,
+      };
     }
     if (external_reference) {
       preference.external_reference = external_reference;
+      preference.notification_url = `https://sxfcsxelvcpxjdszfseg.supabase.co/functions/v1/mercadopago-webhook?ref=${encodeURIComponent(external_reference)}`;
     }
 
     const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
@@ -99,7 +116,11 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ init_point: data.init_point, sandbox_init_point: data.sandbox_init_point, id: data.id }),
+      JSON.stringify({
+        init_point: data.init_point,
+        sandbox_init_point: data.sandbox_init_point,
+        id: data.id,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

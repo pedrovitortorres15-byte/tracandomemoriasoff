@@ -8,6 +8,18 @@ export interface CartItem {
   image: string;
   quantity: number;
   personalization?: string;
+  /** ISO date YYYY-MM-DD chosen by the customer */
+  deliveryDate?: string;
+}
+
+const MIN_PERSONALIZATION_LENGTH = 5;
+const INVALID_PATTERNS = [/^\.+$/, /^[\s\-_]+$/, /^[a-z]$/i];
+
+export function isPersonalizationValid(text?: string): boolean {
+  if (!text) return false;
+  const trimmed = text.trim();
+  if (trimmed.length < MIN_PERSONALIZATION_LENGTH) return false;
+  return !INVALID_PATTERNS.some((p) => p.test(trimmed));
 }
 
 interface CartStore {
@@ -16,9 +28,11 @@ interface CartStore {
   addItem: (item: CartItem) => void;
   updateQuantity: (id: string, quantity: number) => void;
   updatePersonalization: (id: string, text: string) => void;
+  updateDeliveryDate: (id: string, iso: string) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
-  allPersonalized: () => boolean;
+  allValid: () => boolean;
+  invalidReason: () => string | null;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -48,6 +62,11 @@ export const useCartStore = create<CartStore>()(
         set({ items: items.map(i => i.id === id ? { ...i, personalization: text } : i) });
       },
 
+      updateDeliveryDate: (id, iso) => {
+        const { items } = get();
+        set({ items: items.map(i => i.id === id ? { ...i, deliveryDate: iso } : i) });
+      },
+
       removeItem: (id) => {
         const { items } = get();
         set({ items: items.filter(i => i.id !== id) });
@@ -55,9 +74,24 @@ export const useCartStore = create<CartStore>()(
 
       clearCart: () => set({ items: [] }),
 
-      allPersonalized: () => {
+      allValid: () => {
         const { items } = get();
-        return items.length > 0 && items.every(i => i.personalization && i.personalization.trim().length > 0);
+        if (items.length === 0) return false;
+        return items.every((i) => isPersonalizationValid(i.personalization) && !!i.deliveryDate);
+      },
+
+      invalidReason: () => {
+        const { items } = get();
+        if (items.length === 0) return "Carrinho vazio";
+        for (const i of items) {
+          if (!isPersonalizationValid(i.personalization)) {
+            return `Personalização inválida em "${i.name}". Escreva pelo menos ${MIN_PERSONALIZATION_LENGTH} caracteres reais.`;
+          }
+          if (!i.deliveryDate) {
+            return `Selecione a data de entrega para "${i.name}".`;
+          }
+        }
+        return null;
       },
     }),
     {
