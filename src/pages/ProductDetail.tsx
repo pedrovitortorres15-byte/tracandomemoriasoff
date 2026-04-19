@@ -499,37 +499,38 @@ const ProductDetail = () => {
 
               {/* Action buttons */}
               <div className="space-y-3">
-                <Button onClick={handleAddToCart} size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-sm font-semibold rounded-full">
+                {!validationCheck.ok && (
+                  <div className="bg-destructive/10 border border-destructive/30 rounded-md p-2.5 flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-destructive font-medium">{validationCheck.reason}</p>
+                  </div>
+                )}
+                <Button
+                  onClick={handleAddToCart}
+                  size="lg"
+                  disabled={!validationCheck.ok}
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50"
+                >
                   <ShoppingCart className="h-5 w-5 mr-2" />
                   Adicionar ao Carrinho
                 </Button>
                 <Button
-                  onClick={async () => {
-                    try {
-                      const { data, error } = await supabase.functions.invoke('mercadopago-checkout', {
-                        body: {
-                          items: [{
-                            title: name,
-                            quantity,
-                            unit_price: price,
-                            picture_url: images[0] || '',
-                          }],
-                        },
-                      });
-                      if (error) throw error;
-                      if (data?.init_point) window.open(data.init_point, '_blank');
-                    } catch {
-                      toast.error('Erro ao processar pagamento.');
-                    }
-                  }}
+                  onClick={handleMercadoPagoDirect}
                   size="lg"
-                  className="w-full bg-[hsl(210,80%,50%)] hover:bg-[hsl(210,80%,45%)] text-[hsl(0,0%,100%)] uppercase tracking-wider text-sm font-semibold rounded-full"
+                  disabled={!validationCheck.ok}
+                  className="w-full bg-[hsl(210,80%,50%)] hover:bg-[hsl(210,80%,45%)] text-[hsl(0,0%,100%)] uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50"
                 >
                   <CreditCard className="h-5 w-5 mr-2" />
-                  Pagar com Mercado Pago
+                  Pagar Cartão (3x sem juros)
                 </Button>
-                <Button onClick={handleWhatsAppOrder} size="lg" variant="outline" className="w-full border-[hsl(140,60%,35%)] text-[hsl(140,60%,30%)] hover:bg-[hsl(140,60%,95%)] uppercase tracking-wider text-sm font-semibold rounded-full">
-                  Pedir pelo WhatsApp
+                <Button
+                  onClick={handleWhatsAppOrder}
+                  size="lg"
+                  disabled={!validationCheck.ok}
+                  variant="outline"
+                  className="w-full border-[hsl(140,60%,35%)] text-[hsl(140,60%,30%)] hover:bg-[hsl(140,60%,95%)] uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50"
+                >
+                  PIX via WhatsApp (10% off)
                 </Button>
               </div>
             </div>
