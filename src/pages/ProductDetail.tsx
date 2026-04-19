@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { type FirebaseProduct } from "@/hooks/useProducts";
 import { useCartStore, isPersonalizationValid } from "@/stores/cartStore";
+import { useDeliverySettings } from "@/hooks/useDeliverySettings";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
@@ -17,6 +18,9 @@ import { ptBR } from "date-fns/locale";
 const ProductDetail = () => {
   const { handle } = useParams<{ handle: string }>();
   const addItem = useCartStore(state => state.addItem);
+  const { data: settings } = useDeliverySettings();
+  const pixActive = settings?.pix_discount_active ?? true;
+  const pixPct = settings?.pix_discount_percent ?? 10;
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
