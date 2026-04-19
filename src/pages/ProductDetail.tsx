@@ -1,15 +1,18 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { type FirebaseProduct } from "@/hooks/useProducts";
-import { useCartStore } from "@/stores/cartStore";
+import { useCartStore, isPersonalizationValid } from "@/stores/cartStore";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { DeliveryDatePicker } from "@/components/DeliveryDatePicker";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, ShoppingCart, Minus, Plus, ChevronRight, ChevronLeft, Upload, CreditCard } from "lucide-react";
-import { useState, useMemo } from "react";
+import { ArrowLeft, Loader2, ShoppingCart, Minus, Plus, ChevronRight, ChevronLeft, Upload, CreditCard, Check, AlertCircle } from "lucide-react";
+import { useState, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const ProductDetail = () => {
   const { handle } = useParams<{ handle: string }>();
@@ -19,6 +22,8 @@ const ProductDetail = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [personalization, setPersonalization] = useState<Record<string, string>>({});
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File | null>>({});
+  const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(undefined);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['supabase-product', handle],
