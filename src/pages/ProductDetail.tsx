@@ -132,13 +132,48 @@ const ProductDetail = () => {
     );
   }
 
+  // Validação completa antes de qualquer ação
+  const validatePersonalization = (): { ok: boolean; reason?: string } => {
+    const requiredSteps = steps.filter((s) => s.type !== 'file'); // file é opcional
+    for (const s of requiredSteps) {
+      const v = personalization[s.id];
+      if (!v || !v.trim()) return { ok: false, reason: `Preencha "${s.title}"` };
+      if (s.type === 'text' && !isPersonalizationValid(v)) {
+        return { ok: false, reason: `"${s.title}" precisa de pelo menos 5 caracteres reais` };
+      }
+    }
+    if (!deliveryDate) return { ok: false, reason: "Escolha a data de entrega" };
+    return { ok: true };
+  };
+
+  const buildPersonalizationSummary = (): string => {
+    const parts = steps
+      .map((s) => {
+        const v = personalization[s.id];
+        if (!v) return null;
+        return `${s.title}: ${v}`;
+      })
+      .filter(Boolean) as string[];
+    if (deliveryDate) {
+      parts.push(`Entrega: ${format(deliveryDate, "dd/MM/yyyy", { locale: ptBR })}`);
+    }
+    return parts.join(" | ");
+  };
+
   const handleAddToCart = () => {
+    const v = validatePersonalization();
+    if (!v.ok) {
+      toast.error(v.reason || "Complete a personalização");
+      return;
+    }
     addItem({
       id: product.id,
       name,
       price,
       image: images[0] || "",
       quantity,
+      personalization: buildPersonalizationSummary(),
+      deliveryDate: deliveryDate ? deliveryDate.toISOString().slice(0, 10) : undefined,
     });
     toast.success("Adicionado ao carrinho!", { position: "top-center" });
   };
@@ -148,9 +183,15 @@ const ProductDetail = () => {
   };
 
   const handleWhatsAppOrder = () => {
-    let text = `Olá! Gostaria de fazer um pedido:\n\n`;
+    const v = validatePersonalization();
+    if (!v.ok) {
+      toast.error(v.reason || "Complete a personalização");
+      return;
+    }
+    let text = `Olá! Gostaria de fazer um pedido (PIX 10% off):\n\n`;
     text += `📦 *${name}* (x${quantity})\n`;
-    text += `💰 Total: R$${(price * quantity).toFixed(2)}\n\n`;
+    text += `💰 Total: R$${(price * quantity).toFixed(2)}\n`;
+    text += `📅 Entrega: ${deliveryDate ? format(deliveryDate, "dd/MM/yyyy", { locale: ptBR }) : "—"}\n\n`;
     text += `✏️ *Personalização:*\n`;
 
     Object.entries(personalization).forEach(([key, value]) => {
@@ -169,6 +210,40 @@ const ProductDetail = () => {
 
     window.open(`https://wa.me/558287060860?text=${encodeURIComponent(text)}`, '_blank');
   };
+
+  const handleMercadoPagoDirect = async () => {
+    const v = validatePersonalization();
+    if (!v.ok) {
+      toast.error(v.reason || "Complete a personalização");
+      return;
+    }
+    try {
+      const summary = buildPersonalizationSummary();
+      const { data, error } = await supabase.functions.invoke('mercadopago-checkout', {
+        body: {
+          items: [{
+            title: `${name} - ${summary}`.slice(0, 250),
+            quantity,
+            unit_price: price,
+            picture_url: images[0] || '',
+          }],
+          installments: 3,
+        },
+      });
+      if (error) throw error;
+      if (data?.init_point) {
+        window.location.href = data.init_point;
+      } else {
+        throw new Error("Sem link de pagamento");
+      }
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.message || 'Erro ao processar pagamento.');
+    }
+  };
+
+  const isLastStep = currentStep === steps.length - 1;
+  const validationCheck = validatePersonalization();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
