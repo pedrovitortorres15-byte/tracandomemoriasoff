@@ -11,7 +11,7 @@ import { MediaUploader } from "@/components/MediaUploader";
 import logoIcon from "@/assets/logo-icon.jpg";
 import {
   Package, ShoppingBag, Users, Plus, ArrowLeft, Trash2, Edit2,
-  Eye, ChevronDown, ChevronUp, LogOut, Save, X, Search
+  Eye, ChevronDown, ChevronUp, LogOut, Save, X, Search, Settings as SettingsIcon
 } from "lucide-react";
 
 interface Order {
@@ -75,8 +75,49 @@ const Admin = () => {
     if (isAdmin) {
       loadOrders();
       loadProducts();
+      loadSettings();
     }
   }, [isAdmin]);
+
+  const loadSettings = async () => {
+    const { data } = await (supabase as any).from("delivery_settings").select("*").limit(1).maybeSingle();
+    if (data) {
+      setSettingsId(data.id);
+      setSettingsForm({
+        daily_order_limit: data.daily_order_limit,
+        min_business_days: data.min_business_days,
+        pix_discount_percent: data.pix_discount_percent,
+        pix_discount_active: data.pix_discount_active,
+        delivery_window_text: data.delivery_window_text || "",
+      });
+    }
+  };
+
+  const saveSettings = async () => {
+    setSaving(true);
+    try {
+      const payload = {
+        daily_order_limit: Number(settingsForm.daily_order_limit) || 10,
+        min_business_days: Number(settingsForm.min_business_days) || 5,
+        pix_discount_percent: Number(settingsForm.pix_discount_percent) || 10,
+        pix_discount_active: !!settingsForm.pix_discount_active,
+        delivery_window_text: settingsForm.delivery_window_text || null,
+      };
+      if (settingsId) {
+        const { error } = await (supabase as any).from("delivery_settings").update(payload).eq("id", settingsId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await (supabase as any).from("delivery_settings").insert(payload).select().single();
+        if (error) throw error;
+        if (data) setSettingsId(data.id);
+      }
+      toast.success("Configurações salvas!");
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao salvar configurações");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const loadOrders = async () => {
     const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
@@ -237,8 +278,8 @@ const Admin = () => {
 
         {/* Tabs + busca */}
         <div className="flex flex-col sm:flex-row gap-2 mb-6">
-          <div className="flex gap-2">
-            {([["orders", "Pedidos", ShoppingBag], ["products", "Produtos", Package], ["customers", "Clientes", Users]] as const).map(([key, label, Icon]) => (
+          <div className="flex gap-2 flex-wrap">
+            {([["orders", "Pedidos", ShoppingBag], ["products", "Produtos", Package], ["customers", "Clientes", Users], ["settings", "Configurações", SettingsIcon]] as const).map(([key, label, Icon]) => (
               <Button
                 key={key}
                 variant={tab === key ? "default" : "outline"}
