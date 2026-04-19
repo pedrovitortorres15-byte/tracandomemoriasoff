@@ -192,9 +192,12 @@ const ProductDetail = () => {
       toast.error(v.reason || "Complete a personalização");
       return;
     }
-    let text = `Olá! Gostaria de fazer um pedido (PIX 10% off):\n\n`;
+    let text = `Olá Loja Traçando Memórias! Gostaria de fazer um pedido${pixActive ? ` (PIX ${pixPct}% off)` : ""}:\n\n`;
+    const subtotal = price * quantity;
+    const finalPrice = pixActive ? subtotal * (1 - pixPct / 100) : subtotal;
     text += `📦 *${name}* (x${quantity})\n`;
-    text += `💰 Total: R$${(price * quantity).toFixed(2)}\n`;
+    text += `💰 Subtotal: R$ ${subtotal.toFixed(2)}\n`;
+    if (pixActive) text += `💚 Total PIX (${pixPct}% off): R$ ${finalPrice.toFixed(2)}\n`;
     text += `📅 Entrega: ${deliveryDate ? format(deliveryDate, "dd/MM/yyyy", { locale: ptBR }) : "—"}\n\n`;
     text += `✏️ *Personalização:*\n`;
 
@@ -534,7 +537,7 @@ const ProductDetail = () => {
                   variant="outline"
                   className="w-full border-[hsl(140,60%,35%)] text-[hsl(140,60%,30%)] hover:bg-[hsl(140,60%,95%)] uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50"
                 >
-                  PIX via WhatsApp (10% off)
+                  PIX via WhatsApp{pixActive ? ` (${pixPct}% off)` : ""}
                 </Button>
               </div>
             </div>
