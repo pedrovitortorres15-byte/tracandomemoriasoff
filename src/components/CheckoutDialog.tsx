@@ -7,12 +7,14 @@ import { Loader2, CreditCard } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useCartStore } from "@/stores/cartStore";
+import { useCartStore, isPersonalizationValid } from "@/stores/cartStore";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const checkoutSchema = z.object({
   customer_name: z.string().trim().min(2, "Nome obrigatório").max(120),
   customer_email: z.string().trim().email("E-mail inválido").max(160),
-  customer_phone: z.string().trim().min(8, "Telefone obrigatório").max(30),
+  customer_phone: z.string().trim().min(10, "WhatsApp obrigatório (com DDD)").max(30),
   shipping_zip: z.string().trim().min(8, "CEP obrigatório").max(10),
   shipping_address: z.string().trim().min(3, "Rua obrigatória").max(160),
   shipping_number: z.string().trim().min(1, "Número obrigatório").max(20),
@@ -41,8 +43,20 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess }: Props) => {
   const set = (k: keyof typeof form, v: string) => setForm(p => ({ ...p, [k]: v }));
 
   const totalPrice = items.reduce((s, i) => s + i.price * i.quantity, 0);
+  // Pega a data de entrega mais TARDE entre os itens (pedido só sai quando o último estiver pronto)
+  const farthestDelivery = items
+    .map((i) => i.deliveryDate)
+    .filter(Boolean)
+    .sort()
+    .pop();
 
   const handleSubmit = async () => {
+    // Backend-side guarantee: re-validate personalization & date
+    const allComplete = items.every((i) => isPersonalizationValid(i.personalization) && !!i.deliveryDate);
+    if (!allComplete) {
+      toast.error("Itens incompletos no carrinho — volte e preencha personalização + data de entrega.");
+      return;
+    }
     const parsed = checkoutSchema.safeParse(form);
     if (!parsed.success) {
       const first = Object.values(parsed.error.flatten().fieldErrors)[0]?.[0];
@@ -51,7 +65,14 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess }: Props) => {
     }
     setLoading(true);
     try {
-      const personalizationCombined = items.map(i => `${i.name}: ${i.personalization || '-'}`).join(' | ');
+      const personalizationCombined = items
+        .map((i) => {
+          const dateStr = i.deliveryDate
+            ? format(new Date(i.deliveryDate + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })
+            : "—";
+          return `${i.name}: ${i.personalization} [Entrega: ${dateStr}]`;
+        })
+        .join(" | ");
 
       const { data: order, error: orderErr } = await supabase
         .from("orders")
@@ -71,7 +92,8 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess }: Props) => {
           total: totalPrice,
           status: 'pendente',
           payment_method: 'mercadopago',
-        })
+          delivery_date: farthestDelivery || null,
+        } as any)
         .select()
         .single();
       if (orderErr || !order) throw orderErr || new Error("Pedido não criado");
@@ -99,6 +121,7 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess }: Props) => {
             email: parsed.data.customer_email,
           },
           external_reference: order.id,
+          installments: 3,
         },
       });
       if (payErr) throw payErr;
@@ -120,13 +143,19 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess }: Props) => {
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-heading">Dados de Entrega</DialogTitle>
-          <DialogDescription>Preencha para finalizar via Mercado Pago (PIX, cartão e boleto)</DialogDescription>
+          <DialogDescription>Pagamento seguro pelo Mercado Pago — cartão em até 3x sem juros</DialogDescription>
         </DialogHeader>
         <div className="space-y-3 pt-2">
+          {farthestDelivery && (
+            <div className="bg-primary/10 border border-primary/30 rounded-md p-2.5 text-xs">
+              📅 <strong>Entrega prevista:</strong>{" "}
+              {format(new Date(farthestDelivery + "T12:00:00"), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            </div>
+          )}
           <Input placeholder="Nome completo *" value={form.customer_name} onChange={(e) => set('customer_name', e.target.value)} />
           <div className="grid grid-cols-2 gap-2">
             <Input placeholder="E-mail *" type="email" value={form.customer_email} onChange={(e) => set('customer_email', e.target.value)} />
-            <Input placeholder="WhatsApp *" value={form.customer_phone} onChange={(e) => set('customer_phone', e.target.value)} />
+            <Input placeholder="WhatsApp com DDD *" value={form.customer_phone} onChange={(e) => set('customer_phone', e.target.value)} />
           </div>
           <Input placeholder="CEP *" value={form.shipping_zip} onChange={(e) => set('shipping_zip', e.target.value)} />
           <div className="grid grid-cols-[1fr_100px] gap-2">
@@ -142,9 +171,12 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess }: Props) => {
           <Textarea placeholder="Observações para a dona (opcional)" value={form.notes} onChange={(e) => set('notes', e.target.value)} className="min-h-[60px]" />
 
           <div className="flex justify-between items-center pt-2 border-t">
-            <span className="font-medium">Total</span>
+            <span className="font-medium">Total cartão</span>
             <span className="text-xl font-bold text-primary">R$ {totalPrice.toFixed(2)}</span>
           </div>
+          <p className="text-xs text-muted-foreground text-right">
+            ou 3x de R$ {(totalPrice / 3).toFixed(2)} sem juros
+          </p>
 
           <Button onClick={handleSubmit} disabled={loading} size="lg" className="w-full">
             {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CreditCard className="h-4 w-4 mr-2" />}

@@ -53,7 +53,9 @@ const emptyForm = { name: "", description: "", price: 0, category: "", stock: 0,
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"orders" | "products" | "customers">("orders");
+  const [tab, setTab] = useState<"orders" | "products" | "customers" | "settings">("orders");
+  const [settingsForm, setSettingsForm] = useState({ daily_order_limit: 10, min_business_days: 5, pix_discount_percent: 10, pix_discount_active: true, delivery_window_text: "Entregas no período da tarde (14h às 17h)" });
+  const [settingsId, setSettingsId] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
