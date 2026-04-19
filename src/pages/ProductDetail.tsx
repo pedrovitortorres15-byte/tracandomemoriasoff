@@ -402,27 +402,31 @@ const ProductDetail = () => {
                       )}
 
                       {steps[currentStep].type === 'file' && (
-                        <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 hover:bg-muted/30 transition-colors cursor-pointer block"
+                        >
                           <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                           <p className="text-sm text-muted-foreground mb-2">
                             {uploadedFiles[steps[currentStep].id]
                               ? uploadedFiles[steps[currentStep].id]!.name
-                              : 'Arraste uma imagem ou clique para enviar'}
+                              : 'Clique aqui para enviar uma imagem'}
                           </p>
+                          <p className="text-xs text-muted-foreground">(max 30MB · JPG, PNG)</p>
                           <input
+                            ref={fileInputRef}
                             type="file"
                             accept="image/*"
                             onChange={(e) => handleFileChange(steps[currentStep].id, e.target.files?.[0] || null)}
-                            className="absolute inset-0 opacity-0 cursor-pointer"
-                            style={{ position: 'relative' }}
+                            className="hidden"
                           />
-                          <p className="text-xs text-muted-foreground mt-1">(max 30MB)</p>
-                        </div>
+                        </button>
                       )}
                     </div>
                   )}
 
-                  {/* Step navigation */}
+                  {/* Step navigation — sem 'Próximo' no último */}
                   <div className="flex items-center justify-between pt-2">
                     <Button
                       variant="outline"
@@ -436,14 +440,24 @@ const ProductDetail = () => {
                     <span className="text-xs text-muted-foreground">
                       {currentStep + 1} de {steps.length}
                     </span>
-                    <Button
-                      size="sm"
-                      onClick={() => setCurrentStep(s => Math.min(steps.length - 1, s + 1))}
-                      disabled={currentStep === steps.length - 1}
-                      className="gap-1 bg-primary text-primary-foreground"
-                    >
-                      Próximo <ChevronRight className="h-4 w-4" />
-                    </Button>
+                    {!isLastStep ? (
+                      <Button
+                        size="sm"
+                        onClick={() => setCurrentStep(s => Math.min(steps.length - 1, s + 1))}
+                        className="gap-1 bg-primary text-primary-foreground"
+                      >
+                        Próximo <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-green-700 font-medium flex items-center gap-1">
+                        <Check className="h-3 w-3" /> Última etapa
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Data de entrega — sempre visível, obrigatória */}
+                  <div className="pt-3 border-t border-border">
+                    <DeliveryDatePicker value={deliveryDate} onChange={setDeliveryDate} />
                   </div>
                 </div>
               )}
