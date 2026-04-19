@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      delivery_settings: {
+        Row: {
+          daily_order_limit: number
+          delivery_window_text: string | null
+          id: string
+          min_business_days: number
+          pix_discount_active: boolean
+          pix_discount_percent: number
+          updated_at: string
+        }
+        Insert: {
+          daily_order_limit?: number
+          delivery_window_text?: string | null
+          id?: string
+          min_business_days?: number
+          pix_discount_active?: boolean
+          pix_discount_percent?: number
+          updated_at?: string
+        }
+        Update: {
+          daily_order_limit?: number
+          delivery_window_text?: string | null
+          id?: string
+          min_business_days?: number
+          pix_discount_active?: boolean
+          pix_discount_percent?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
@@ -65,6 +95,8 @@ export type Database = {
           customer_email: string | null
           customer_name: string
           customer_phone: string | null
+          delivery_date: string | null
+          delivery_window: string | null
           id: string
           notes: string | null
           payment_id: string | null
@@ -87,6 +119,8 @@ export type Database = {
           customer_email?: string | null
           customer_name: string
           customer_phone?: string | null
+          delivery_date?: string | null
+          delivery_window?: string | null
           id?: string
           notes?: string | null
           payment_id?: string | null
@@ -109,6 +143,8 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string
           customer_phone?: string | null
+          delivery_date?: string | null
+          delivery_window?: string | null
           id?: string
           notes?: string | null
           payment_id?: string | null
@@ -229,6 +265,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_delivery_capacity: {
+        Args: { end_date: string; start_date: string }
+        Returns: {
+          count: number
+          delivery_date: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
