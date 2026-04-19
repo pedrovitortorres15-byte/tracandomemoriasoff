@@ -515,6 +515,85 @@ const Admin = () => {
             )}
           </div>
         )}
+
+        {/* Settings Tab */}
+        {tab === "settings" && (
+          <div className="max-w-2xl space-y-4">
+            <div className="bg-card border rounded-lg p-5 space-y-4">
+              <div className="flex items-center gap-2">
+                <SettingsIcon className="h-5 w-5 text-primary" />
+                <h3 className="font-heading text-lg font-semibold">Entrega & Pagamento</h3>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Ajuste estas regras a qualquer momento sem mexer no código. As mudanças valem para todo o site na hora.
+              </p>
+
+              <div className="space-y-3 pt-2">
+                <div>
+                  <label className="text-sm font-medium block mb-1.5">Limite diário de pedidos</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={500}
+                    value={settingsForm.daily_order_limit}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, daily_order_limit: parseInt(e.target.value) || 0 })}
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">Quantos pedidos no máximo por data de entrega (atual: 10).</p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium block mb-1.5">Prazo mínimo (dias úteis)</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={60}
+                    value={settingsForm.min_business_days}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, min_business_days: parseInt(e.target.value) || 0 })}
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">A partir de quantos dias úteis o cliente pode escolher entrega (atual: 5).</p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium block mb-1.5">Texto da janela de entrega</label>
+                  <Input
+                    value={settingsForm.delivery_window_text}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, delivery_window_text: e.target.value })}
+                    placeholder="Entregas no período da tarde (14h às 17h)"
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">Aparece para o cliente no checkout.</p>
+                </div>
+
+                <div className="border-t pt-3 space-y-3">
+                  <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settingsForm.pix_discount_active}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, pix_discount_active: e.target.checked })}
+                      className="h-4 w-4 rounded"
+                    />
+                    Ativar desconto no PIX
+                  </label>
+                  <div>
+                    <label className="text-sm font-medium block mb-1.5">% de desconto no PIX</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={settingsForm.pix_discount_percent}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, pix_discount_percent: parseInt(e.target.value) || 0 })}
+                      disabled={!settingsForm.pix_discount_active}
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">Atual: 10%. Aplica em todo o site (carrinho, produto e checkout).</p>
+                  </div>
+                </div>
+
+                <Button onClick={saveSettings} disabled={saving} className="w-full">
+                  <Save className="h-4 w-4 mr-2" /> {saving ? "Salvando..." : "Salvar configurações"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
