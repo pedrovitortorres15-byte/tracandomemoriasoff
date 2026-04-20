@@ -448,6 +448,13 @@ const Admin = () => {
                   maxItems={7}
                 />
 
+                <div className="border-t pt-3">
+                  <CustomFieldsBuilder
+                    value={productForm.custom_fields}
+                    onChange={(fields) => setProductForm({ ...productForm, custom_fields: fields })}
+                  />
+                </div>
+
                 <div className="flex gap-2 pt-2">
                   <Button onClick={saveProduct} disabled={saving}>
                     <Save className="h-4 w-4 mr-2" /> {saving ? 'Salvando...' : 'Salvar'}
@@ -604,6 +611,36 @@ const Admin = () => {
                       disabled={!settingsForm.pix_discount_active}
                     />
                     <p className="text-[11px] text-muted-foreground mt-1">Atual: 10%. Aplica em todo o site (carrinho, produto e checkout).</p>
+                  </div>
+                </div>
+
+                <div className="border-t pt-3 space-y-3">
+                  <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settingsForm.pickup_enabled}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, pickup_enabled: e.target.checked })}
+                      className="h-4 w-4 rounded"
+                    />
+                    Permitir RETIRADA pelo cliente
+                  </label>
+                  <div>
+                    <label className="text-sm font-medium block mb-1.5">Endereço de retirada</label>
+                    <Input
+                      value={settingsForm.pickup_address}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, pickup_address: e.target.value })}
+                      placeholder="Rua, nº, bairro, cidade"
+                      disabled={!settingsForm.pickup_enabled}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium block mb-1.5">Janela de retirada</label>
+                    <Input
+                      value={settingsForm.pickup_window_text}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, pickup_window_text: e.target.value })}
+                      placeholder="Retirada das 14h às 17h"
+                      disabled={!settingsForm.pickup_enabled}
+                    />
                   </div>
                 </div>
 
