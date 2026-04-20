@@ -8,6 +8,9 @@ export interface DeliverySettings {
   delivery_window_text: string | null;
   pix_discount_percent: number;
   pix_discount_active: boolean;
+  pickup_enabled: boolean;
+  pickup_address: string;
+  pickup_window_text: string;
 }
 
 const DEFAULTS: DeliverySettings = {
@@ -17,6 +20,9 @@ const DEFAULTS: DeliverySettings = {
   delivery_window_text: "Entregas no período da tarde (14h às 17h)",
   pix_discount_percent: 10,
   pix_discount_active: true,
+  pickup_enabled: true,
+  pickup_address: "",
+  pickup_window_text: "Retirada das 14h às 17h",
 };
 
 export function useDeliverySettings() {
@@ -29,7 +35,7 @@ export function useDeliverySettings() {
         .limit(1)
         .maybeSingle();
       if (error || !data) return DEFAULTS;
-      return data as unknown as DeliverySettings;
+      return { ...DEFAULTS, ...(data as any) } as DeliverySettings;
     },
     staleTime: 1000 * 60 * 5,
   });
