@@ -20,6 +20,9 @@ export type Database = {
           delivery_window_text: string | null
           id: string
           min_business_days: number
+          pickup_address: string | null
+          pickup_enabled: boolean
+          pickup_window_text: string | null
           pix_discount_active: boolean
           pix_discount_percent: number
           updated_at: string
@@ -29,6 +32,9 @@ export type Database = {
           delivery_window_text?: string | null
           id?: string
           min_business_days?: number
+          pickup_address?: string | null
+          pickup_enabled?: boolean
+          pickup_window_text?: string | null
           pix_discount_active?: boolean
           pix_discount_percent?: number
           updated_at?: string
@@ -38,6 +44,9 @@ export type Database = {
           delivery_window_text?: string | null
           id?: string
           min_business_days?: number
+          pickup_address?: string | null
+          pickup_enabled?: boolean
+          pickup_window_text?: string | null
           pix_discount_active?: boolean
           pix_discount_percent?: number
           updated_at?: string
@@ -96,12 +105,15 @@ export type Database = {
           customer_name: string
           customer_phone: string | null
           delivery_date: string | null
+          delivery_method: string
           delivery_window: string | null
           id: string
           notes: string | null
           payment_id: string | null
           payment_method: string | null
           personalization: string | null
+          recipient_name: string | null
+          recipient_phone: string | null
           shipping_address: string
           shipping_city: string | null
           shipping_complement: string | null
@@ -120,12 +132,15 @@ export type Database = {
           customer_name: string
           customer_phone?: string | null
           delivery_date?: string | null
+          delivery_method?: string
           delivery_window?: string | null
           id?: string
           notes?: string | null
           payment_id?: string | null
           payment_method?: string | null
           personalization?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string | null
           shipping_address: string
           shipping_city?: string | null
           shipping_complement?: string | null
@@ -144,12 +159,15 @@ export type Database = {
           customer_name?: string
           customer_phone?: string | null
           delivery_date?: string | null
+          delivery_method?: string
           delivery_window?: string | null
           id?: string
           notes?: string | null
           payment_id?: string | null
           payment_method?: string | null
           personalization?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string | null
           shipping_address?: string
           shipping_city?: string | null
           shipping_complement?: string | null
@@ -169,6 +187,7 @@ export type Database = {
           active: boolean
           category: string | null
           created_at: string
+          custom_fields: Json
           description: string | null
           id: string
           image_url: string | null
@@ -183,6 +202,7 @@ export type Database = {
           active?: boolean
           category?: string | null
           created_at?: string
+          custom_fields?: Json
           description?: string | null
           id?: string
           image_url?: string | null
@@ -197,6 +217,7 @@ export type Database = {
           active?: boolean
           category?: string | null
           created_at?: string
+          custom_fields?: Json
           description?: string | null
           id?: string
           image_url?: string | null
