@@ -436,11 +436,11 @@ const ProductDetail = () => {
                   <ShoppingCart className="h-5 w-5 mr-2" /> Adicionar ao Carrinho
                 </Button>
                 <Button onClick={handleMercadoPagoDirect} size="lg" disabled={!validationCheck.ok}
-                  className="w-full bg-[hsl(210,80%,50%)] hover:bg-[hsl(210,80%,45%)] text-[hsl(0,0%,100%)] uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50">
+                  className="w-full bg-pay-card text-pay-card-foreground hover:bg-pay-card/90 uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50">
                   <CreditCard className="h-5 w-5 mr-2" /> Pagar Cartão (3x sem juros)
                 </Button>
                 <Button onClick={handleWhatsAppOrder} size="lg" disabled={!validationCheck.ok} variant="outline"
-                  className="w-full border-[hsl(140,60%,35%)] text-[hsl(140,60%,30%)] hover:bg-[hsl(140,60%,95%)] uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50">
+                  className="w-full border-pay-pix text-pay-pix hover:bg-pay-pix-soft uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50">
                   PIX via WhatsApp{pixActive ? ` (${pixPct}% off)` : ""}
                 </Button>
               </div>
