@@ -1,6 +1,5 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { type FirebaseProduct } from "@/hooks/useProducts";
 import { useCartStore, isPersonalizationValid } from "@/stores/cartStore";
 import { useDeliverySettings } from "@/hooks/useDeliverySettings";
 import { Header } from "@/components/Header";
@@ -14,6 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { readCustomFields, toSteps, calcAddonTotal } from "@/lib/customFields";
 
 const ProductDetail = () => {
   const { handle } = useParams<{ handle: string }>();
@@ -24,92 +24,48 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
-  const [personalization, setPersonalization] = useState<Record<string, string>>({});
+  const [personalization, setPersonalization] = useState<Record<string, string | string[]>>({});
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File | null>>({});
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['supabase-product', handle],
-    queryFn: async (): Promise<FirebaseProduct | null> => {
+    queryFn: async (): Promise<any> => {
       const { data, error } = await supabase
         .from('products')
         .select('*')
         .eq('id', handle!)
         .single();
       if (error || !data) return null;
+      const d: any = data;
       return {
-        id: data.id,
-        nome: data.name,
-        descricao: data.description || '',
-        preco: data.price,
-        imagem: data.image_url || '',
-        categoria: data.category || '',
-        ativo: data.active,
-        estoque: data.stock,
+        id: d.id,
+        nome: d.name,
+        descricao: d.description || '',
+        preco: d.price,
+        imagem: (d.media_urls && d.media_urls[0]) || d.image_url || '',
+        imagens: d.media_urls && d.media_urls.length > 0 ? d.media_urls : (d.image_url ? [d.image_url] : []),
+        categoria: d.category || '',
+        ativo: d.active,
+        estoque: d.stock,
+        custom_fields: d.custom_fields || [],
       };
     },
     enabled: !!handle,
   });
 
-  const name = product ? (product.nome || (product as any).name || "Produto") : "";
-  const price = product ? (product.preco || (product as any).price || 0) : 0;
-  const originalPrice = product ? ((product as any).precoOriginal || (product as any).originalPrice) : null;
-  const description = product ? (product.descricao || (product as any).description || "") : "";
-  const images: string[] = product ? (product.imagens || (product.imagem ? [product.imagem] : [])) : [];
-  const installments = price > 0 ? Math.ceil(price / 3) : 0;
+  const name = product?.nome || "";
+  const basePrice = Number(product?.preco || 0);
+  const description = product?.descricao || "";
+  const images: string[] = product?.imagens || [];
 
-  // Build personalization steps from product data
-  const steps = useMemo(() => {
-    if (!product) return [];
-    const s: Array<{ id: string; title: string; type: 'text' | 'select' | 'file' | 'textarea'; options?: string[]; placeholder?: string; description?: string }> = [];
+  const customFields = useMemo(() => readCustomFields(product), [product]);
+  const steps = useMemo(() => toSteps(customFields), [customFields]);
 
-    // Check for personalization options in the product
-    const opcoes = (product as any).opcoes || (product as any).options;
-    if (opcoes && Array.isArray(opcoes)) {
-      opcoes.forEach((opt: any) => {
-        s.push({
-          id: opt.id || opt.nome || opt.name,
-          title: opt.nome || opt.name || opt.titulo || opt.title,
-          type: opt.tipo === 'select' || opt.type === 'select' || (opt.valores && opt.valores.length > 0) ? 'select' : 'text',
-          options: opt.valores || opt.values || opt.options,
-          placeholder: opt.placeholder,
-          description: opt.descricao || opt.description,
-        });
-      });
-    }
-
-    // Standard customization options
-    s.push(
-      {
-        id: 'tipo_azulejo',
-        title: 'Tipo de Azulejo',
-        type: 'select',
-        options: ['Informações do Nascimento', 'Foto + Frase', 'Monograma do Bebê'],
-        description: 'Escolha o modelo de azulejo para o seu produto.',
-      },
-      {
-        id: 'cor_box',
-        title: 'Cor Predominante da Box',
-        type: 'select',
-        options: ['Rosa Chá', 'Verde Oliva', 'Bege', 'Marrom', 'Azul Claro'],
-        description: 'Escolha a cor predominante da sua caixinha.',
-      },
-      {
-        id: 'balao_frase',
-        title: 'Balão de Frase',
-        type: 'select',
-        options: ['Feliz Aniversário', 'Eu Te Amo', 'Feliz Dia', 'Nós Te Amamos', 'Apenas Inicial'],
-        description: 'Escolha a frase que vai no balão.',
-      },
-      { id: 'nome_presenteado', title: 'Nome/Apelido', type: 'text', placeholder: 'Nome de quem vai receber', description: 'Coloque o nome ou apelido da pessoa que irá receber o produto.' },
-      { id: 'mensagem', title: 'Mensagem Personalizada', type: 'textarea', placeholder: 'Escreva sua mensagem aqui...', description: 'Uma mensagem especial para acompanhar o presente.' },
-      { id: 'foto', title: 'Foto para Personalização', type: 'file', description: 'Envie a foto que deseja usar na personalização do produto.' },
-      { id: 'enviado_por', title: 'Enviado por', type: 'text', placeholder: 'Seu nome', description: 'Coloque o nome de quem está enviando.' },
-    );
-
-    return s;
-  }, [product]);
+  const addonTotal = useMemo(() => calcAddonTotal(customFields, personalization), [customFields, personalization]);
+  const unitPrice = basePrice + addonTotal;
+  const installments = unitPrice > 0 ? unitPrice / 3 : 0;
 
   if (isLoading) {
     return (
@@ -136,14 +92,20 @@ const ProductDetail = () => {
     );
   }
 
-  // Validação completa antes de qualquer ação
   const validatePersonalization = (): { ok: boolean; reason?: string } => {
-    const requiredSteps = steps.filter((s) => s.type !== 'file'); // file é opcional
-    for (const s of requiredSteps) {
+    for (const s of steps) {
+      if (!s.required) continue;
       const v = personalization[s.id];
-      if (!v || !v.trim()) return { ok: false, reason: `Preencha "${s.title}"` };
-      if (s.type === 'text' && !isPersonalizationValid(v)) {
-        return { ok: false, reason: `"${s.title}" precisa de pelo menos 5 caracteres reais` };
+      if (s.type === "multiselect" || s.type === "addon") {
+        if (!Array.isArray(v) || v.length === 0) return { ok: false, reason: `Selecione "${s.title}"` };
+      } else if (s.type === "file") {
+        if (!uploadedFiles[s.id]) return { ok: false, reason: `Envie a imagem em "${s.title}"` };
+      } else {
+        const str = typeof v === "string" ? v : "";
+        if (!str.trim()) return { ok: false, reason: `Preencha "${s.title}"` };
+        if ((s.type === "text" || s.type === "textarea") && !isPersonalizationValid(str)) {
+          return { ok: false, reason: `"${s.title}" precisa de pelo menos 5 caracteres reais` };
+        }
       }
     }
     if (!deliveryDate) return { ok: false, reason: "Escolha a data de entrega" };
@@ -154,26 +116,22 @@ const ProductDetail = () => {
     const parts = steps
       .map((s) => {
         const v = personalization[s.id];
-        if (!v) return null;
-        return `${s.title}: ${v}`;
+        if (!v || (Array.isArray(v) && v.length === 0)) return null;
+        const text = Array.isArray(v) ? v.join(", ") : v;
+        return `${s.title}: ${text}`;
       })
       .filter(Boolean) as string[];
-    if (deliveryDate) {
-      parts.push(`Entrega: ${format(deliveryDate, "dd/MM/yyyy", { locale: ptBR })}`);
-    }
+    if (deliveryDate) parts.push(`Entrega: ${format(deliveryDate, "dd/MM/yyyy", { locale: ptBR })}`);
     return parts.join(" | ");
   };
 
   const handleAddToCart = () => {
     const v = validatePersonalization();
-    if (!v.ok) {
-      toast.error(v.reason || "Complete a personalização");
-      return;
-    }
+    if (!v.ok) { toast.error(v.reason || "Complete a personalização"); return; }
     addItem({
       id: product.id,
       name,
-      price,
+      price: unitPrice,
       image: images[0] || "",
       quantity,
       personalization: buildPersonalizationSummary(),
@@ -188,42 +146,33 @@ const ProductDetail = () => {
 
   const handleWhatsAppOrder = () => {
     const v = validatePersonalization();
-    if (!v.ok) {
-      toast.error(v.reason || "Complete a personalização");
-      return;
-    }
+    if (!v.ok) { toast.error(v.reason || "Complete a personalização"); return; }
     let text = `Olá Loja Traçando Memórias! Gostaria de fazer um pedido${pixActive ? ` (PIX ${pixPct}% off)` : ""}:\n\n`;
-    const subtotal = price * quantity;
+    const subtotal = unitPrice * quantity;
     const finalPrice = pixActive ? subtotal * (1 - pixPct / 100) : subtotal;
     text += `📦 *${name}* (x${quantity})\n`;
     text += `💰 Subtotal: R$ ${subtotal.toFixed(2)}\n`;
     if (pixActive) text += `💚 Total PIX (${pixPct}% off): R$ ${finalPrice.toFixed(2)}\n`;
     text += `📅 Entrega: ${deliveryDate ? format(deliveryDate, "dd/MM/yyyy", { locale: ptBR }) : "—"}\n\n`;
     text += `✏️ *Personalização:*\n`;
-
     Object.entries(personalization).forEach(([key, value]) => {
-      if (value) {
-        const step = steps.find(s => s.id === key);
-        text += `• ${step?.title || key}: ${value}\n`;
-      }
+      if (!value || (Array.isArray(value) && value.length === 0)) return;
+      const step = steps.find(s => s.id === key);
+      const txt = Array.isArray(value) ? value.join(", ") : value;
+      text += `• ${step?.title || key}: ${txt}\n`;
     });
-
     Object.entries(uploadedFiles).forEach(([key, file]) => {
       if (file) {
         const step = steps.find(s => s.id === key);
         text += `• ${step?.title || key}: (foto anexada separadamente)\n`;
       }
     });
-
     window.open(`https://wa.me/558287060860?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const handleMercadoPagoDirect = async () => {
     const v = validatePersonalization();
-    if (!v.ok) {
-      toast.error(v.reason || "Complete a personalização");
-      return;
-    }
+    if (!v.ok) { toast.error(v.reason || "Complete a personalização"); return; }
     try {
       const summary = buildPersonalizationSummary();
       const { data, error } = await supabase.functions.invoke('mercadopago-checkout', {
@@ -231,18 +180,15 @@ const ProductDetail = () => {
           items: [{
             title: `${name} - ${summary}`.slice(0, 250),
             quantity,
-            unit_price: price,
+            unit_price: unitPrice,
             picture_url: images[0] || '',
           }],
           installments: 3,
         },
       });
       if (error) throw error;
-      if (data?.init_point) {
-        window.location.href = data.init_point;
-      } else {
-        throw new Error("Sem link de pagamento");
-      }
+      if (data?.init_point) window.location.href = data.init_point;
+      else throw new Error("Sem link de pagamento");
     } catch (e: any) {
       console.error(e);
       toast.error(e.message || 'Erro ao processar pagamento.');
@@ -251,6 +197,16 @@ const ProductDetail = () => {
 
   const isLastStep = currentStep === steps.length - 1;
   const validationCheck = validatePersonalization();
+  const currentField = steps[currentStep];
+
+  const toggleMulti = (fieldId: string, label: string) => {
+    setPersonalization((prev) => {
+      const arr = Array.isArray(prev[fieldId]) ? [...(prev[fieldId] as string[])] : [];
+      const i = arr.indexOf(label);
+      if (i >= 0) arr.splice(i, 1); else arr.push(label);
+      return { ...prev, [fieldId]: arr };
+    });
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -263,26 +219,18 @@ const ProductDetail = () => {
           </Link>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-            {/* Images - Gallery style like umcaixote */}
             <div className="flex gap-3">
-              {/* Thumbnails on the side */}
               {images.length > 1 && (
                 <div className="hidden md:flex flex-col gap-2 w-16 flex-shrink-0">
                   {images.map((img, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setSelectedImage(i)}
-                      className={`w-16 h-20 rounded overflow-hidden border-2 transition-colors flex-shrink-0 ${
-                        i === selectedImage ? 'border-primary' : 'border-transparent hover:border-border'
-                      }`}
-                    >
+                    <button key={i} onClick={() => setSelectedImage(i)}
+                      className={`w-16 h-20 rounded overflow-hidden border-2 transition-colors flex-shrink-0 ${i === selectedImage ? 'border-primary' : 'border-transparent hover:border-border'}`}>
                       <img src={img} alt="" className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
               )}
 
-              {/* Main image */}
               <div className="flex-1">
                 <div className="aspect-[3/4] rounded overflow-hidden bg-muted">
                   {images[selectedImage] ? (
@@ -291,17 +239,11 @@ const ProductDetail = () => {
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground">Sem imagem</div>
                   )}
                 </div>
-                {/* Mobile thumbnails */}
                 {images.length > 1 && (
                   <div className="flex gap-2 mt-3 md:hidden overflow-x-auto">
                     {images.map((img, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setSelectedImage(i)}
-                        className={`w-14 h-14 rounded overflow-hidden flex-shrink-0 border-2 transition-colors ${
-                          i === selectedImage ? 'border-primary' : 'border-transparent'
-                        }`}
-                      >
+                      <button key={i} onClick={() => setSelectedImage(i)}
+                        className={`w-14 h-14 rounded overflow-hidden flex-shrink-0 border-2 transition-colors ${i === selectedImage ? 'border-primary' : 'border-transparent'}`}>
                         <img src={img} alt="" className="w-full h-full object-cover" />
                       </button>
                     ))}
@@ -310,18 +252,14 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Product info + Personalization */}
             <div className="space-y-6">
-              {/* Title and price */}
               <div>
-                <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground uppercase tracking-wide mb-3">
-                  {name}
-                </h1>
+                <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground uppercase tracking-wide mb-3">{name}</h1>
                 <div className="flex items-center gap-3">
-                  {originalPrice && originalPrice > price && (
-                    <span className="text-lg text-muted-foreground line-through">R${originalPrice.toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-primary">R${unitPrice.toFixed(2)}</span>
+                  {addonTotal > 0 && (
+                    <span className="text-xs text-muted-foreground">(+R${addonTotal.toFixed(2)} em adicionais)</span>
                   )}
-                  <span className="text-2xl font-bold text-primary">R${price.toFixed(2)}</span>
                 </div>
                 {installments > 0 && (
                   <p className="text-sm text-muted-foreground mt-1">
@@ -330,10 +268,8 @@ const ProductDetail = () => {
                 )}
               </div>
 
-              {/* Divider */}
               <div className="w-full h-px bg-border" />
 
-              {/* Description */}
               {description && (
                 <div>
                   <h3 className="text-sm font-semibold text-foreground mb-2 uppercase tracking-wide">O que vem!?</h3>
@@ -341,118 +277,99 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Personalization wizard */}
-              {steps.length > 0 && (
+              {steps.length > 0 && currentField && (
                 <div className="bg-cream-50 border border-border rounded-lg p-5 space-y-5">
-                  <h3 className="font-heading text-lg font-semibold text-foreground">
-                    Personalização
-                  </h3>
+                  <h3 className="font-heading text-lg font-semibold text-foreground">Personalização</h3>
 
-                  {/* Step indicator */}
                   <div className="flex items-center gap-1">
                     {steps.map((_, i) => (
-                      <div
-                        key={i}
-                        className={`h-1.5 flex-1 rounded-full transition-colors ${
-                          i <= currentStep ? 'bg-primary' : 'bg-border'
-                        }`}
-                      />
+                      <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${i <= currentStep ? 'bg-primary' : 'bg-border'}`} />
                     ))}
                   </div>
 
-                  {/* Current step content */}
-                  {steps[currentStep] && (
-                    <div className="space-y-3">
-                      <label className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                        {steps[currentStep].title}
-                      </label>
-                      {steps[currentStep].description && (
-                        <p className="text-xs text-muted-foreground">{steps[currentStep].description}</p>
-                      )}
+                  <div className="space-y-3">
+                    <label className="text-sm font-semibold text-foreground uppercase tracking-wide flex items-center gap-2">
+                      {currentField.title}
+                      {!currentField.required && <span className="text-[10px] text-muted-foreground normal-case font-normal">(opcional)</span>}
+                    </label>
+                    {currentField.description && (
+                      <p className="text-xs text-muted-foreground">{currentField.description}</p>
+                    )}
 
-                      {steps[currentStep].type === 'text' && (
-                        <input
-                          type="text"
-                          value={personalization[steps[currentStep].id] || ''}
-                          onChange={(e) => setPersonalization(prev => ({ ...prev, [steps[currentStep].id]: e.target.value }))}
-                          placeholder={steps[currentStep].placeholder}
-                          className="w-full px-4 py-2.5 border border-border rounded bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                        />
-                      )}
+                    {currentField.type === 'text' && (
+                      <input
+                        type="text"
+                        value={(personalization[currentField.id] as string) || ''}
+                        onChange={(e) => setPersonalization(prev => ({ ...prev, [currentField.id]: e.target.value }))}
+                        placeholder={currentField.placeholder}
+                        className="w-full px-4 py-2.5 border border-border rounded bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      />
+                    )}
 
-                      {steps[currentStep].type === 'textarea' && (
-                        <textarea
-                          value={personalization[steps[currentStep].id] || ''}
-                          onChange={(e) => setPersonalization(prev => ({ ...prev, [steps[currentStep].id]: e.target.value }))}
-                          placeholder={steps[currentStep].placeholder}
-                          rows={3}
-                          className="w-full px-4 py-2.5 border border-border rounded bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-                        />
-                      )}
+                    {currentField.type === 'textarea' && (
+                      <textarea
+                        value={(personalization[currentField.id] as string) || ''}
+                        onChange={(e) => setPersonalization(prev => ({ ...prev, [currentField.id]: e.target.value }))}
+                        placeholder={currentField.placeholder}
+                        rows={3}
+                        className="w-full px-4 py-2.5 border border-border rounded bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+                      />
+                    )}
 
-                      {steps[currentStep].type === 'select' && steps[currentStep].options && (
-                        <div className="grid grid-cols-2 gap-2">
-                          {steps[currentStep].options!.map((opt) => (
-                            <button
-                              key={opt}
-                              onClick={() => setPersonalization(prev => ({ ...prev, [steps[currentStep].id]: opt }))}
-                              className={`px-3 py-2 text-sm border rounded transition-colors ${
-                                personalization[steps[currentStep].id] === opt
-                                  ? 'bg-primary text-primary-foreground border-primary'
-                                  : 'bg-background border-border text-foreground hover:border-primary'
-                              }`}
-                            >
-                              {opt}
+                    {currentField.type === 'select' && currentField.options && (
+                      <div className="grid grid-cols-2 gap-2">
+                        {currentField.options.map((opt) => (
+                          <button key={opt.label}
+                            onClick={() => setPersonalization(prev => ({ ...prev, [currentField.id]: opt.label }))}
+                            className={`px-3 py-2 text-sm border rounded transition-colors ${personalization[currentField.id] === opt.label ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-border text-foreground hover:border-primary'}`}>
+                            {opt.label}{opt.price ? ` (+R$${opt.price.toFixed(2)})` : ""}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {(currentField.type === 'multiselect' || currentField.type === 'addon') && currentField.options && (
+                      <div className="grid grid-cols-1 gap-2">
+                        {currentField.options.map((opt) => {
+                          const arr = (personalization[currentField.id] as string[]) || [];
+                          const checked = arr.includes(opt.label);
+                          return (
+                            <button key={opt.label} onClick={() => toggleMulti(currentField.id, opt.label)}
+                              className={`px-3 py-2 text-sm border rounded transition-colors flex items-center justify-between ${checked ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-border text-foreground hover:border-primary'}`}>
+                              <span className="flex items-center gap-2">
+                                <span className={`h-4 w-4 rounded border flex items-center justify-center ${checked ? 'bg-primary-foreground/20 border-primary-foreground' : 'border-border'}`}>
+                                  {checked && <Check className="h-3 w-3" />}
+                                </span>
+                                {opt.label}
+                              </span>
+                              {opt.price ? <span className="text-xs">+R${opt.price.toFixed(2)}</span> : null}
                             </button>
-                          ))}
-                        </div>
-                      )}
+                          );
+                        })}
+                      </div>
+                    )}
 
-                      {steps[currentStep].type === 'file' && (
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="w-full border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 hover:bg-muted/30 transition-colors cursor-pointer block"
-                        >
-                          <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {uploadedFiles[steps[currentStep].id]
-                              ? uploadedFiles[steps[currentStep].id]!.name
-                              : 'Clique aqui para enviar uma imagem'}
-                          </p>
-                          <p className="text-xs text-muted-foreground">(max 30MB · JPG, PNG)</p>
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleFileChange(steps[currentStep].id, e.target.files?.[0] || null)}
-                            className="hidden"
-                          />
-                        </button>
-                      )}
-                    </div>
-                  )}
+                    {currentField.type === 'file' && (
+                      <button type="button" onClick={() => fileInputRef.current?.click()}
+                        className="w-full border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 hover:bg-muted/30 transition-colors cursor-pointer block">
+                        <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {uploadedFiles[currentField.id] ? uploadedFiles[currentField.id]!.name : 'Clique aqui para enviar uma imagem'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">(max 30MB · JPG, PNG)</p>
+                        <input ref={fileInputRef} type="file" accept="image/*"
+                          onChange={(e) => handleFileChange(currentField.id, e.target.files?.[0] || null)} className="hidden" />
+                      </button>
+                    )}
+                  </div>
 
-                  {/* Step navigation — sem 'Próximo' no último */}
                   <div className="flex items-center justify-between pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentStep(s => Math.max(0, s - 1))}
-                      disabled={currentStep === 0}
-                      className="gap-1"
-                    >
+                    <Button variant="outline" size="sm" onClick={() => setCurrentStep(s => Math.max(0, s - 1))} disabled={currentStep === 0} className="gap-1">
                       <ChevronLeft className="h-4 w-4" /> Voltar
                     </Button>
-                    <span className="text-xs text-muted-foreground">
-                      {currentStep + 1} de {steps.length}
-                    </span>
+                    <span className="text-xs text-muted-foreground">{currentStep + 1} de {steps.length}</span>
                     {!isLastStep ? (
-                      <Button
-                        size="sm"
-                        onClick={() => setCurrentStep(s => Math.min(steps.length - 1, s + 1))}
-                        className="gap-1 bg-primary text-primary-foreground"
-                      >
+                      <Button size="sm" onClick={() => setCurrentStep(s => Math.min(steps.length - 1, s + 1))} className="gap-1 bg-primary text-primary-foreground">
                         Próximo <ChevronRight className="h-4 w-4" />
                       </Button>
                     ) : (
@@ -462,35 +379,38 @@ const ProductDetail = () => {
                     )}
                   </div>
 
-                  {/* Data de entrega — sempre visível, obrigatória */}
                   <div className="pt-3 border-t border-border">
                     <DeliveryDatePicker value={deliveryDate} onChange={setDeliveryDate} />
                   </div>
                 </div>
               )}
 
-              {/* Price summary */}
               <div className="bg-cream-100 rounded-lg p-4 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>Produto</span>
-                  <span className="font-medium">R${price.toFixed(2)}</span>
+                  <span>Produto base</span>
+                  <span className="font-medium">R${basePrice.toFixed(2)}</span>
                 </div>
+                {addonTotal > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span>Adicionais</span>
+                    <span className="font-medium">+R${addonTotal.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span>Quantidade</span>
                   <span className="font-medium">{quantity}</span>
                 </div>
                 <div className="border-t border-border pt-2 flex justify-between font-semibold">
                   <span>Total</span>
-                  <span className="text-primary text-lg">R${(price * quantity).toFixed(2)}</span>
+                  <span className="text-primary text-lg">R${(unitPrice * quantity).toFixed(2)}</span>
                 </div>
-                {installments > 0 && (
-                  <p className="text-xs text-muted-foreground text-right">
-                    ou 3x de R${(price * quantity / 3).toFixed(2)} sem juros
+                {pixActive && (
+                  <p className="text-xs text-green-700 text-right font-medium">
+                    💚 PIX: R${(unitPrice * quantity * (1 - pixPct / 100)).toFixed(2)} ({pixPct}% off)
                   </p>
                 )}
               </div>
 
-              {/* Quantity */}
               <div className="flex items-center gap-4">
                 <span className="text-sm font-medium text-foreground uppercase tracking-wide">Quantidade</span>
                 <div className="flex items-center border border-border rounded">
@@ -504,7 +424,6 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              {/* Action buttons */}
               <div className="space-y-3">
                 {!validationCheck.ok && (
                   <div className="bg-destructive/10 border border-destructive/30 rounded-md p-2.5 flex items-start gap-2">
@@ -512,31 +431,16 @@ const ProductDetail = () => {
                     <p className="text-xs text-destructive font-medium">{validationCheck.reason}</p>
                   </div>
                 )}
-                <Button
-                  onClick={handleAddToCart}
-                  size="lg"
-                  disabled={!validationCheck.ok}
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50"
-                >
-                  <ShoppingCart className="h-5 w-5 mr-2" />
-                  Adicionar ao Carrinho
+                <Button onClick={handleAddToCart} size="lg" disabled={!validationCheck.ok}
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50">
+                  <ShoppingCart className="h-5 w-5 mr-2" /> Adicionar ao Carrinho
                 </Button>
-                <Button
-                  onClick={handleMercadoPagoDirect}
-                  size="lg"
-                  disabled={!validationCheck.ok}
-                  className="w-full bg-[hsl(210,80%,50%)] hover:bg-[hsl(210,80%,45%)] text-[hsl(0,0%,100%)] uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50"
-                >
-                  <CreditCard className="h-5 w-5 mr-2" />
-                  Pagar Cartão (3x sem juros)
+                <Button onClick={handleMercadoPagoDirect} size="lg" disabled={!validationCheck.ok}
+                  className="w-full bg-[hsl(210,80%,50%)] hover:bg-[hsl(210,80%,45%)] text-[hsl(0,0%,100%)] uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50">
+                  <CreditCard className="h-5 w-5 mr-2" /> Pagar Cartão (3x sem juros)
                 </Button>
-                <Button
-                  onClick={handleWhatsAppOrder}
-                  size="lg"
-                  disabled={!validationCheck.ok}
-                  variant="outline"
-                  className="w-full border-[hsl(140,60%,35%)] text-[hsl(140,60%,30%)] hover:bg-[hsl(140,60%,95%)] uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50"
-                >
+                <Button onClick={handleWhatsAppOrder} size="lg" disabled={!validationCheck.ok} variant="outline"
+                  className="w-full border-[hsl(140,60%,35%)] text-[hsl(140,60%,30%)] hover:bg-[hsl(140,60%,95%)] uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50">
                   PIX via WhatsApp{pixActive ? ` (${pixPct}% off)` : ""}
                 </Button>
               </div>
