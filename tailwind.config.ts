@@ -91,6 +91,15 @@ export default {
           800: "hsl(var(--warm-800))",
           900: "hsl(var(--warm-900))",
         },
+        "pay-card": {
+          DEFAULT: "hsl(var(--pay-card))",
+          foreground: "hsl(var(--pay-card-foreground))",
+        },
+        "pay-pix": {
+          DEFAULT: "hsl(var(--pay-pix))",
+          foreground: "hsl(var(--pay-pix-foreground))",
+          soft: "hsl(var(--pay-pix-soft))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

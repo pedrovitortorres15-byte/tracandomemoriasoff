@@ -63,6 +63,12 @@
     --warm-800: 25 45% 15%;
     --warm-900: 25 40% 10%;
 
+    --pay-card: 210 80% 50%;
+    --pay-card-foreground: 0 0% 100%;
+    --pay-pix: 140 60% 35%;
+    --pay-pix-foreground: 0 0% 100%;
+    --pay-pix-soft: 140 60% 95%;
+
     --sidebar-background: 30 20% 98%;
     --sidebar-foreground: 25 40% 20%;
     --sidebar-primary: 25 45% 30%;
