@@ -97,7 +97,7 @@ export const CartDrawer = () => {
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium text-sm truncate flex items-center gap-1.5">
                               {item.name}
-                              {itemComplete && <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />}
+                              {itemComplete && <CheckCircle2 className="h-3.5 w-3.5 text-pay-pix flex-shrink-0" />}
                             </h4>
                             <p className="font-semibold text-sm text-primary">R$ {item.price.toFixed(2)}</p>
                           </div>
@@ -159,8 +159,8 @@ export const CartDrawer = () => {
                   </div>
                   {pixActive && (
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-green-700 font-medium">PIX ({pixPct}% off)</span>
-                      <span className="font-bold text-green-700">R$ {pixPrice.toFixed(2)}</span>
+                      <span className="text-pay-pix font-medium">PIX ({pixPct}% off)</span>
+                      <span className="font-bold text-pay-pix">R$ {pixPrice.toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between items-center pt-1 border-t">

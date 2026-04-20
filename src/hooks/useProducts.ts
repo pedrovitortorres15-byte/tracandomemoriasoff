@@ -26,7 +26,9 @@ async function fetchAllProducts(): Promise<Product[]> {
 
   if (error) throw error;
 
-  return (data || []).map((p: any) => ({
+  return (data || [])
+    .filter((p: any) => (p.name || '').trim().length > 0)
+    .map((p: any) => ({
     id: p.id,
     nome: p.name,
     descricao: p.description || '',
