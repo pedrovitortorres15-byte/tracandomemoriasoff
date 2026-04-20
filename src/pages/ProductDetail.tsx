@@ -373,7 +373,7 @@ const ProductDetail = () => {
                         Próximo <ChevronRight className="h-4 w-4" />
                       </Button>
                     ) : (
-                      <span className="text-xs text-green-700 font-medium flex items-center gap-1">
+                      <span className="text-xs text-pay-pix font-medium flex items-center gap-1">
                         <Check className="h-3 w-3" /> Última etapa
                       </span>
                     )}
@@ -405,7 +405,7 @@ const ProductDetail = () => {
                   <span className="text-primary text-lg">R${(unitPrice * quantity).toFixed(2)}</span>
                 </div>
                 {pixActive && (
-                  <p className="text-xs text-green-700 text-right font-medium">
+                  <p className="text-xs text-pay-pix text-right font-medium">
                     💚 PIX: R${(unitPrice * quantity * (1 - pixPct / 100)).toFixed(2)} ({pixPct}% off)
                   </p>
                 )}
