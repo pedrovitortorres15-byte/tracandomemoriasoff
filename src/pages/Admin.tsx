@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { MediaUploader } from "@/components/MediaUploader";
+import { CustomFieldsBuilder } from "@/components/CustomFieldsBuilder";
+import type { CustomField } from "@/lib/customFields";
 import logoIcon from "@/assets/logo-icon.jpg";
 import {
   Package, ShoppingBag, Users, Plus, ArrowLeft, Trash2, Edit2,
@@ -46,15 +48,25 @@ interface Product {
   category: string | null;
   stock: number;
   active: boolean;
+  custom_fields?: CustomField[];
 }
 
-const emptyForm = { name: "", description: "", price: 0, category: "", stock: 0, media_urls: [] as string[] };
+const emptyForm = { name: "", description: "", price: 0, category: "", stock: 0, media_urls: [] as string[], custom_fields: [] as CustomField[] };
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState<"orders" | "products" | "customers" | "settings">("orders");
-  const [settingsForm, setSettingsForm] = useState({ daily_order_limit: 10, min_business_days: 5, pix_discount_percent: 10, pix_discount_active: true, delivery_window_text: "Entregas no período da tarde (14h às 17h)" });
+  const [settingsForm, setSettingsForm] = useState({
+    daily_order_limit: 10,
+    min_business_days: 5,
+    pix_discount_percent: 10,
+    pix_discount_active: true,
+    delivery_window_text: "Entregas no período da tarde (14h às 17h)",
+    pickup_enabled: true,
+    pickup_address: "",
+    pickup_window_text: "Retirada das 14h às 17h",
+  });
   const [settingsId, setSettingsId] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -89,6 +101,9 @@ const Admin = () => {
         pix_discount_percent: data.pix_discount_percent,
         pix_discount_active: data.pix_discount_active,
         delivery_window_text: data.delivery_window_text || "",
+        pickup_enabled: data.pickup_enabled ?? true,
+        pickup_address: data.pickup_address || "",
+        pickup_window_text: data.pickup_window_text || "Retirada das 14h às 17h",
       });
     }
   };
@@ -102,6 +117,9 @@ const Admin = () => {
         pix_discount_percent: Number(settingsForm.pix_discount_percent) || 10,
         pix_discount_active: !!settingsForm.pix_discount_active,
         delivery_window_text: settingsForm.delivery_window_text || null,
+        pickup_enabled: !!settingsForm.pickup_enabled,
+        pickup_address: settingsForm.pickup_address || "",
+        pickup_window_text: settingsForm.pickup_window_text || "",
       };
       if (settingsId) {
         const { error } = await (supabase as any).from("delivery_settings").update(payload).eq("id", settingsId);
