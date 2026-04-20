@@ -165,7 +165,7 @@ const Admin = () => {
     if (!productForm.name.trim()) { toast.error("Nome obrigatório"); return; }
     setSaving(true);
     try {
-      const payload = {
+      const payload: any = {
         name: productForm.name.trim(),
         description: productForm.description.trim() || null,
         price: Number(productForm.price) || 0,
@@ -173,6 +173,7 @@ const Admin = () => {
         stock: Number(productForm.stock) || 0,
         media_urls: productForm.media_urls,
         image_url: productForm.media_urls[0] || null,
+        custom_fields: productForm.custom_fields || [],
       };
       if (editingProduct) {
         const { error } = await supabase.from("products").update(payload).eq("id", editingProduct.id);
@@ -216,6 +217,7 @@ const Admin = () => {
       category: product.category || "",
       stock: product.stock,
       media_urls: product.media_urls && product.media_urls.length > 0 ? product.media_urls : (product.image_url ? [product.image_url] : []),
+      custom_fields: Array.isArray((product as any).custom_fields) ? (product as any).custom_fields : [],
     });
   };
 
