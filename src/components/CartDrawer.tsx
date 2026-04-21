@@ -8,6 +8,7 @@ import { useCartStore, isPersonalizationValid } from "@/stores/cartStore";
 import { toast } from "sonner";
 import { CheckoutDialog, type PaymentChoice } from "./CheckoutDialog";
 import { useDeliverySettings } from "@/hooks/useDeliverySettings";
+import { BrandLogo } from "./BrandLogo";
 
 export const CartDrawer = () => {
   const navigate = useNavigate();
@@ -48,7 +49,10 @@ export const CartDrawer = () => {
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-lg flex flex-col h-full">
         <SheetHeader className="flex-shrink-0">
-          <SheetTitle className="font-heading">Carrinho — Loja Traçando Memórias</SheetTitle>
+          <SheetTitle className="font-heading flex items-center gap-2.5">
+            <BrandLogo variant="icon" className="h-9 w-9" />
+            <span>Carrinho — Loja Traçando Memórias</span>
+          </SheetTitle>
           <SheetDescription>
             {totalItems === 0 ? "Seu carrinho está vazio" : `${totalItems} ite${totalItems !== 1 ? 'ns' : 'm'} no carrinho`}
           </SheetDescription>
