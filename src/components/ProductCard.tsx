@@ -37,7 +37,6 @@ export const ProductCard = forwardRef<HTMLAnchorElement, ProductCardProps>(({ pr
 
   return (
     <Link
-      ref={ref}
       to={`/produto/${product.id}`}
       className="group block rounded-lg overflow-hidden bg-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
     >
@@ -107,6 +106,6 @@ export const ProductCard = forwardRef<HTMLAnchorElement, ProductCardProps>(({ pr
       </div>
     </Link>
   );
-});
-ProductCard.displayName = "ProductCard";
+}
+
 
