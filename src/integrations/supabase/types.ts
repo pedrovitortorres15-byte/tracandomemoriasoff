@@ -403,6 +403,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_create_order_item_for_recent_order: {
+        Args: { _order_id: string }
+        Returns: boolean
+      }
       get_delivery_capacity: {
         Args: { end_date: string; start_date: string }
         Returns: {
