@@ -256,10 +256,65 @@ const TOOLS = [
     type: "function",
     function: {
       name: "list_recent_orders",
-      description: "Lista os últimos pedidos (somente leitura) para análise.",
+      description: "Lista os últimos pedidos para análise.",
       parameters: {
         type: "object",
-        properties: { limit: { type: "number", description: "Máx 50, padrão 10" } },
+        properties: {
+          limit: { type: "number", description: "Máx 50, padrão 10" },
+          status: { type: "string", description: "Filtrar por status: pendente | confirmado | enviado | entregue | cancelado" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_order_details",
+      description: "Retorna detalhes completos de UM pedido (cliente, endereço, itens, total, status). Use antes de atualizar.",
+      parameters: {
+        type: "object",
+        properties: { id: { type: "string" } },
+        required: ["id"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_order_status",
+      description: "Atualiza o status de um pedido. Use 'cancelado' para tirar do faturamento total.",
+      parameters: {
+        type: "object",
+        properties: {
+          id: { type: "string" },
+          status: { type: "string", description: "pendente | confirmado | enviado | entregue | cancelado" },
+        },
+        required: ["id", "status"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_order",
+      description: "Exclui um pedido permanentemente. Confirme com a usuária antes.",
+      parameters: {
+        type: "object",
+        properties: { id: { type: "string" } },
+        required: ["id"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_sales_summary",
+      description: "Resumo de vendas: total faturado (sem cancelados), nº de pedidos por status, ticket médio.",
+      parameters: {
+        type: "object",
+        properties: {
+          days: { type: "number", description: "Janela em dias (padrão 30, máx 365)" },
+        },
       },
     },
   },
