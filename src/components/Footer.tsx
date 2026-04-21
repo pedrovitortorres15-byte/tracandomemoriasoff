@@ -67,9 +67,9 @@ export const Footer = () => {
             <h4 className="font-heading text-lg font-semibold">Navegação</h4>
             <div className="w-10 h-0.5 bg-primary-foreground/30 rounded-full" />
             <ul className="space-y-2 text-sm opacity-80">
-              <li><a href="/" className="hover:opacity-100 transition-opacity">Início</a></li>
-              <li><a href="#produtos" className="hover:opacity-100 transition-opacity">Produtos</a></li>
-              <li><a href="#sobre" className="hover:opacity-100 transition-opacity">Sobre</a></li>
+              <li><a href="/" onClick={goHome} className="hover:opacity-100 transition-opacity">Início</a></li>
+              <li><a href="/#produtos" onClick={(e) => scrollToSection(e, "produtos")} className="hover:opacity-100 transition-opacity">Produtos</a></li>
+              <li><a href="/#sobre" onClick={(e) => scrollToSection(e, "sobre")} className="hover:opacity-100 transition-opacity">Sobre</a></li>
               <li>
                 <button
                   type="button"
