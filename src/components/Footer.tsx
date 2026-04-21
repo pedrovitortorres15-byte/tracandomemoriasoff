@@ -22,6 +22,28 @@ export const Footer = () => {
     }
   };
 
+  const scrollToSection = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    const doScroll = () => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    if (window.location.pathname !== "/") {
+      navigate("/");
+      setTimeout(doScroll, 150);
+    } else {
+      doScroll();
+    }
+  };
+
+  const goHome = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (window.location.pathname !== "/") {
+      navigate("/");
+    }
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
+  };
+
   return (
     <footer id="sobre" className="bg-primary text-primary-foreground py-14">
       <div className="container">
@@ -45,9 +67,9 @@ export const Footer = () => {
             <h4 className="font-heading text-lg font-semibold">Navegação</h4>
             <div className="w-10 h-0.5 bg-primary-foreground/30 rounded-full" />
             <ul className="space-y-2 text-sm opacity-80">
-              <li><a href="/" className="hover:opacity-100 transition-opacity">Início</a></li>
-              <li><a href="#produtos" className="hover:opacity-100 transition-opacity">Produtos</a></li>
-              <li><a href="#sobre" className="hover:opacity-100 transition-opacity">Sobre</a></li>
+              <li><a href="/" onClick={goHome} className="hover:opacity-100 transition-opacity">Início</a></li>
+              <li><a href="/#produtos" onClick={(e) => scrollToSection(e, "produtos")} className="hover:opacity-100 transition-opacity">Produtos</a></li>
+              <li><a href="/#sobre" onClick={(e) => scrollToSection(e, "sobre")} className="hover:opacity-100 transition-opacity">Sobre</a></li>
               <li>
                 <button
                   type="button"
