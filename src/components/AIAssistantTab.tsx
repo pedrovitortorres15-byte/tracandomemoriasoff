@@ -482,45 +482,60 @@ export const AIAssistantTab = () => {
                   <div
                     key={c.id}
                     className={cn(
-                      "group rounded-md flex items-center gap-1 px-1",
+                      "group rounded-md flex items-start gap-1 px-1",
                       activeId === c.id ? "bg-primary/10" : "hover:bg-muted",
                     )}
                   >
                     <button
                       onClick={() => { setActiveId(c.id); setSidebarOpen(false); }}
-                      className="flex-1 text-left px-2 py-2 text-sm truncate"
+                      className="flex-1 min-w-0 text-left px-2 py-2 text-sm"
                       title={c.title}
                     >
-                      <div className="truncate font-medium">{c.title}</div>
-                      <div className="text-[10px] text-muted-foreground">
+                      <div className="font-medium leading-snug break-words [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden">
+                        {c.title}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
                         {new Date(c.updated_at).toLocaleString("pt-BR", {
                           day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
                         })}
                       </div>
                     </button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100"
-                          title="Ações"
-                        >
-                          <MoreVertical className="h-3.5 w-3.5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => renameConversation(c.id, c.title)}>
-                          <Pencil className="h-3.5 w-3.5 mr-2" /> Renomear
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => deleteConversation(c.id)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center shrink-0 pt-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => { e.stopPropagation(); deleteConversation(c.id); }}
+                        title="Excluir conversa"
+                        aria-label="Excluir conversa"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground"
+                            title="Mais ações"
+                            aria-label="Mais ações"
+                          >
+                            <MoreVertical className="h-3.5 w-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => renameConversation(c.id, c.title)}>
+                            <Pencil className="h-3.5 w-3.5 mr-2" /> Renomear
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => deleteConversation(c.id)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 ))
               )}
