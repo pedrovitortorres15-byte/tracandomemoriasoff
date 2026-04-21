@@ -70,7 +70,7 @@ export default function CampaignPage() {
 
   useEffect(() => {
     if (campaign?.name) {
-      document.title = `${campaign.name} — Loja Traçando Memórias`;
+      document.title = `Especial ${campaign.name} — Loja Traçando Memórias`;
     }
   }, [campaign?.name]);
 
@@ -98,10 +98,10 @@ export default function CampaignPage() {
               </div>
             ) : !campaign ? (
               <div className="space-y-3">
-                <h1 className="font-heading text-3xl font-bold">Campanha não encontrada</h1>
+                <h1 className="font-heading text-3xl font-bold">Especial não encontrado</h1>
                 <p className="text-muted-foreground">Verifique o link ou volte para a página inicial.</p>
                 <Button asChild>
-                  <Link to="/">Ver todas as campanhas</Link>
+                  <Link to="/">Ver todos os especiais</Link>
                 </Button>
               </div>
             ) : (
@@ -109,7 +109,7 @@ export default function CampaignPage() {
                 <div className="flex items-center gap-3">
                   <BrandLogo variant="icon" className="h-12 w-12 md:h-14 md:w-14" />
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/15 text-primary text-[11px] font-semibold uppercase tracking-wider">
-                    <Sparkles className="h-3.5 w-3.5" /> Campanha Especial
+                    <Sparkles className="h-3.5 w-3.5" /> Especial
                   </div>
                 </div>
                 <h1 className="font-heading text-3xl md:text-5xl font-bold text-foreground leading-tight">
@@ -143,7 +143,7 @@ export default function CampaignPage() {
               <div className="text-center py-16 space-y-4">
                 <PackageOpen className="h-16 w-16 mx-auto text-muted-foreground/50" />
                 <h3 className="font-heading text-xl font-semibold text-muted-foreground">
-                  Nenhum produto nesta campanha por enquanto
+                  Nenhum produto neste especial por enquanto
                 </h3>
                 <p className="text-muted-foreground text-sm max-w-md mx-auto">
                   Em breve novidades especiais aqui. Enquanto isso, explore os outros produtos da loja.
@@ -158,7 +158,7 @@ export default function CampaignPage() {
               <>
                 <div className="text-center mb-8">
                   <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-medium">
-                    Coleção da campanha
+                    Coleção do especial
                   </span>
                   <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground mt-2">
                     {products.length} {products.length === 1 ? "produto disponível" : "produtos disponíveis"}
