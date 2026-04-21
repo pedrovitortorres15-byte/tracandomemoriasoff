@@ -255,6 +255,7 @@ const Admin = () => {
         media_urls: productForm.media_urls,
         image_url: productForm.media_urls[0] || null,
         custom_fields: productForm.custom_fields || [],
+        campaign_slug: productForm.campaign_slug?.trim() || null,
       };
       if (editingProduct) {
         const { error } = await supabase.from("products").update(payload).eq("id", editingProduct.id);
