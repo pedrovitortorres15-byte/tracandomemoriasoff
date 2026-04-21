@@ -409,13 +409,65 @@ async function executeTool(name: string, args: any, admin: any): Promise<any> {
         return { ok: true, settings: data };
       }
       case "list_recent_orders": {
-        const { data, error } = await admin
+        let q = admin
           .from("orders")
-          .select("id,customer_name,total,status,delivery_date,delivery_method,campaign_slug,created_at")
+          .select("id,customer_name,customer_phone,total,status,delivery_date,delivery_method,campaign_slug,created_at")
           .order("created_at", { ascending: false })
           .limit(Math.min(args.limit ?? 10, 50));
+        if (args.status) q = q.eq("status", args.status);
+        const { data, error } = await q;
         if (error) throw error;
         return { orders: data };
+      }
+      case "get_order_details": {
+        const { data: order, error } = await admin
+          .from("orders").select("*").eq("id", args.id).maybeSingle();
+        if (error) throw error;
+        if (!order) return { error: "Pedido não encontrado." };
+        const { data: items } = await admin
+          .from("order_items")
+          .select("product_name,quantity,unit_price")
+          .eq("order_id", args.id);
+        return { order, items: items || [] };
+      }
+      case "update_order_status": {
+        const allowed = ["pendente", "confirmado", "enviado", "entregue", "cancelado"];
+        if (!allowed.includes(args.status)) {
+          return { error: `Status inválido. Use: ${allowed.join(", ")}` };
+        }
+        const { data, error } = await admin
+          .from("orders").update({ status: args.status }).eq("id", args.id).select().single();
+        if (error) throw error;
+        return { ok: true, order: data };
+      }
+      case "delete_order": {
+        const { error } = await admin.from("orders").delete().eq("id", args.id);
+        if (error) throw error;
+        return { ok: true };
+      }
+      case "get_sales_summary": {
+        const days = Math.min(Math.max(Number(args.days ?? 30), 1), 365);
+        const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+        const { data, error } = await admin
+          .from("orders")
+          .select("id,total,status,created_at")
+          .gte("created_at", since);
+        if (error) throw error;
+        const orders = data || [];
+        const active = orders.filter((o: any) => o.status !== "cancelado");
+        const cancelled = orders.filter((o: any) => o.status === "cancelado");
+        const revenue = active.reduce((s: number, o: any) => s + Number(o.total || 0), 0);
+        const byStatus: Record<string, number> = {};
+        for (const o of orders) byStatus[o.status] = (byStatus[o.status] || 0) + 1;
+        return {
+          window_days: days,
+          orders_total: orders.length,
+          orders_active: active.length,
+          orders_cancelled: cancelled.length,
+          revenue: Number(revenue.toFixed(2)),
+          avg_ticket: active.length ? Number((revenue / active.length).toFixed(2)) : 0,
+          by_status: byStatus,
+        };
       }
       default:
         return { error: `Ferramenta desconhecida: ${name}` };
