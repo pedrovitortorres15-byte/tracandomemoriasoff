@@ -46,7 +46,7 @@ export const DeliveryDatePicker = ({ value, onChange, className, label = "Data d
     <div className={cn("space-y-2", className)}>
       <label className="text-sm font-semibold flex items-center gap-2">
         <CalendarIcon className="h-4 w-4 text-primary" />
-        Data de Entrega <span className="text-destructive">*</span>
+        {label} <span className="text-destructive">*</span>
       </label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
