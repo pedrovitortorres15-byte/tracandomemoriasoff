@@ -22,10 +22,10 @@ interface Message {
 }
 
 const QUICK_PROMPTS = [
-  { icon: "📸", label: "Legenda para post", prompt: "Crie uma legenda envolvente para Instagram sobre uma caixa personalizada de presente. Inclua hashtags." },
-  { icon: "🎬", label: "Roteiro de Reels", prompt: "Crie um roteiro de Reels de 30 segundos mostrando o passo a passo de uma encomenda personalizada." },
-  { icon: "💝", label: "Ideia de campanha", prompt: "Me dê 3 ideias de campanha para Dia das Mães com produtos personalizados." },
-  { icon: "💬", label: "Resposta ao cliente", prompt: "Como respondo educadamente um cliente que pede desconto?" },
+  { icon: "🎨", label: "Mudar cor da loja", prompt: "Quero deixar o site com uma vibe mais romântica em tons de rosa antigo. Pode ajustar a cor primária e o accent pra mim?" },
+  { icon: "📸", label: "Legenda + hashtags", prompt: "Crie 3 versões de legenda envolvente para Instagram sobre uma caixa personalizada de presente, com hashtags estratégicas e CTA." },
+  { icon: "🎬", label: "Roteiro de Reels", prompt: "Crie um roteiro de Reels de 30 segundos com hook forte mostrando o passo a passo de uma encomenda personalizada. Inclua sugestão de áudio em alta." },
+  { icon: "🎁", label: "Criar campanha", prompt: "Crie uma campanha de Dia das Mães na loja com data limite de pedido e me sugira 3 produtos pra vincular nela." },
 ];
 
 const STORAGE_KEY = "admin-ai-chat-history";
