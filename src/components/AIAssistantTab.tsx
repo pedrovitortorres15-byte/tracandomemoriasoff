@@ -298,9 +298,26 @@ export const AIAssistantTab = () => {
                     </div>
                   )}
                   {m.role === "assistant" ? (
-                    <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1.5 prose-headings:my-2 prose-ul:my-1.5 prose-ol:my-1.5">
-                      <ReactMarkdown>{m.content}</ReactMarkdown>
-                    </div>
+                    <>
+                      {m.toolEvents && m.toolEvents.length > 0 && (
+                        <div className="mb-2 space-y-1">
+                          {m.toolEvents.map((t, ti) => (
+                            <div key={ti} className="flex items-center gap-1.5 text-[11px] bg-background/60 border rounded-md px-2 py-1">
+                              <Wand2 className="h-3 w-3 text-primary" />
+                              <span className="font-mono text-muted-foreground">{t.name}</span>
+                              {t.result?.error ? (
+                                <span className="text-destructive">· erro</span>
+                              ) : (
+                                <span className="text-green-600">· ok</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1.5 prose-headings:my-2 prose-ul:my-1.5 prose-ol:my-1.5">
+                        <ReactMarkdown>{m.content}</ReactMarkdown>
+                      </div>
+                    </>
                   ) : (
                     <p className="whitespace-pre-wrap">{m.content}</p>
                   )}
