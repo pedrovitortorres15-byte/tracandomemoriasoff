@@ -544,25 +544,72 @@ const Admin = () => {
             )}
 
             {(newProduct || editingProduct) && (
-              <div className="bg-card border rounded-lg p-4 space-y-3">
+              <div className="bg-card border rounded-lg p-4 space-y-4">
                 <h3 className="font-semibold">{editingProduct ? "Editar Produto" : "Novo Produto"}</h3>
-                <Input placeholder="Nome do produto *" value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} maxLength={120} />
-                <Textarea placeholder="Descrição" value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} maxLength={1000} />
-                <div className="grid grid-cols-2 gap-3">
-                  <Input type="number" step="0.01" placeholder="Preço (R$)" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: parseFloat(e.target.value) || 0 })} />
-                  <Input type="number" placeholder="Estoque" value={productForm.stock} onChange={(e) => setProductForm({ ...productForm, stock: parseInt(e.target.value) || 0 })} />
+
+                <div>
+                  <label className="text-sm font-medium block mb-1">Nome do produto *</label>
+                  <Input
+                    placeholder="Ex: Caixa Afeto Personalizada"
+                    value={productForm.name}
+                    onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                    maxLength={120}
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">Aparece no card da loja e na página do produto.</p>
                 </div>
+
+                <div>
+                  <label className="text-sm font-medium block mb-1">Descrição</label>
+                  <Textarea
+                    placeholder="Conte sobre o produto: materiais, tamanho, o que está incluso, ocasião ideal…"
+                    value={productForm.description}
+                    onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+                    maxLength={1000}
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">Texto exibido na página do produto. Capricha — ajuda a vender!</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-sm font-medium block mb-1">Preço (R$) *</label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0,00"
+                      value={productForm.price}
+                      onChange={(e) => setProductForm({ ...productForm, price: parseFloat(e.target.value) || 0 })}
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">Preço base, sem adicionais.</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium block mb-1">Estoque</label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={productForm.stock}
+                      onChange={(e) => setProductForm({ ...productForm, stock: parseInt(e.target.value) || 0 })}
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">Use 0 para "sob encomenda" ilimitado.</p>
+                  </div>
+                </div>
+
                 <CategoryPicker
                   value={productForm.category}
                   existing={Array.from(new Set(products.map((p) => p.category).filter(Boolean) as string[])).sort((a, b) => a.localeCompare(b, "pt-BR"))}
                   onChange={(v) => setProductForm({ ...productForm, category: v })}
                 />
 
-                <MediaUploader
-                  value={productForm.media_urls}
-                  onChange={(urls) => setProductForm({ ...productForm, media_urls: urls })}
-                  maxItems={7}
-                />
+                <div className="border-t pt-3">
+                  <label className="text-sm font-medium block mb-1">Fotos e vídeo do produto</label>
+                  <p className="text-[11px] text-muted-foreground mb-2">
+                    Envie até 7 mídias. A primeira é a foto principal (capa). Use fotos com boa luz e fundo neutro.
+                  </p>
+                  <MediaUploader
+                    value={productForm.media_urls}
+                    onChange={(urls) => setProductForm({ ...productForm, media_urls: urls })}
+                    maxItems={7}
+                  />
+                </div>
 
                 <div className="border-t pt-3">
                   <label className="text-sm font-medium block mb-1.5 flex items-center gap-1.5">
@@ -580,10 +627,15 @@ const Admin = () => {
                       </option>
                     ))}
                   </select>
-                  <p className="text-[11px] text-muted-foreground mt-1">Produtos vinculados a um especial ativam regras especiais no checkout.</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Vincule a uma campanha (ex: Dia das Mães) para usar a data fixa de entrega dessa campanha.
+                  </p>
                 </div>
 
                 <div className="border-t pt-3">
+                  <p className="text-[11px] text-muted-foreground mb-2">
+                    Defina aqui as perguntas que o cliente vai responder para personalizar o produto (ex: nome, mensagem, foto, cor). Pode adicionar, remover ou reordenar livremente.
+                  </p>
                   <CustomFieldsBuilder
                     value={productForm.custom_fields}
                     onChange={(fields) => setProductForm({ ...productForm, custom_fields: fields })}
