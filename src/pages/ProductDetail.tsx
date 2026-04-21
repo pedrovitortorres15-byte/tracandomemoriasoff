@@ -155,6 +155,9 @@ const ProductDetail = () => {
   const handleAddToCart = () => {
     const v = validatePersonalization();
     if (!v.ok) { toast.error(v.reason || "Complete a personalização"); return; }
+    const finalISO = isCampaignProduct && campaignDateISO
+      ? campaignDateISO
+      : (deliveryDate ? deliveryDate.toISOString().slice(0, 10) : undefined);
     addItem({
       id: product.id,
       name,
@@ -162,7 +165,7 @@ const ProductDetail = () => {
       image: images[0] || "",
       quantity,
       personalization: buildPersonalizationSummary(),
-      deliveryDate: deliveryDate ? deliveryDate.toISOString().slice(0, 10) : undefined,
+      deliveryDate: finalISO,
       fulfillmentMethod: fulfillmentMethod as FulfillmentMethod,
       campaign_slug: product.campaign_slug || null,
     });
