@@ -9,11 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { MediaUploader } from "@/components/MediaUploader";
 import { CustomFieldsBuilder } from "@/components/CustomFieldsBuilder";
+import { SiteCustomizer } from "@/components/SiteCustomizer";
 import type { CustomField } from "@/lib/customFields";
 import logoIcon from "@/assets/logo-icon.jpg";
 import {
   Package, ShoppingBag, Users, Plus, ArrowLeft, Trash2, Edit2,
-  Eye, ChevronDown, ChevronUp, LogOut, Save, X, Search, Settings as SettingsIcon, Sparkles
+  Eye, ChevronDown, ChevronUp, LogOut, Save, X, Search, Settings as SettingsIcon, Sparkles, Palette
 } from "lucide-react";
 
 interface Order {
@@ -69,7 +70,7 @@ const Admin = () => {
   const OWNER_EMAIL = "catharinaferrario@gmail.com";
   const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL;
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"orders" | "products" | "customers" | "campaigns" | "settings">("orders");
+  const [tab, setTab] = useState<"orders" | "products" | "customers" | "campaigns" | "settings" | "appearance">("orders");
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [newCampaign, setNewCampaign] = useState(false);
@@ -401,7 +402,7 @@ const Admin = () => {
         {/* Tabs + busca */}
         <div className="flex flex-col sm:flex-row gap-2 mb-6">
           <div className="flex gap-2 flex-wrap">
-            {([["orders", "Pedidos", ShoppingBag], ["products", "Produtos", Package], ["customers", "Clientes", Users], ["campaigns", "Campanhas", Sparkles], ["settings", "Configurações", SettingsIcon]] as const).map(([key, label, Icon]) => (
+            {([["orders", "Pedidos", ShoppingBag], ["products", "Produtos", Package], ["customers", "Clientes", Users], ["campaigns", "Campanhas", Sparkles], ["appearance", "Aparência", Palette], ["settings", "Configurações", SettingsIcon]] as const).map(([key, label, Icon]) => (
               <Button
                 key={key}
                 variant={tab === key ? "default" : "outline"}
@@ -769,6 +770,9 @@ const Admin = () => {
             </div>
           </div>
         )}
+
+        {/* Appearance Tab */}
+        {tab === "appearance" && <SiteCustomizer />}
 
         {/* Settings Tab */}
         {tab === "settings" && (
