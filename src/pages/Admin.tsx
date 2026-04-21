@@ -531,11 +531,13 @@ const Admin = () => {
           <div className="space-y-4">
             {!newProduct && !editingProduct && (
               <Button onClick={() => {
-                // Pré-preenche os campos personalizados com o mesmo modelo do primeiro produto cadastrado
-                const template = products.find((p) => Array.isArray((p as any).custom_fields) && (p as any).custom_fields.length > 0);
-                const templateFields: CustomField[] = template ? JSON.parse(JSON.stringify((template as any).custom_fields)) : [];
-                setNewProduct(true);
-                setProductForm({ ...emptyForm, custom_fields: templateFields });
+                // Pré-preenche os campos personalizados com o modelo padrão da loja
+                // (Tipo de Azulejo, Cor, Nome, Mensagem, Foto) — a dona pode editar como quiser.
+                import("@/lib/customFields").then(({ DEFAULT_FALLBACK_FIELDS }) => {
+                  const templateFields: CustomField[] = JSON.parse(JSON.stringify(DEFAULT_FALLBACK_FIELDS));
+                  setNewProduct(true);
+                  setProductForm({ ...emptyForm, custom_fields: templateFields });
+                });
               }}>
                 <Plus className="h-4 w-4 mr-2" /> Novo Produto
               </Button>
@@ -546,15 +548,15 @@ const Admin = () => {
                 <h3 className="font-semibold">{editingProduct ? "Editar Produto" : "Novo Produto"}</h3>
                 <Input placeholder="Nome do produto *" value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} maxLength={120} />
                 <Textarea placeholder="Descrição" value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} maxLength={1000} />
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <Input type="number" step="0.01" placeholder="Preço (R$)" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: parseFloat(e.target.value) || 0 })} />
-                  <CategoryPicker
-                    value={productForm.category}
-                    existing={Array.from(new Set(products.map((p) => p.category).filter(Boolean) as string[])).sort((a, b) => a.localeCompare(b, "pt-BR"))}
-                    onChange={(v) => setProductForm({ ...productForm, category: v })}
-                  />
                   <Input type="number" placeholder="Estoque" value={productForm.stock} onChange={(e) => setProductForm({ ...productForm, stock: parseInt(e.target.value) || 0 })} />
                 </div>
+                <CategoryPicker
+                  value={productForm.category}
+                  existing={Array.from(new Set(products.map((p) => p.category).filter(Boolean) as string[])).sort((a, b) => a.localeCompare(b, "pt-BR"))}
+                  onChange={(v) => setProductForm({ ...productForm, category: v })}
+                />
 
                 <MediaUploader
                   value={productForm.media_urls}
