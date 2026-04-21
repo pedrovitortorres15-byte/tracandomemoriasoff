@@ -19,13 +19,18 @@ export interface CartItem {
 }
 
 const MIN_PERSONALIZATION_LENGTH = 5;
+const MIN_STRUCTURED_FIELDS = 2;
 const INVALID_PATTERNS = [/^\.+$/, /^[\s\-_]+$/, /^[a-z]$/i];
 
 export function isPersonalizationValid(text?: string): boolean {
   if (!text) return false;
   const trimmed = text.trim();
   if (trimmed.length < MIN_PERSONALIZATION_LENGTH) return false;
-  return !INVALID_PATTERNS.some((p) => p.test(trimmed));
+  if (INVALID_PATTERNS.some((p) => p.test(trimmed))) return false;
+  // Require structured personalization summary (at least N "Title: value" pairs separated by " | ")
+  // This guarantees the item went through the product page personalization flow.
+  const parts = trimmed.split(" | ").filter((p) => /[^:]+:\s*\S+/.test(p));
+  return parts.length >= MIN_STRUCTURED_FIELDS;
 }
 
 interface CartStore {
@@ -96,7 +101,7 @@ export const useCartStore = create<CartStore>()(
         if (items.length === 0) return "Carrinho vazio";
         for (const i of items) {
           if (!isPersonalizationValid(i.personalization)) {
-            return `Personalização inválida em "${i.name}". Escreva pelo menos ${MIN_PERSONALIZATION_LENGTH} caracteres reais.`;
+            return `Personalização incompleta em "${i.name}". Volte à página do produto e preencha todas as etapas.`;
           }
           if (!i.deliveryDate) {
             return `Selecione a data desejada para "${i.name}".`;
