@@ -189,10 +189,11 @@ export const AIAssistantTab = () => {
       toast.error("Faça login como administradora.");
       return null;
     }
-    const title = firstUserText.trim().slice(0, 60) || "Nova conversa";
+    // Título inicial provisório (curto), será refinado pela IA depois da 1ª resposta.
+    const provisional = firstUserText.trim().slice(0, 40) || "Nova conversa";
     const { data, error } = await supabase
       .from("ai_conversations")
-      .insert({ user_id: user.id, title })
+      .insert({ user_id: user.id, title: provisional })
       .select("id,title,updated_at")
       .single();
     if (error || !data) {
@@ -203,6 +204,33 @@ export const AIAssistantTab = () => {
     setConversations((prev) => [data, ...prev]);
     setActiveId(data.id);
     return data.id;
+  };
+
+  /** Gera um título curto (3-6 palavras) usando a IA e atualiza no banco. */
+  const summarizeTitle = async (conversationId: string, firstUserText: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`;
+      const r = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ action: "summarize_title", text: firstUserText }),
+      });
+      if (!r.ok) return;
+      const { title } = await r.json();
+      if (!title || typeof title !== "string") return;
+      const cleanTitle = title.trim().slice(0, 60);
+      await supabase.from("ai_conversations").update({ title: cleanTitle }).eq("id", conversationId);
+      setConversations((prev) =>
+        prev.map((c) => (c.id === conversationId ? { ...c, title: cleanTitle } : c)),
+      );
+    } catch (e) {
+      console.error("summarize title", e);
+    }
   };
 
   const persistMessage = async (conversationId: string, msg: Message) => {
@@ -313,6 +341,8 @@ export const AIAssistantTab = () => {
     setLoading(true);
 
     try {
+      // Detecta se essa é a primeira mensagem (para gerar o título resumido depois).
+      const isFirstMessage = messages.length === 0 && !activeId;
       // Garante uma conversa criada antes de enviar
       const convId = await ensureConversation(userMsg.content);
       if (!convId) { setLoading(false); return; }
@@ -369,6 +399,10 @@ export const AIAssistantTab = () => {
       };
       setMessages((prev) => [...prev, assistantMsg]);
       persistMessage(convId, assistantMsg).catch((e) => console.error("persist assistant", e));
+      // Refina o título da conversa após a primeira troca (resumo curto via IA)
+      if (isFirstMessage) {
+        summarizeTitle(convId, userMsg.content).catch((e) => console.error("summarize", e));
+      }
       // reordena a sidebar (move pra topo)
       setConversations((prev) => {
         const idx = prev.findIndex((c) => c.id === convId);

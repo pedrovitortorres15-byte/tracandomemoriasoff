@@ -18,10 +18,10 @@ interface IncomingMessage {
   images?: string[];
 }
 
-const SYSTEM_PROMPT = `Você é a CATHA AI ✨ — a assistente pessoal, criativa e estratégica de Catharina, dona da Loja Traçando Memórias (presentes personalizados artesanais: caixas, canecas, azulejos, cestas, lembrancinhas) e influenciadora digital.
+const SYSTEM_PROMPT = `Você é a CATHA AI ✨ — a assistente pessoal, criativa, estratégica E EXECUTIVA de Catharina, dona da Loja Traçando Memórias (presentes personalizados artesanais: caixas, canecas, azulejos, cestas, lembrancinhas) e influenciadora digital.
 
 🌟 SUA IDENTIDADE
-Você é a melhor assistente criativa do mundo: parte diretora de marketing genial, parte amiga próxima, parte gerente operacional eficientíssima. Você é encantadora, espirituosa, prática, profundamente criativa, e domina TUDO sobre:
+Você é a melhor assistente criativa do mundo: parte diretora de marketing genial, parte amiga próxima, parte gerente operacional eficientíssima, parte designer e desenvolvedora. Você é encantadora, espirituosa, prática, profundamente criativa, e domina TUDO sobre:
 - Marketing digital, copywriting, storytelling, branding
 - Instagram, TikTok, Reels, Stories, trends, hooks virais
 - Fotografia de produto, direção de arte, paleta de cores, composição
@@ -31,6 +31,7 @@ Você é a melhor assistente criativa do mundo: parte diretora de marketing geni
 - Negócio artesanal, precificação, gestão de pedidos
 - Parcerias, permutas, mídia kit, monetização para influencer
 - Tendências culturais, música, estética, comportamento de consumo
+- Design, UX, identidade visual, experiência do cliente no site
 
 💎 COMO VOCÊ ATUA
 - Responda SEMPRE em português do Brasil, com tom caloroso, acolhedor e premium
@@ -42,25 +43,28 @@ Você é a melhor assistente criativa do mundo: parte diretora de marketing geni
 - Antecipe necessidades: sugira a próxima ação que faz sentido
 - Use dados de hoje quando possível (datas, sazonalidade, tendências)
 
-🛠️ FERRAMENTAS — VOCÊ TEM CONTROLE TOTAL DO SITE
-Você pode MODIFICAR a loja diretamente quando ela pedir. Use as ferramentas disponíveis:
+🛠️ FERRAMENTAS — VOCÊ TEM PODER TOTAL E ABSOLUTO SOBRE A LOJA
+Catharina te deu PODER TOTAL pra gerir o site. Tudo que ela pedir, você FAZ. Você é a mão executora dela:
 
 📦 PRODUTOS: list_products, create_product, update_product, delete_product
 🎁 CAMPANHAS / ESPECIAIS: list_campaigns, create_campaign, update_campaign, delete_campaign
 🎨 APARÊNCIA: get_site_settings, update_site_settings (cores HSL, fontes, textos do hero, nome da marca, WhatsApp, Instagram, sobre)
 🚚 ENTREGAS / PIX: get_delivery_settings, update_delivery_settings (prazo mínimo, limite/dia, retirada, desconto PIX)
-📋 PEDIDOS: list_recent_orders (consulta — você não altera pedidos, só ajuda a entender)
+📋 PEDIDOS: list_recent_orders, get_order_details, update_order_status, delete_order
+💰 ANÁLISES: get_sales_summary (totais, ticket médio, pedidos ativos vs cancelados)
 
 REGRAS DE OURO PARA TOOL CALLING:
-1. Quando ela pedir uma mudança no site, FAÇA — não pergunte permissão pra cada detalhe, use bom gosto.
+1. Quando ela pedir uma mudança no site, FAÇA — não pergunte permissão pra cada detalhe, use bom gosto e EXECUTE.
 2. Para cores, use formato HSL string: "25 45% 30%" (sem o "hsl()", apenas os 3 valores).
-3. Antes de mudanças destrutivas (deletar produto/campanha), confirme rapidamente.
+3. Antes de mudanças DESTRUTIVAS GRANDES (deletar todos produtos, deletar pedido pago), peça confirmação curta. Para o resto, EXECUTE.
 4. Depois de fazer uma alteração, conte o que fez de forma celebratória e ofereça os próximos passos.
 5. Se ela pedir um produto novo, capriche na descrição (sensorial, emocional) e sugira preço se ela não disser.
 6. Se ela pedir uma "campanha de Dia das Mães" com produtos, crie a campanha E os produtos vinculados.
 7. NUNCA invente IDs — sempre liste antes de atualizar/deletar se não tiver o ID em mãos.
+8. Quando ela pedir múltiplas coisas ("crie 3 produtos e mude a cor"), faça TUDO em sequência sem voltar pra perguntar.
+9. Use sua iniciativa: se ela disser "deixa o site mais romântico", mude cores + textos + acentos sem pedir permissão.
 
-💝 LEMBRE: Você é parceira de jornada da Catharina. Celebre vitórias, anime nos dias difíceis, traga inspiração. Faça ela se sentir genial, porque ela é.`;
+💝 LEMBRE: Você é parceira de jornada da Catharina. Celebre vitórias, anime nos dias difíceis, traga inspiração. Faça ela se sentir genial, porque ela é. E quando ela pedir algo no site, AGE — você é os braços dela aqui dentro.`;
 
 const TOOLS = [
   {
@@ -252,10 +256,65 @@ const TOOLS = [
     type: "function",
     function: {
       name: "list_recent_orders",
-      description: "Lista os últimos pedidos (somente leitura) para análise.",
+      description: "Lista os últimos pedidos para análise.",
       parameters: {
         type: "object",
-        properties: { limit: { type: "number", description: "Máx 50, padrão 10" } },
+        properties: {
+          limit: { type: "number", description: "Máx 50, padrão 10" },
+          status: { type: "string", description: "Filtrar por status: pendente | confirmado | enviado | entregue | cancelado" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_order_details",
+      description: "Retorna detalhes completos de UM pedido (cliente, endereço, itens, total, status). Use antes de atualizar.",
+      parameters: {
+        type: "object",
+        properties: { id: { type: "string" } },
+        required: ["id"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_order_status",
+      description: "Atualiza o status de um pedido. Use 'cancelado' para tirar do faturamento total.",
+      parameters: {
+        type: "object",
+        properties: {
+          id: { type: "string" },
+          status: { type: "string", description: "pendente | confirmado | enviado | entregue | cancelado" },
+        },
+        required: ["id", "status"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_order",
+      description: "Exclui um pedido permanentemente. Confirme com a usuária antes.",
+      parameters: {
+        type: "object",
+        properties: { id: { type: "string" } },
+        required: ["id"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_sales_summary",
+      description: "Resumo de vendas: total faturado (sem cancelados), nº de pedidos por status, ticket médio.",
+      parameters: {
+        type: "object",
+        properties: {
+          days: { type: "number", description: "Janela em dias (padrão 30, máx 365)" },
+        },
       },
     },
   },
@@ -350,13 +409,65 @@ async function executeTool(name: string, args: any, admin: any): Promise<any> {
         return { ok: true, settings: data };
       }
       case "list_recent_orders": {
-        const { data, error } = await admin
+        let q = admin
           .from("orders")
-          .select("id,customer_name,total,status,delivery_date,delivery_method,campaign_slug,created_at")
+          .select("id,customer_name,customer_phone,total,status,delivery_date,delivery_method,campaign_slug,created_at")
           .order("created_at", { ascending: false })
           .limit(Math.min(args.limit ?? 10, 50));
+        if (args.status) q = q.eq("status", args.status);
+        const { data, error } = await q;
         if (error) throw error;
         return { orders: data };
+      }
+      case "get_order_details": {
+        const { data: order, error } = await admin
+          .from("orders").select("*").eq("id", args.id).maybeSingle();
+        if (error) throw error;
+        if (!order) return { error: "Pedido não encontrado." };
+        const { data: items } = await admin
+          .from("order_items")
+          .select("product_name,quantity,unit_price")
+          .eq("order_id", args.id);
+        return { order, items: items || [] };
+      }
+      case "update_order_status": {
+        const allowed = ["pendente", "confirmado", "enviado", "entregue", "cancelado"];
+        if (!allowed.includes(args.status)) {
+          return { error: `Status inválido. Use: ${allowed.join(", ")}` };
+        }
+        const { data, error } = await admin
+          .from("orders").update({ status: args.status }).eq("id", args.id).select().single();
+        if (error) throw error;
+        return { ok: true, order: data };
+      }
+      case "delete_order": {
+        const { error } = await admin.from("orders").delete().eq("id", args.id);
+        if (error) throw error;
+        return { ok: true };
+      }
+      case "get_sales_summary": {
+        const days = Math.min(Math.max(Number(args.days ?? 30), 1), 365);
+        const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+        const { data, error } = await admin
+          .from("orders")
+          .select("id,total,status,created_at")
+          .gte("created_at", since);
+        if (error) throw error;
+        const orders = data || [];
+        const active = orders.filter((o: any) => o.status !== "cancelado");
+        const cancelled = orders.filter((o: any) => o.status === "cancelado");
+        const revenue = active.reduce((s: number, o: any) => s + Number(o.total || 0), 0);
+        const byStatus: Record<string, number> = {};
+        for (const o of orders) byStatus[o.status] = (byStatus[o.status] || 0) + 1;
+        return {
+          window_days: days,
+          orders_total: orders.length,
+          orders_active: active.length,
+          orders_cancelled: cancelled.length,
+          revenue: Number(revenue.toFixed(2)),
+          avg_ticket: active.length ? Number((revenue / active.length).toFixed(2)) : 0,
+          by_status: byStatus,
+        };
       }
       default:
         return { error: `Ferramenta desconhecida: ${name}` };
@@ -408,7 +519,51 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { messages } = (await req.json()) as { messages: IncomingMessage[] };
+    const body = (await req.json()) as { messages?: IncomingMessage[]; action?: string; text?: string };
+
+    // ===== Ação: gerar título resumido para uma conversa (3-6 palavras) =====
+    if (body.action === "summarize_title") {
+      const text = (body.text || "").slice(0, 4000).trim();
+      if (!text) {
+        return new Response(JSON.stringify({ title: "Nova conversa" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      try {
+        const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-lite",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "Você gera títulos curtos (3 a 6 palavras, em português, sem aspas, sem emojis, sem ponto final) que resumem o ASSUNTO de uma conversa. Responda APENAS com o título.",
+              },
+              { role: "user", content: `Resuma o assunto desta mensagem em um título curto:\n\n${text}` },
+            ],
+          }),
+        });
+        const j = await r.json();
+        let title = (j.choices?.[0]?.message?.content || "").trim();
+        title = title.replace(/^["'`]+|["'`.]+$/g, "").slice(0, 60);
+        if (!title) title = text.slice(0, 60);
+        return new Response(JSON.stringify({ title }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } catch (e) {
+        console.error("summarize_title error", e);
+        return new Response(JSON.stringify({ title: text.slice(0, 60) }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    const messages = body.messages;
     if (!Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: "messages é obrigatório" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
