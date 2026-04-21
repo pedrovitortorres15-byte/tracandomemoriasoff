@@ -645,6 +645,112 @@ const Admin = () => {
           </div>
         )}
 
+        {/* Campaigns Tab */}
+        {tab === "campaigns" && (
+          <div className="space-y-4">
+            {!newCampaign && !editingCampaign && (
+              <Button onClick={() => { setNewCampaign(true); setCampaignForm(emptyCampaign); }}>
+                <Plus className="h-4 w-4 mr-2" /> Nova Campanha
+              </Button>
+            )}
+
+            {(newCampaign || editingCampaign) && (
+              <div className="bg-card border rounded-lg p-4 space-y-3">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  {editingCampaign ? "Editar Campanha" : "Nova Campanha"}
+                </h3>
+                <div>
+                  <label className="text-xs font-medium block mb-1">Nome *</label>
+                  <Input
+                    placeholder="Ex: Dia das Mães 2026"
+                    value={campaignForm.name}
+                    onChange={(e) => setCampaignForm({ ...campaignForm, name: e.target.value })}
+                    maxLength={120}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium block mb-1">Slug (identificador único, sem espaços) *</label>
+                  <Input
+                    placeholder="dia-das-maes-2026"
+                    value={campaignForm.slug}
+                    onChange={(e) => setCampaignForm({ ...campaignForm, slug: e.target.value })}
+                    maxLength={60}
+                    disabled={!!editingCampaign}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium block mb-1">Data especial de entrega</label>
+                  <Input
+                    type="date"
+                    value={campaignForm.delivery_date}
+                    onChange={(e) => setCampaignForm({ ...campaignForm, delivery_date: e.target.value })}
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Todos os pedidos com produtos desta campanha serão entregues nesta data (ex: 08/05/2026).
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium block mb-1">Observação (aparece no checkout)</label>
+                  <Textarea
+                    placeholder="Ex: Entregas desta campanha serão realizadas em 08/05/2026"
+                    value={campaignForm.note}
+                    onChange={(e) => setCampaignForm({ ...campaignForm, note: e.target.value })}
+                    maxLength={300}
+                  />
+                </div>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={campaignForm.active}
+                    onChange={(e) => setCampaignForm({ ...campaignForm, active: e.target.checked })}
+                    className="h-4 w-4 rounded"
+                  />
+                  Campanha ativa
+                </label>
+
+                <div className="flex gap-2 pt-2">
+                  <Button onClick={saveCampaign} disabled={saving}>
+                    <Save className="h-4 w-4 mr-2" /> {saving ? "Salvando..." : "Salvar"}
+                  </Button>
+                  <Button variant="outline" onClick={() => { setNewCampaign(false); setEditingCampaign(null); setCampaignForm(emptyCampaign); }}>
+                    <X className="h-4 w-4 mr-2" /> Cancelar
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {campaigns.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">Nenhuma campanha cadastrada</p>
+              ) : campaigns.map((c) => (
+                <div key={c.id} className="bg-card border rounded-lg p-3 flex items-center gap-3 flex-wrap">
+                  <Sparkles className="h-5 w-5 text-primary flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium truncate">{c.name}</h4>
+                    <p className="text-xs text-muted-foreground">
+                      {c.slug}{c.delivery_date ? ` • Entrega: ${new Date(c.delivery_date + "T12:00:00").toLocaleDateString("pt-BR")}` : ""}
+                    </p>
+                    {c.note && <p className="text-[11px] text-muted-foreground mt-0.5">{c.note}</p>}
+                  </div>
+                  <Badge variant={c.active ? "default" : "secondary"}>{c.active ? "Ativa" : "Inativa"}</Badge>
+                  <div className="flex gap-1">
+                    <Button size="icon" variant="ghost" onClick={() => toggleCampaignActive(c)} title={c.active ? "Desativar" : "Ativar"}>
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" onClick={() => startEditCampaign(c)} title="Editar">
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="text-destructive" onClick={() => deleteCampaign(c.id)} title="Excluir">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Settings Tab */}
         {tab === "settings" && (
           <div className="max-w-2xl space-y-4">
