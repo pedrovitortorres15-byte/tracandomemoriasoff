@@ -184,13 +184,21 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
         })
         .join(" | ");
 
+      // Sanitiza para garantir que respeita os limites das policies (RLS)
+      const safeName = d.customer_name.trim().slice(0, 120);
+      const safeEmail = d.customer_email.trim().slice(0, 160);
+      const safePhone = d.customer_phone.trim().slice(0, 30);
+      const safeNotes = d.notes ? d.notes.trim().slice(0, 1000) : null;
+      const safePersonalization = personalizationCombined.slice(0, 5000);
+      const safeTotal = Math.max(0, Math.min(100000, Number(totalFinal) || 0));
+
       const orderPayload: any = {
-        customer_name: d.customer_name,
-        customer_email: d.customer_email,
-        customer_phone: d.customer_phone,
-        notes: d.notes || null,
-        personalization: personalizationCombined,
-        total: totalFinal,
+        customer_name: safeName,
+        customer_email: safeEmail,
+        customer_phone: safePhone,
+        notes: safeNotes,
+        personalization: safePersonalization,
+        total: safeTotal,
         status: 'pendente',
         payment_method: paymentMethod,
         delivery_date: effectiveDeliveryDate || null,
