@@ -300,6 +300,7 @@ const Admin = () => {
       stock: product.stock,
       media_urls: product.media_urls && product.media_urls.length > 0 ? product.media_urls : (product.image_url ? [product.image_url] : []),
       custom_fields: Array.isArray((product as any).custom_fields) ? (product as any).custom_fields : [],
+      campaign_slug: product.campaign_slug || "",
     });
   };
 
