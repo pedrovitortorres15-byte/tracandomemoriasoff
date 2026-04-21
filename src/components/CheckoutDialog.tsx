@@ -68,8 +68,9 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
     customer_name: "", customer_email: "", customer_phone: "",
     shipping_zip: "", shipping_address: "", shipping_number: "", shipping_complement: "",
     shipping_neighborhood: "", shipping_city: "", shipping_state: "", notes: "",
-    recipient_name: "", recipient_phone: "",
+    recipient_name: "", recipient_phone: "", shipping_reference: "",
   });
+  const [recipientType, setRecipientType] = useState<"presenteada" | "eu" | "outra">("presenteada");
 
   const set = (k: keyof typeof form, v: string) => setForm(p => ({ ...p, [k]: v }));
 
@@ -179,6 +180,8 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
           shipping_state: dd.shipping_state.toUpperCase(),
           recipient_name: dd.recipient_name,
           recipient_phone: dd.recipient_phone || null,
+          notes: [d.notes, form.shipping_reference ? `Ponto de referência: ${form.shipping_reference}` : null]
+            .filter(Boolean).join(" | ") || null,
         });
       } else {
         Object.assign(orderPayload, {
@@ -220,8 +223,9 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
           `${dd.shipping_complement ? ` — ${dd.shipping_complement}` : ""}\n` +
           `${dd.shipping_neighborhood} • ${dd.shipping_city}/${dd.shipping_state.toUpperCase()}\n` +
           `CEP ${dd.shipping_zip}\n` +
-          `📨 Recebe: ${dd.recipient_name}${dd.recipient_phone ? ` (${dd.recipient_phone})` : ""}\n` +
-          `💰 *Taxa de entrega: a partir de R$10,00* (valor final confirmado conforme endereço)\n`;
+          (form.shipping_reference ? `📌 Ponto de referência: ${form.shipping_reference}\n` : "") +
+          `📨 Recebe (${recipientType === "presenteada" ? "pessoa presenteada" : recipientType === "eu" ? "eu mesmo(a)" : "outra pessoa"}): ${dd.recipient_name}${dd.recipient_phone ? ` (${dd.recipient_phone})` : ""}\n` +
+          `💰 *Taxa de entrega: a partir de R$10,00* (valor final confirmado conforme bairro/região)\n`;
       } else {
         methodBlock =
           `\n🏪 *Forma de recebimento: Retirada*\n` +
@@ -348,6 +352,10 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
 
           {method === "entrega" && (
             <>
+              <div className="bg-muted border border-border rounded-md p-2.5 text-xs">
+                💰 <strong>Taxa de entrega a partir de R$ 10,00</strong>, podendo variar conforme o bairro/região. O valor final é confirmado com a loja pelo WhatsApp.
+              </div>
+
               <div className="relative">
                 <Input
                   placeholder="CEP * (preenche endereço automaticamente)"
@@ -367,11 +375,41 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
                 <Input placeholder="Cidade" value={form.shipping_city} onChange={(e) => set('shipping_city', e.target.value)} />
                 <Input placeholder="UF" maxLength={2} value={form.shipping_state} onChange={(e) => set('shipping_state', e.target.value.toUpperCase())} />
               </div>
+              <Input placeholder="Ponto de referência (opcional)" value={form.shipping_reference} onChange={(e) => set('shipping_reference', e.target.value)} />
 
               <div className="bg-accent/30 border border-border rounded p-2.5 space-y-2">
                 <p className="text-xs font-semibold">📨 Quem vai receber o pedido?</p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {([
+                    { id: "presenteada", label: "A presenteada" },
+                    { id: "eu", label: "Eu mesmo(a)" },
+                    { id: "outra", label: "Outra pessoa" },
+                  ] as const).map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        setRecipientType(opt.id);
+                        if (opt.id === "eu") {
+                          setForm((p) => ({
+                            ...p,
+                            recipient_name: p.customer_name || p.recipient_name,
+                            recipient_phone: p.customer_phone || p.recipient_phone,
+                          }));
+                        }
+                      }}
+                      className={`text-[11px] px-2 py-1.5 border rounded transition-colors ${
+                        recipientType === opt.id
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background border-border hover:border-primary"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
                 <Input placeholder="Nome de quem recebe *" value={form.recipient_name} onChange={(e) => set('recipient_name', e.target.value)} />
-                <Input placeholder="WhatsApp de quem recebe (opcional)" value={form.recipient_phone} onChange={(e) => set('recipient_phone', e.target.value)} />
+                <Input placeholder="WhatsApp de quem recebe (se diferente do comprador)" value={form.recipient_phone} onChange={(e) => set('recipient_phone', e.target.value)} />
               </div>
             </>
           )}
