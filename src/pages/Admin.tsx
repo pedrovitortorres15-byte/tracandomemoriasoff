@@ -702,11 +702,13 @@ const Admin = () => {
                 orders.forEach((o) => {
                   const key = o.customer_phone || o.customer_email || o.customer_name;
                   const existing = customers.get(key);
+                  const isCancelled = o.status === "cancelado";
+                  const spent = isCancelled ? 0 : Number(o.total);
                   if (existing) {
-                    existing.orderCount++;
-                    existing.totalSpent += Number(o.total);
+                    if (!isCancelled) existing.orderCount++;
+                    existing.totalSpent += spent;
                   } else {
-                    customers.set(key, { name: o.customer_name, email: o.customer_email, phone: o.customer_phone, orderCount: 1, totalSpent: Number(o.total), lastOrder: o.created_at });
+                    customers.set(key, { name: o.customer_name, email: o.customer_email, phone: o.customer_phone, orderCount: isCancelled ? 0 : 1, totalSpent: spent, lastOrder: o.created_at });
                   }
                 });
                 const list = Array.from(customers.values()).filter(c =>
