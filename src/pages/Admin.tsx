@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { MediaUploader } from "@/components/MediaUploader";
 import { CustomFieldsBuilder } from "@/components/CustomFieldsBuilder";
+import { CategoryPicker } from "@/components/CategoryPicker";
 import { SiteCustomizer } from "@/components/SiteCustomizer";
 import type { CustomField } from "@/lib/customFields";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -529,7 +530,13 @@ const Admin = () => {
         {tab === "products" && (
           <div className="space-y-4">
             {!newProduct && !editingProduct && (
-              <Button onClick={() => { setNewProduct(true); setProductForm(emptyForm); }}>
+              <Button onClick={() => {
+                // Pré-preenche os campos personalizados com o mesmo modelo do primeiro produto cadastrado
+                const template = products.find((p) => Array.isArray((p as any).custom_fields) && (p as any).custom_fields.length > 0);
+                const templateFields: CustomField[] = template ? JSON.parse(JSON.stringify((template as any).custom_fields)) : [];
+                setNewProduct(true);
+                setProductForm({ ...emptyForm, custom_fields: templateFields });
+              }}>
                 <Plus className="h-4 w-4 mr-2" /> Novo Produto
               </Button>
             )}
@@ -541,7 +548,11 @@ const Admin = () => {
                 <Textarea placeholder="Descrição" value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} maxLength={1000} />
                 <div className="grid grid-cols-3 gap-3">
                   <Input type="number" step="0.01" placeholder="Preço (R$)" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: parseFloat(e.target.value) || 0 })} />
-                  <Input placeholder="Categoria" value={productForm.category} onChange={(e) => setProductForm({ ...productForm, category: e.target.value })} maxLength={60} />
+                  <CategoryPicker
+                    value={productForm.category}
+                    existing={Array.from(new Set(products.map((p) => p.category).filter(Boolean) as string[])).sort((a, b) => a.localeCompare(b, "pt-BR"))}
+                    onChange={(v) => setProductForm({ ...productForm, category: v })}
+                  />
                   <Input type="number" placeholder="Estoque" value={productForm.stock} onChange={(e) => setProductForm({ ...productForm, stock: parseInt(e.target.value) || 0 })} />
                 </div>
 
