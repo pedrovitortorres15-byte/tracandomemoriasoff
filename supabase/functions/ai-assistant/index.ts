@@ -391,16 +391,16 @@ Deno.serve(async (req) => {
     const userClient = createClient(SUPABASE_URL, ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsErr } = await userClient.auth.getClaims(token);
-    if (claimsErr || !claimsData?.claims?.sub) {
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    const user = userData?.user;
+    if (userErr || !user?.id) {
       return new Response(JSON.stringify({ error: "Sessão inválida." }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
     const { data: isAdmin } = await admin.rpc("has_role", {
-      _user_id: claimsData.claims.sub, _role: "admin",
+      _user_id: user.id, _role: "admin",
     });
     if (!isAdmin) {
       return new Response(JSON.stringify({ error: "Acesso restrito à administração." }), {
