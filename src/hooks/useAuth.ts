@@ -14,21 +14,29 @@ export function useAuth() {
 
     const checkRole = async (u: User | null) => {
       if (!u) {
-        if (mounted) setIsAdmin(false);
+        if (mounted) {
+          setIsAdmin(false);
+          setLoading(false);
+        }
         return;
       }
       // 1) shortcut: e-mail da dona é sempre admin (resiliente a falha de migração)
-      if (ADMIN_EMAILS.includes(u.email?.toLowerCase() || '')) {
-        if (mounted) setIsAdmin(true);
+      const ownerShortcut = ADMIN_EMAILS.includes(u.email?.toLowerCase() || '');
+      if (ownerShortcut && mounted) setIsAdmin(true);
+      // 2) valida no banco
+      try {
+        const { data } = await supabase
+          .from('user_roles' as any)
+          .select('role')
+          .eq('user_id', u.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+        if (mounted) setIsAdmin(!!data || ownerShortcut);
+      } catch {
+        if (mounted) setIsAdmin(ownerShortcut);
+      } finally {
+        if (mounted) setLoading(false);
       }
-      // 2) ainda assim, valida no banco
-      const { data } = await supabase
-        .from('user_roles' as any)
-        .select('role')
-        .eq('user_id', u.id)
-        .eq('role', 'admin')
-        .maybeSingle();
-      if (mounted) setIsAdmin(!!data || ADMIN_EMAILS.includes(u.email?.toLowerCase() || ''));
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -36,16 +44,13 @@ export function useAuth() {
       setUser(u);
       // defer DB call to avoid blocking auth callback
       setTimeout(() => checkRole(u), 0);
-      setLoading(false);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       const u = session?.user ?? null;
-      if (mounted) {
-        setUser(u);
-        checkRole(u);
-        setLoading(false);
-      }
+      if (!mounted) return;
+      setUser(u);
+      checkRole(u);
     });
 
     return () => {
