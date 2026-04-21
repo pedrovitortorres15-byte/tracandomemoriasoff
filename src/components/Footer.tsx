@@ -1,10 +1,27 @@
-import { Instagram, Phone, Shield } from "lucide-react";
+import { Instagram, Phone, Shield, LogOut, LogIn } from "lucide-react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { BrandLogo } from "./BrandLogo";
 
 export const Footer = () => {
   const { settings } = useSiteSettings();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const phoneDisplay = settings.whatsapp_number.replace(/^55/, "+55 ").replace(/(\d{2})(\d{4,5})(\d{4})$/, "$1 $2-$3");
+
+  const handleAccountClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (user) {
+      await signOut();
+      toast.success("Você saiu da conta");
+      navigate("/");
+    } else {
+      navigate("/auth");
+    }
+  };
+
   return (
     <footer id="sobre" className="bg-primary text-primary-foreground py-14">
       <div className="container">
@@ -31,7 +48,19 @@ export const Footer = () => {
               <li><a href="/" className="hover:opacity-100 transition-opacity">Início</a></li>
               <li><a href="#produtos" className="hover:opacity-100 transition-opacity">Produtos</a></li>
               <li><a href="#sobre" className="hover:opacity-100 transition-opacity">Sobre</a></li>
-              <li><a href="/auth" className="hover:opacity-100 transition-opacity">Minha conta</a></li>
+              <li>
+                <button
+                  type="button"
+                  onClick={handleAccountClick}
+                  className="hover:opacity-100 transition-opacity inline-flex items-center gap-1.5 text-left"
+                >
+                  {user ? (
+                    <><LogOut className="h-3 w-3" /> Sair da conta</>
+                  ) : (
+                    <><LogIn className="h-3 w-3" /> Entrar / Criar conta</>
+                  )}
+                </button>
+              </li>
             </ul>
           </div>
           <div className="space-y-4">
