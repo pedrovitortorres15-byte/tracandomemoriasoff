@@ -55,13 +55,15 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
   const { data: campaigns } = useCampaigns(true);
   const pickupEnabled = settings?.pickup_enabled ?? true;
   const pickupWindow = settings?.pickup_window_text || "Retirada das 14h às 17h (combine previamente pelo WhatsApp)";
+  const pickupAddress = settings?.pickup_address?.trim() || "Bairro Antares";
   const deliveryWindow = settings?.delivery_window_text || "Entregas no período da tarde (14h às 17h)";
   const pixActive = settings?.pix_discount_active ?? true;
   const pixPct = settings?.pix_discount_percent ?? 10;
+  const cartMethod = items.find((i) => i.fulfillmentMethod)?.fulfillmentMethod;
 
   const [loading, setLoading] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
-  const [method, setMethod] = useState<"entrega" | "retirada">("entrega");
+  const [method, setMethod] = useState<"entrega" | "retirada">(cartMethod || "entrega");
   const [form, setForm] = useState({
     customer_name: "", customer_email: "", customer_phone: "",
     shipping_zip: "", shipping_address: "", shipping_number: "", shipping_complement: "",
@@ -118,10 +120,16 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
     }
   };
 
+  useEffect(() => {
+    if (cartMethod === "entrega" || cartMethod === "retirada") {
+      setMethod(cartMethod);
+    }
+  }, [cartMethod]);
+
   const handleSubmit = async () => {
     const allComplete = items.every((i) => isPersonalizationValid(i.personalization) && !!i.deliveryDate);
     if (!allComplete) {
-      toast.error("Itens incompletos no carrinho — preencha personalização + data de entrega.");
+      toast.error("Itens incompletos no carrinho — preencha personalização + data desejada.");
       return;
     }
 
