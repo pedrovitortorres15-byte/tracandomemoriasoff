@@ -37,8 +37,10 @@ export const Footer = () => {
                   <Phone className="h-3 w-3" /> +55 82 8706-0860
                 </a>
               </li>
-              <li className="inline-flex items-center gap-2">
-                <Instagram className="h-3 w-3" /> @tracandomemorias
+              <li>
+                <a href="https://instagram.com/lojatracandomemorias" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity inline-flex items-center gap-2">
+                  <Instagram className="h-3 w-3" /> @lojatracandomemorias
+                </a>
               </li>
             </ul>
           </div>

@@ -55,6 +55,8 @@ const emptyForm = { name: "", description: "", price: 0, category: "", stock: 0,
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
+  const OWNER_EMAIL = "catharinaferrario@gmail.com";
+  const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL;
   const navigate = useNavigate();
   const [tab, setTab] = useState<"orders" | "products" | "customers" | "settings">("orders");
   const [settingsForm, setSettingsForm] = useState({
@@ -78,18 +80,18 @@ const Admin = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!loading && (!user || !isAdmin)) {
+    if (!loading && (!user || !isAdmin || !isOwner)) {
       navigate("/auth");
     }
-  }, [user, isAdmin, loading, navigate]);
+  }, [user, isAdmin, isOwner, loading, navigate]);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (isAdmin && isOwner) {
       loadOrders();
       loadProducts();
       loadSettings();
     }
-  }, [isAdmin]);
+  }, [isAdmin, isOwner]);
 
   const loadSettings = async () => {
     const { data } = await (supabase as any).from("delivery_settings").select("*").limit(1).maybeSingle();
@@ -222,7 +224,7 @@ const Admin = () => {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
-  if (!isAdmin) return null;
+  if (!isAdmin || !isOwner) return null;
 
   const statusColors: Record<string, string> = {
     pendente: "bg-yellow-100 text-yellow-800",
