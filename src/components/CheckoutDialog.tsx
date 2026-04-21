@@ -299,8 +299,8 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
 
   const title = isPix ? "Finalizar por PIX via WhatsApp" : "Finalizar por Cartão via WhatsApp";
   const subtitle = isPix
-    ? `Enviaremos seu pedido pelo WhatsApp. A loja responde com a chave PIX${pixActive ? ` (${pixPct}% off)` : ""}.`
-    : "Enviaremos seu pedido pelo WhatsApp. A loja confirma a disponibilidade e envia o link de pagamento (cartão até 3x sem juros).";
+    ? `Seu pedido será enviado pelo WhatsApp da loja. A dona confirma a disponibilidade e envia a chave PIX${pixActive ? ` (${pixPct}% off)` : ""} para você pagar por aqui.`
+    : "Seu pedido será enviado pelo WhatsApp da loja. A dona confirma a disponibilidade e envia o link de pagamento (cartão até 3x sem juros) para você concluir a compra.";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
