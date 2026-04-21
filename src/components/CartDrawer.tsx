@@ -6,15 +6,14 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { ShoppingCart, Minus, Plus, Trash2, CreditCard, MessageCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useCartStore, isPersonalizationValid } from "@/stores/cartStore";
 import { toast } from "sonner";
-import { CheckoutDialog } from "./CheckoutDialog";
+import { CheckoutDialog, type PaymentChoice } from "./CheckoutDialog";
 import { DeliveryDatePicker } from "./DeliveryDatePicker";
 import { useDeliverySettings } from "@/hooks/useDeliverySettings";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 export const CartDrawer = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [paymentChoice, setPaymentChoice] = useState<PaymentChoice>("pix");
   const { items, updateQuantity, updatePersonalization, updateDeliveryDate, removeItem, allValid, invalidReason } = useCartStore();
   const { data: settings } = useDeliverySettings();
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -25,27 +24,12 @@ export const CartDrawer = () => {
   const canCheckout = allValid();
   const blockReason = invalidReason();
 
-  const handleWhatsAppCheckout = () => {
+  const openCheckout = (choice: PaymentChoice) => {
     if (!canCheckout) {
       toast.error(blockReason || "Complete os dados de cada item");
       return;
     }
-    const message = items.map(i => {
-      const dateStr = i.deliveryDate
-        ? format(new Date(i.deliveryDate + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })
-        : "—";
-      return `• ${i.name} (x${i.quantity}) - R$ ${(i.price * i.quantity).toFixed(2)}\n  Personalização: ${i.personalization}\n  Entrega: ${dateStr}`;
-    }).join('\n\n');
-    const text = `Olá Loja Traçando Memórias! Gostaria de fazer o seguinte pedido (PIX com ${pixPct}% off):\n\n${message}\n\nTotal PIX: R$ ${pixPrice.toFixed(2)}`;
-    window.open(`https://wa.me/558287060860?text=${encodeURIComponent(text)}`, '_blank');
-    setIsOpen(false);
-  };
-
-  const handleStartCheckout = () => {
-    if (!canCheckout) {
-      toast.error(blockReason || "Complete os dados de cada item");
-      return;
-    }
+    setPaymentChoice(choice);
     setCheckoutOpen(true);
   };
 
@@ -167,25 +151,28 @@ export const CartDrawer = () => {
                     <span className="text-base font-semibold">Total cartão</span>
                     <span className="text-lg font-bold text-primary">R$ {totalPrice.toFixed(2)}</span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground text-right">3x sem juros no cartão</p>
+                  <p className="text-[10px] text-muted-foreground text-right">Cartão até 3x sem juros (confirmado pela loja no WhatsApp)</p>
                 </div>
                 <Button
-                  onClick={handleStartCheckout}
+                  onClick={() => openCheckout("cartao")}
                   className="w-full bg-pay-card text-pay-card-foreground hover:bg-pay-card/90"
                   size="lg"
                   disabled={!canCheckout}
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
-                  Pagar Cartão — R$ {totalPrice.toFixed(2)}
+                  Cartão via WhatsApp — R$ {totalPrice.toFixed(2)}
                 </Button>
                 <Button
-                  onClick={handleWhatsAppCheckout}
+                  onClick={() => openCheckout("pix")}
                   className="w-full bg-pay-pix text-pay-pix-foreground hover:bg-pay-pix/90"
                   size="lg"
                   disabled={!canCheckout}
                 >
                   <MessageCircle className="w-4 h-4 mr-2" /> PIX via WhatsApp — R$ {pixPrice.toFixed(2)}
                 </Button>
+                <p className="text-[10px] text-muted-foreground text-center">
+                  Todos os pedidos são confirmados manualmente pela loja antes da cobrança.
+                </p>
               </div>
             </>
           )}
@@ -196,6 +183,7 @@ export const CartDrawer = () => {
       open={checkoutOpen}
       onOpenChange={setCheckoutOpen}
       onSuccess={() => { setCheckoutOpen(false); setIsOpen(false); }}
+      paymentMethod={paymentChoice}
     />
     </>
   );
