@@ -670,7 +670,7 @@ const Admin = () => {
           <div className="space-y-4">
             {!newCampaign && !editingCampaign && (
               <Button onClick={() => { setNewCampaign(true); setCampaignForm(emptyCampaign); }}>
-                <Plus className="h-4 w-4 mr-2" /> Nova Campanha
+                <Plus className="h-4 w-4 mr-2" /> Novo Especial
               </Button>
             )}
 
@@ -742,7 +742,7 @@ const Admin = () => {
 
             <div className="space-y-2">
               {campaigns.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">Nenhuma campanha cadastrada</p>
+                <p className="text-center text-muted-foreground py-8">Nenhum especial cadastrado</p>
               ) : campaigns.map((c) => (
                 <div key={c.id} className="bg-card border rounded-lg p-3 flex items-center gap-3 flex-wrap">
                   <Sparkles className="h-5 w-5 text-primary flex-shrink-0" />
