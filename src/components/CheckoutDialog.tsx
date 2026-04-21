@@ -240,10 +240,16 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
         });
       } else {
         Object.assign(orderPayload, {
-          shipping_address: `Retirada: ${pickupAddress}`,
+          shipping_address: `Retirada: ${pickupAddress || "Bairro Antares"}`.slice(0, 500),
         });
       }
 
+      // Garante que NUNCA vai um shipping_address vazio (RLS exige btrim <> '')
+      if (!orderPayload.shipping_address || !String(orderPayload.shipping_address).trim()) {
+        orderPayload.shipping_address = method === "entrega" ? "Endereço a confirmar pelo WhatsApp" : "Retirada a combinar pelo WhatsApp";
+      }
+
+      console.log("[checkout] inserting order", orderPayload);
       const { data: order, error: orderErr } = await supabase
         .from("orders")
         .insert(orderPayload)
