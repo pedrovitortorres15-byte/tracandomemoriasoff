@@ -221,8 +221,9 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
           `${dd.shipping_complement ? ` — ${dd.shipping_complement}` : ""}\n` +
           `${dd.shipping_neighborhood} • ${dd.shipping_city}/${dd.shipping_state.toUpperCase()}\n` +
           `CEP ${dd.shipping_zip}\n` +
-          `📨 Recebe: ${dd.recipient_name}${dd.recipient_phone ? ` (${dd.recipient_phone})` : ""}\n` +
-          `💰 *Taxa de entrega: a partir de R$10,00* (valor final confirmado conforme endereço)\n`;
+          (form.shipping_reference ? `📌 Ponto de referência: ${form.shipping_reference}\n` : "") +
+          `📨 Recebe (${recipientType === "presenteada" ? "pessoa presenteada" : recipientType === "eu" ? "eu mesmo(a)" : "outra pessoa"}): ${dd.recipient_name}${dd.recipient_phone ? ` (${dd.recipient_phone})` : ""}\n` +
+          `💰 *Taxa de entrega: a partir de R$10,00* (valor final confirmado conforme bairro/região)\n`;
       } else {
         methodBlock =
           `\n🏪 *Forma de recebimento: Retirada*\n` +
