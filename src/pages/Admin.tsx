@@ -393,9 +393,9 @@ const Admin = () => {
               <Users className="h-8 w-8 text-primary" />
               <div>
                 <p className="text-2xl font-bold">
-                  R$ {orders.reduce((s, o) => s + Number(o.total), 0).toFixed(2)}
+                  R$ {orders.filter((o) => o.status !== "cancelado").reduce((s, o) => s + Number(o.total), 0).toFixed(2)}
                 </p>
-                <p className="text-sm text-muted-foreground">Receita Total</p>
+                <p className="text-sm text-muted-foreground">Receita Total (sem cancelados)</p>
               </div>
             </div>
           </div>
