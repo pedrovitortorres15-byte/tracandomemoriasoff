@@ -19,6 +19,7 @@ const ProductDetail = () => {
   const { handle } = useParams<{ handle: string }>();
   const addItem = useCartStore(state => state.addItem);
   const { data: settings } = useDeliverySettings();
+  const { data: campaigns } = useCampaigns(true);
   const pixActive = settings?.pix_discount_active ?? true;
   const pixPct = settings?.pix_discount_percent ?? 10;
   const pickupEnabled = settings?.pickup_enabled ?? true;
