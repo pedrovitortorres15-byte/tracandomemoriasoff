@@ -1,10 +1,19 @@
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { CartDrawer } from "./CartDrawer";
-import { Search, User, Shield } from "lucide-react";
+import { Search, User, Shield, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 import logoIconFallback from "@/assets/logo-icon.jpg";
 
 const CATEGORIES: { label: string; value: string }[] = [
@@ -90,11 +99,38 @@ export const Header = () => {
               </Button>
             </Link>
           )}
-          <Link to={user ? "/" : "/auth"} aria-label={user ? "Conta" : "Entrar"}>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <User className="h-5 w-5" />
-            </Button>
-          </Link>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full" aria-label="Minha conta">
+                  <User className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <p className="text-xs text-muted-foreground">Conectada como</p>
+                  <p className="text-sm font-medium truncate">{user.email}</p>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={async () => {
+                    await signOut();
+                    toast.success("Você saiu da conta");
+                    navigate("/");
+                  }}
+                  className="text-destructive focus:text-destructive cursor-pointer"
+                >
+                  <LogOut className="h-4 w-4 mr-2" /> Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link to="/auth" aria-label="Entrar">
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <User className="h-5 w-5" />
+              </Button>
+            </Link>
+          )}
           <CartDrawer />
         </div>
       </div>
