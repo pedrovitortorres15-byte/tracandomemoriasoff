@@ -3,10 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Sparkles, Send, ImagePlus, X, Loader2, Trash2, Lightbulb, Mic, MicOff, Wand2, Copy, Check } from "lucide-react";
+import { Sparkles, Send, ImagePlus, X, Loader2, Trash2, Lightbulb, Mic, MicOff, Wand2, Copy, Check, Plus, MessagesSquare, Pencil, MoreVertical } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ToolEvent {
   name: string;
@@ -15,10 +21,17 @@ interface ToolEvent {
 }
 
 interface Message {
+  id?: string;
   role: "user" | "assistant";
   content: string;
   images?: string[]; // data URLs
   toolEvents?: ToolEvent[];
+}
+
+interface Conversation {
+  id: string;
+  title: string;
+  updated_at: string;
 }
 
 const QUICK_PROMPTS = [
@@ -28,17 +41,16 @@ const QUICK_PROMPTS = [
   { icon: "🎁", label: "Criar campanha", prompt: "Crie uma campanha de Dia das Mães na loja com data limite de pedido e me sugira 3 produtos pra vincular nela." },
 ];
 
-const STORAGE_KEY = "admin-ai-chat-history";
+const ACTIVE_CONV_KEY = "admin-ai-active-conversation";
 
 export const AIAssistantTab = () => {
-  const [messages, setMessages] = useState<Message[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(
+    () => localStorage.getItem(ACTIVE_CONV_KEY)
+  );
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [input, setInput] = useState("");
   const [pendingImages, setPendingImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -48,6 +60,7 @@ export const AIAssistantTab = () => {
   const recognitionRef = useRef<any>(null);
   const baseTextRef = useRef<string>("");
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const copyMessage = async (text: string, idx: number) => {
     try {
@@ -113,15 +126,141 @@ export const AIAssistantTab = () => {
   // Para a gravação ao desmontar
   useEffect(() => () => recognitionRef.current?.stop(), []);
 
-  useEffect(() => {
-    try {
-      // Salva últimas 50 mensagens (sem as imagens base64 para não estourar storage)
-      const slim = messages.slice(-50).map((m) => ({ ...m, images: m.images ? ["[imagem]"] : undefined }));
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(slim));
-    } catch {
-      // ignore quota errors
+  // ============ Histórico no banco ============
+  const loadConversations = async () => {
+    const { data, error } = await supabase
+      .from("ai_conversations")
+      .select("id,title,updated_at")
+      .order("updated_at", { ascending: false });
+    if (error) {
+      console.error(error);
+      return;
     }
-  }, [messages]);
+    setConversations(data || []);
+  };
+
+  const loadMessages = async (conversationId: string) => {
+    setLoadingMessages(true);
+    const { data, error } = await supabase
+      .from("ai_messages")
+      .select("id,role,content,images,tool_events,created_at")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: true });
+    setLoadingMessages(false);
+    if (error) {
+      console.error(error);
+      toast.error("Não consegui carregar o histórico desta conversa.");
+      return;
+    }
+    setMessages(
+      (data || []).map((row: any) => ({
+        id: row.id,
+        role: row.role,
+        content: row.content,
+        images: row.images || undefined,
+        toolEvents: row.tool_events || undefined,
+      })),
+    );
+  };
+
+  // Carrega lista ao montar e mensagens da conversa ativa
+  useEffect(() => {
+    (async () => {
+      setLoadingHistory(true);
+      await loadConversations();
+      setLoadingHistory(false);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (activeId) {
+      localStorage.setItem(ACTIVE_CONV_KEY, activeId);
+      loadMessages(activeId);
+    } else {
+      localStorage.removeItem(ACTIVE_CONV_KEY);
+      setMessages([]);
+    }
+  }, [activeId]);
+
+  const ensureConversation = async (firstUserText: string): Promise<string | null> => {
+    if (activeId) return activeId;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("Faça login como administradora.");
+      return null;
+    }
+    const title = firstUserText.trim().slice(0, 60) || "Nova conversa";
+    const { data, error } = await supabase
+      .from("ai_conversations")
+      .insert({ user_id: user.id, title })
+      .select("id,title,updated_at")
+      .single();
+    if (error || !data) {
+      console.error(error);
+      toast.error("Não consegui criar a conversa.");
+      return null;
+    }
+    setConversations((prev) => [data, ...prev]);
+    setActiveId(data.id);
+    return data.id;
+  };
+
+  const persistMessage = async (conversationId: string, msg: Message) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from("ai_messages").insert({
+      conversation_id: conversationId,
+      user_id: user.id,
+      role: msg.role,
+      content: msg.content,
+      images: msg.images && msg.images.length > 0 ? msg.images : null,
+      tool_events: msg.toolEvents && msg.toolEvents.length > 0 ? (msg.toolEvents as any) : null,
+    });
+    // bump updated_at + reordena
+    await supabase
+      .from("ai_conversations")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", conversationId);
+  };
+
+  const newConversation = () => {
+    setActiveId(null);
+    setMessages([]);
+    setInput("");
+    setPendingImages([]);
+    setSidebarOpen(false);
+  };
+
+  const renameConversation = async (id: string, currentTitle: string) => {
+    const next = window.prompt("Novo nome da conversa:", currentTitle);
+    if (!next || next.trim() === "" || next === currentTitle) return;
+    const title = next.trim().slice(0, 80);
+    const { error } = await supabase
+      .from("ai_conversations")
+      .update({ title })
+      .eq("id", id);
+    if (error) {
+      toast.error("Não consegui renomear.");
+      return;
+    }
+    setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, title } : c)));
+    toast.success("Conversa renomeada.");
+  };
+
+  const deleteConversation = async (id: string) => {
+    if (!confirm("Excluir esta conversa? Essa ação não pode ser desfeita.")) return;
+    const { error } = await supabase.from("ai_conversations").delete().eq("id", id);
+    if (error) {
+      toast.error("Não consegui excluir.");
+      return;
+    }
+    setConversations((prev) => prev.filter((c) => c.id !== id));
+    if (activeId === id) {
+      setActiveId(null);
+      setMessages([]);
+    }
+    toast.success("Conversa excluída.");
+  };
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -174,6 +313,12 @@ export const AIAssistantTab = () => {
     setLoading(true);
 
     try {
+      // Garante uma conversa criada antes de enviar
+      const convId = await ensureConversation(userMsg.content);
+      if (!convId) { setLoading(false); return; }
+      // Persiste a mensagem do usuário em paralelo com a chamada à IA
+      persistMessage(convId, userMsg).catch((e) => console.error("persist user", e));
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         toast.error("Faça login como administradora para usar a IA.");
@@ -217,11 +362,20 @@ export const AIAssistantTab = () => {
         toast.success(`✨ ${writeTools.length} ação(ões) aplicadas no site`);
       }
 
-      setMessages((prev) => [...prev, {
+      const assistantMsg: Message = {
         role: "assistant",
         content: data.content || "✨",
         toolEvents: toolEvents.length > 0 ? toolEvents : undefined,
-      }]);
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
+      persistMessage(convId, assistantMsg).catch((e) => console.error("persist assistant", e));
+      // reordena a sidebar (move pra topo)
+      setConversations((prev) => {
+        const idx = prev.findIndex((c) => c.id === convId);
+        if (idx === -1) return prev;
+        const updated = { ...prev[idx], updated_at: new Date().toISOString() };
+        return [updated, ...prev.filter((c) => c.id !== convId)];
+      });
     } catch (e) {
       console.error(e);
       toast.error("Falha de conexão com a IA.");
@@ -230,11 +384,6 @@ export const AIAssistantTab = () => {
     }
   };
 
-  const clearChat = () => {
-    if (!confirm("Limpar toda a conversa?")) return;
-    setMessages([]);
-    localStorage.removeItem(STORAGE_KEY);
-  };
 
   return (
     <div className="space-y-4">
@@ -248,12 +397,100 @@ export const AIAssistantTab = () => {
             Posso mudar cores e textos do site, criar produtos e campanhas, escrever legendas, roteiros, responder clientes e analisar suas fotos e vídeos. É só pedir — eu faço por você. 💝
           </p>
         </div>
-        {messages.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={clearChat} title="Limpar conversa">
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
+        <Button
+          variant="outline"
+          size="sm"
+          className="lg:hidden gap-1"
+          onClick={() => setSidebarOpen((s) => !s)}
+          title="Histórico de conversas"
+        >
+          <MessagesSquare className="h-4 w-4" />
+          {conversations.length > 0 && (
+            <span className="text-[11px]">{conversations.length}</span>
+          )}
+        </Button>
       </div>
+
+      {/* Layout principal: sidebar + chat */}
+      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
+        {/* Sidebar de histórico */}
+        <aside
+          className={cn(
+            "bg-card border rounded-lg flex flex-col h-[60vh] min-h-[400px]",
+            "lg:flex",
+            sidebarOpen ? "flex" : "hidden",
+          )}
+        >
+          <div className="p-3 border-b flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Conversas
+            </span>
+            <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={newConversation}>
+              <Plus className="h-3.5 w-3.5" /> Nova
+            </Button>
+          </div>
+          <ScrollArea className="flex-1">
+            <div className="p-2 space-y-1">
+              {loadingHistory ? (
+                <div className="text-xs text-muted-foreground text-center py-6 flex items-center justify-center gap-2">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Carregando...
+                </div>
+              ) : conversations.length === 0 ? (
+                <div className="text-xs text-muted-foreground text-center py-6 px-2">
+                  Nenhuma conversa ainda. Comece uma agora! ✨
+                </div>
+              ) : (
+                conversations.map((c) => (
+                  <div
+                    key={c.id}
+                    className={cn(
+                      "group rounded-md flex items-center gap-1 px-1",
+                      activeId === c.id ? "bg-primary/10" : "hover:bg-muted",
+                    )}
+                  >
+                    <button
+                      onClick={() => { setActiveId(c.id); setSidebarOpen(false); }}
+                      className="flex-1 text-left px-2 py-2 text-sm truncate"
+                      title={c.title}
+                    >
+                      <div className="truncate font-medium">{c.title}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {new Date(c.updated_at).toLocaleString("pt-BR", {
+                          day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
+                        })}
+                      </div>
+                    </button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100"
+                          title="Ações"
+                        >
+                          <MoreVertical className="h-3.5 w-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => renameConversation(c.id, c.title)}>
+                          <Pencil className="h-3.5 w-3.5 mr-2" /> Renomear
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => deleteConversation(c.id)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        </aside>
+
+        <div className="space-y-4">
 
       {/* Sugestões rápidas */}
       {messages.length === 0 && (
@@ -434,6 +671,8 @@ export const AIAssistantTab = () => {
           <p className="text-[10px] text-muted-foreground text-center">
             A IA pode cometer erros. Use o bom senso e revise sugestões antes de publicar.
           </p>
+        </div>
+        </div>
         </div>
       </div>
     </div>
