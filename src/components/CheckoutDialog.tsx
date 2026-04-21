@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, CreditCard, Truck, Store, MessageCircle } from "lucide-react";
+import { Loader2, Truck, Store, MessageCircle, CreditCard, Sparkles } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCartStore, isPersonalizationValid } from "@/stores/cartStore";
-import { useDeliverySettings } from "@/hooks/useDeliverySettings";
+import { useDeliverySettings, useCampaigns } from "@/hooks/useDeliverySettings";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -40,19 +40,24 @@ const pickupSchema = z.object({
   delivery_method: z.literal("retirada"),
 });
 
+export type PaymentChoice = "pix" | "cartao";
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  paymentMethod: PaymentChoice;
 }
 
-export const CheckoutDialog = ({ open, onOpenChange, onSuccess }: Props) => {
+export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }: Props) => {
   const { items, clearCart } = useCartStore();
   const { data: settings } = useDeliverySettings();
+  const { data: campaigns } = useCampaigns(true);
   const pickupEnabled = settings?.pickup_enabled ?? true;
-  const pickupAddress = settings?.pickup_address || "";
   const pickupWindow = settings?.pickup_window_text || "Retirada das 14h às 17h (combine previamente pelo WhatsApp)";
   const deliveryWindow = settings?.delivery_window_text || "Entregas no período da tarde (14h às 17h)";
+  const pixActive = settings?.pix_discount_active ?? true;
+  const pixPct = settings?.pix_discount_percent ?? 10;
 
   const [loading, setLoading] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
@@ -66,12 +71,27 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess }: Props) => {
 
   const set = (k: keyof typeof form, v: string) => setForm(p => ({ ...p, [k]: v }));
 
-  const totalPrice = items.reduce((s, i) => s + i.price * i.quantity, 0);
+  const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
+  const isPix = paymentMethod === "pix";
+  const totalFinal = isPix && pixActive ? subtotal * (1 - pixPct / 100) : subtotal;
   const farthestDelivery = items.map((i) => i.deliveryDate).filter(Boolean).sort().pop();
 
-  // ViaCEP — auto-preenche endereço quando CEP tem 8 dígitos
+  // Detecta se algum item do carrinho está vinculado a uma campanha
+  const activeCampaign = useMemo(() => {
+    if (!campaigns || campaigns.length === 0) return null;
+    for (const item of items) {
+      const camp = (item as any).campaign_slug;
+      if (camp) {
+        const match = campaigns.find((c) => c.slug === camp);
+        if (match) return match;
+      }
+    }
+    return null;
+  }, [items, campaigns]);
+
+  const effectiveDeliveryDate = activeCampaign?.delivery_date || farthestDelivery;
+
   const handleCepChange = async (raw: string) => {
-    // mantém máscara visual leve
     const onlyDigits = raw.replace(/\D/g, "").slice(0, 8);
     const masked = onlyDigits.length > 5 ? `${onlyDigits.slice(0, 5)}-${onlyDigits.slice(5)}` : onlyDigits;
     set("shipping_zip", masked);
@@ -98,21 +118,10 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess }: Props) => {
     }
   };
 
-  const openWhatsAppShipping = () => {
-    const msg = `Oi! Quero confirmar a *taxa de entrega* para o meu CEP antes de fechar o pedido.\n\nMeu CEP: ${form.shipping_zip || "(vou te passar)"}\nBairro: ${form.shipping_neighborhood || "—"}\nCidade: ${form.shipping_city || "—"}`;
-    window.open(`https://wa.me/${OWNER_WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
-  };
-
-  const openWhatsAppPickup = () => {
-    const dateStr = farthestDelivery ? format(new Date(farthestDelivery + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR }) : "—";
-    const msg = `Oi! Vou *retirar meu pedido* na loja em ${dateStr}. Quero combinar o horário (entre 14h e 17h).`;
-    window.open(`https://wa.me/${OWNER_WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
-  };
-
   const handleSubmit = async () => {
     const allComplete = items.every((i) => isPersonalizationValid(i.personalization) && !!i.deliveryDate);
     if (!allComplete) {
-      toast.error("Itens incompletos no carrinho — volte e preencha personalização + data de entrega.");
+      toast.error("Itens incompletos no carrinho — preencha personalização + data de entrega.");
       return;
     }
 
@@ -139,11 +148,12 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess }: Props) => {
         customer_phone: d.customer_phone,
         notes: d.notes || null,
         personalization: personalizationCombined,
-        total: totalPrice,
+        total: totalFinal,
         status: 'pendente',
-        payment_method: 'mercadopago',
-        delivery_date: farthestDelivery || null,
+        payment_method: paymentMethod,
+        delivery_date: effectiveDeliveryDate || null,
         delivery_method: method,
+        campaign_slug: activeCampaign?.slug || null,
       };
       if (method === "entrega") {
         const dd = d as z.infer<typeof deliverySchema>;
@@ -160,7 +170,7 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess }: Props) => {
         });
       } else {
         Object.assign(orderPayload, {
-          shipping_address: pickupAddress || "Retirada na loja",
+          shipping_address: "Retirada no Bairro Antares",
         });
       }
 
@@ -181,65 +191,65 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess }: Props) => {
       const { error: itemsErr } = await supabase.from("order_items").insert(itemsPayload);
       if (itemsErr) throw itemsErr;
 
-      const { data: pay, error: payErr } = await supabase.functions.invoke('mercadopago-checkout', {
-        body: {
-          items: items.map(i => ({
-            title: `${i.name} - ${i.personalization}`.slice(0, 250),
-            quantity: i.quantity,
-            unit_price: i.price,
-            picture_url: i.image,
-          })),
-          payer: { name: d.customer_name, email: d.customer_email },
-          external_reference: order.id,
-        },
-      });
-      if (payErr) throw payErr;
-      if (!pay?.init_point) throw new Error("Falha ao iniciar pagamento");
+      // Monta a mensagem pro WhatsApp (tanto Cartão quanto PIX)
+      const itemsText = items
+        .map((i) => {
+          const dStr = i.deliveryDate ? format(new Date(i.deliveryDate + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR }) : "—";
+          return `• *${i.name}* x${i.quantity} — R$ ${(i.price * i.quantity).toFixed(2)}\n   ✏️ ${i.personalization}\n   📅 ${dStr}`;
+        })
+        .join("\n\n");
 
-      // Notificação no WhatsApp da dona — TAMBÉM para cartão
-      try {
-        const itemsText = items
-          .map((i) => `• ${i.name} x${i.quantity} — R$ ${(i.price * i.quantity).toFixed(2)}\n  Personalização: ${i.personalization}`)
-          .join("\n");
-        const dateStr = farthestDelivery ? format(new Date(farthestDelivery + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR }) : "—";
-
-        let methodBlock = "";
-        if (method === "entrega") {
-          const dd = d as z.infer<typeof deliverySchema>;
-          methodBlock =
-            `\n📍 *Entrega em ${dateStr}*\n` +
-            `${dd.shipping_address}, ${dd.shipping_number}` +
-            `${dd.shipping_complement ? ` — ${dd.shipping_complement}` : ""}\n` +
-            `${dd.shipping_neighborhood}\n` +
-            `${dd.shipping_city}/${dd.shipping_state.toUpperCase()} • CEP ${dd.shipping_zip}\n` +
-            `\n📨 Recebe: ${dd.recipient_name}${dd.recipient_phone ? ` (${dd.recipient_phone})` : ""}\n` +
-            `\n⚠️ *Taxa de entrega a combinar pelo WhatsApp com o cliente*\n`;
-        } else {
-          methodBlock =
-            `\n🏪 *Retirada em ${dateStr}*\n` +
-            `${pickupAddress || "—"}\n${pickupWindow}\n` +
-            `\n⚠️ *Cliente vai combinar horário pelo WhatsApp*\n`;
-        }
-
-        const ownerMsg =
-          `🛒 *NOVO PEDIDO — Loja Traçando Memórias*\n` +
-          `\n💳 Pagamento: Cartão (Mercado Pago)\n` +
-          `📦 Pedido: ${order.id.slice(0, 8)}\n` +
-          `\n👤 *Cliente*\n${d.customer_name}\n` +
-          `📱 ${d.customer_phone}\n` +
-          `📧 ${d.customer_email}\n` +
-          methodBlock +
-          `\n🛍️ *Itens*\n${itemsText}\n` +
-          `\n💰 Subtotal produtos: R$ ${totalPrice.toFixed(2)}` +
-          (d.notes ? `\n\n📝 Obs: ${d.notes}` : "");
-        window.open(`https://wa.me/${OWNER_WHATSAPP}?text=${encodeURIComponent(ownerMsg)}`, "_blank");
-      } catch (notifyErr) {
-        console.warn("Falha ao abrir WhatsApp da dona:", notifyErr);
+      let methodBlock = "";
+      if (method === "entrega") {
+        const dd = d as z.infer<typeof deliverySchema>;
+        methodBlock =
+          `\n📍 *Forma de recebimento: Entrega*\n` +
+          `${dd.shipping_address}, ${dd.shipping_number}` +
+          `${dd.shipping_complement ? ` — ${dd.shipping_complement}` : ""}\n` +
+          `${dd.shipping_neighborhood} • ${dd.shipping_city}/${dd.shipping_state.toUpperCase()}\n` +
+          `CEP ${dd.shipping_zip}\n` +
+          `📨 Recebe: ${dd.recipient_name}${dd.recipient_phone ? ` (${dd.recipient_phone})` : ""}\n` +
+          `💰 *Taxa de entrega: a partir de R$10,00* (valor final confirmado conforme endereço)\n`;
+      } else {
+        methodBlock =
+          `\n🏪 *Forma de recebimento: Retirada*\n` +
+          `Local: *Bairro Antares* (endereço completo será combinado por aqui)\n` +
+          `${pickupWindow}\n`;
       }
+
+      const payLabel = isPix
+        ? `💚 *Pagamento: PIX${pixActive ? ` (${pixPct}% off)` : ""}*`
+        : `💳 *Pagamento: Cartão até 3x sem juros*`;
+
+      const campaignBlock = activeCampaign
+        ? `\n🌸 *Campanha: ${activeCampaign.name}*\n📅 Data especial: ${
+            activeCampaign.delivery_date
+              ? format(new Date(activeCampaign.delivery_date + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })
+              : "—"
+          }\n${activeCampaign.note ? activeCampaign.note + "\n" : ""}`
+        : "";
+
+      const msg =
+        `🛒 *Novo pedido — Loja Traçando Memórias*\n` +
+        `Pedido #${order.id.slice(0, 8)}\n` +
+        campaignBlock +
+        `\n👤 *Cliente*\n${d.customer_name}\n📱 ${d.customer_phone}\n📧 ${d.customer_email}\n` +
+        methodBlock +
+        `\n🛍️ *Itens*\n${itemsText}\n` +
+        `\n${payLabel}\n` +
+        `💰 *Total: R$ ${totalFinal.toFixed(2)}*` +
+        (method === "entrega" ? `\n(+ taxa de entrega a partir de R$10,00)` : "") +
+        (d.notes ? `\n\n📝 Obs: ${d.notes}` : "") +
+        (isPix
+          ? `\n\nAguardo o envio da chave PIX para efetuar o pagamento. Obrigada! 💖`
+          : `\n\nAguardo a confirmação da disponibilidade e o link de pagamento (cartão até 3x sem juros). Obrigada! 💖`);
+
+      const url = `https://wa.me/${OWNER_WHATSAPP}?text=${encodeURIComponent(msg)}`;
+      // Abre direto (evita bloqueio de popup em mobile)
+      window.location.href = url;
 
       clearCart();
       onSuccess();
-      window.location.href = pay.init_point;
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Erro ao processar pedido");
@@ -248,22 +258,46 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess }: Props) => {
     }
   };
 
+  const title = isPix ? "Finalizar por PIX via WhatsApp" : "Finalizar por Cartão via WhatsApp";
+  const subtitle = isPix
+    ? `Enviaremos seu pedido pelo WhatsApp. A loja responde com a chave PIX${pixActive ? ` (${pixPct}% off)` : ""}.`
+    : "Enviaremos seu pedido pelo WhatsApp. A loja confirma a disponibilidade e envia o link de pagamento (cartão até 3x sem juros).";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-heading">Finalizar Pedido</DialogTitle>
-          <DialogDescription>Pagamento seguro pelo Mercado Pago — parcelamento sem juros conforme configurado pela loja</DialogDescription>
+          <DialogTitle className="font-heading flex items-center gap-2">
+            {isPix ? <MessageCircle className="h-5 w-5 text-pay-pix" /> : <CreditCard className="h-5 w-5 text-pay-card" />}
+            {title}
+          </DialogTitle>
+          <DialogDescription>{subtitle}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3 pt-2">
-          {farthestDelivery && (
-            <div className="bg-primary/10 border border-primary/30 rounded-md p-2.5 text-xs">
+          {activeCampaign && (
+            <div className="bg-primary/10 border border-primary/30 rounded-md p-2.5 text-xs space-y-0.5">
+              <p className="flex items-center gap-1.5 font-semibold text-primary">
+                <Sparkles className="h-3.5 w-3.5" /> Campanha: {activeCampaign.name}
+              </p>
+              {activeCampaign.delivery_date && (
+                <p>
+                  📅 Entregas desta campanha serão realizadas em{" "}
+                  <strong>
+                    {format(new Date(activeCampaign.delivery_date + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })}
+                  </strong>
+                </p>
+              )}
+              {activeCampaign.note && <p className="text-muted-foreground">{activeCampaign.note}</p>}
+            </div>
+          )}
+
+          {farthestDelivery && !activeCampaign && (
+            <div className="bg-muted/50 border border-border rounded-md p-2.5 text-xs">
               📅 <strong>Data prevista:</strong>{" "}
               {format(new Date(farthestDelivery + "T12:00:00"), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
             </div>
           )}
 
-          {/* Forma de recebimento */}
           <div>
             <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground block mb-1.5">Como deseja receber?</label>
             <div className="grid grid-cols-2 gap-2">
@@ -277,40 +311,27 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess }: Props) => {
               </button>
             </div>
 
-            {/* Aviso entrega */}
             {method === "entrega" && (
-              <div className="mt-2 bg-muted/50 border border-border rounded p-2.5 text-xs space-y-1.5">
+              <div className="mt-2 bg-muted/50 border border-border rounded p-2.5 text-xs space-y-1">
                 <p>🚚 {deliveryWindow}</p>
-                <p className="text-foreground">
-                  💰 <strong>A taxa de entrega varia por bairro</strong> e deve ser combinada com a loja pelo WhatsApp.
-                </p>
-                <button type="button" onClick={openWhatsAppShipping}
-                  className="inline-flex items-center gap-1 text-primary hover:underline font-medium">
-                  <MessageCircle className="h-3 w-3" /> Consultar taxa pelo WhatsApp
-                </button>
+                <p><strong>💰 Taxa de entrega a partir de R$10,00</strong> — valor final confirmado conforme endereço, pelo WhatsApp com a loja.</p>
+                <p className="text-muted-foreground">Prazo mínimo: 5 dias úteis. Horário padrão: 14h às 17h (mediante combinação prévia).</p>
               </div>
             )}
 
-            {/* Aviso retirada */}
             {method === "retirada" && (
-              <div className="mt-2 bg-muted/50 border border-border rounded p-2.5 text-xs space-y-1.5">
-                {pickupAddress && <p>📍 <strong>Endereço:</strong> {pickupAddress}</p>}
-                <p>🕐 Retirada das <strong>14h às 17h</strong>, mas é necessário <strong>combinar previamente</strong> com a loja pelo WhatsApp.</p>
-                {farthestDelivery && (
-                  <p>📅 Sua data de retirada: <strong>{format(new Date(farthestDelivery + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })}</strong></p>
-                )}
-                <button type="button" onClick={openWhatsAppPickup}
-                  className="inline-flex items-center gap-1 text-primary hover:underline font-medium">
-                  <MessageCircle className="h-3 w-3" /> Combinar horário pelo WhatsApp
-                </button>
+              <div className="mt-2 bg-muted/50 border border-border rounded p-2.5 text-xs space-y-1">
+                <p>📍 <strong>Retirada no Bairro Antares.</strong></p>
+                <p className="text-muted-foreground">O endereço completo será informado depois, pelo WhatsApp.</p>
+                <p>🕐 Retiradas das <strong>14h às 17h</strong> — <strong>combine previamente</strong> com a loja pelo WhatsApp.</p>
               </div>
             )}
           </div>
 
           <Input placeholder="Seu nome completo *" value={form.customer_name} onChange={(e) => set('customer_name', e.target.value)} />
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <Input placeholder="Seu e-mail *" type="email" value={form.customer_email} onChange={(e) => set('customer_email', e.target.value)} />
-            <Input placeholder="Seu WhatsApp (DDD) *" value={form.customer_phone} onChange={(e) => set('customer_phone', e.target.value)} />
+            <Input placeholder="Seu WhatsApp (com DDD) *" value={form.customer_phone} onChange={(e) => set('customer_phone', e.target.value)} />
           </div>
 
           {method === "entrega" && (
@@ -324,7 +345,7 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess }: Props) => {
                 />
                 {cepLoading && <Loader2 className="h-4 w-4 animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />}
               </div>
-              <Input placeholder="Rua / Avenida (preenchido pelo CEP)" value={form.shipping_address} onChange={(e) => set('shipping_address', e.target.value)} />
+              <Input placeholder="Rua / Avenida" value={form.shipping_address} onChange={(e) => set('shipping_address', e.target.value)} />
               <div className="grid grid-cols-[100px_1fr] gap-2">
                 <Input placeholder="Nº *" value={form.shipping_number} onChange={(e) => set('shipping_number', e.target.value)} />
                 <Input placeholder="Complemento (opcional)" value={form.shipping_complement} onChange={(e) => set('shipping_complement', e.target.value)} />
@@ -346,22 +367,26 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess }: Props) => {
           <Textarea placeholder="Observações para a loja (opcional)" value={form.notes} onChange={(e) => set('notes', e.target.value)} className="min-h-[60px]" />
 
           <div className="flex justify-between items-center pt-2 border-t">
-            <span className="font-medium">Total dos produtos</span>
-            <span className="text-xl font-bold text-primary">R$ {totalPrice.toFixed(2)}</span>
+            <span className="font-medium">
+              {isPix && pixActive ? `Total PIX (${pixPct}% off)` : "Total dos produtos"}
+            </span>
+            <span className="text-xl font-bold text-primary">R$ {totalFinal.toFixed(2)}</span>
           </div>
           {method === "entrega" && (
-            <p className="text-[11px] text-muted-foreground text-right">+ taxa de entrega a combinar pelo WhatsApp</p>
+            <p className="text-[11px] text-muted-foreground text-right">+ taxa de entrega a partir de R$10,00 (confirmada pelo WhatsApp)</p>
           )}
-          <p className="text-xs text-muted-foreground text-right">
-            Parcelamento sem juros no cartão conforme configuração da loja no Mercado Pago
-          </p>
 
-          <Button onClick={handleSubmit} disabled={loading} size="lg" className="w-full">
-            {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CreditCard className="h-4 w-4 mr-2" />}
-            {loading ? 'Processando...' : 'Pagar com Mercado Pago'}
+          <Button
+            onClick={handleSubmit}
+            disabled={loading}
+            size="lg"
+            className={`w-full ${isPix ? "bg-pay-pix text-pay-pix-foreground hover:bg-pay-pix/90" : "bg-pay-card text-pay-card-foreground hover:bg-pay-card/90"}`}
+          >
+            {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MessageCircle className="h-4 w-4 mr-2" />}
+            {loading ? "Enviando..." : isPix ? "Enviar pedido por WhatsApp (PIX)" : "Enviar pedido por WhatsApp (Cartão)"}
           </Button>
           <p className="text-[10px] text-muted-foreground text-center">
-            🔒 Seus dados são criptografados. O pagamento acontece dentro do Mercado Pago.
+            A cobrança é feita manualmente pela loja após confirmar a disponibilidade do produto.
           </p>
         </div>
       </DialogContent>
