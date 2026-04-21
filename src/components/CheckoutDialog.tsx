@@ -311,7 +311,12 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
       onSuccess();
     } catch (err: any) {
       console.error("[checkout]", err);
-      toast.error(err?.message || "Erro ao processar pedido. Tente novamente.");
+      const msg = err?.message || "";
+      if (msg.includes("row-level security") || msg.includes("violates row-level")) {
+        toast.error("Não foi possível registrar o pedido. Confira se nome, telefone, e-mail e endereço estão corretamente preenchidos e tente novamente.");
+      } else {
+        toast.error(msg || "Erro ao processar pedido. Tente novamente.");
+      }
     } finally {
       setLoading(false);
     }
