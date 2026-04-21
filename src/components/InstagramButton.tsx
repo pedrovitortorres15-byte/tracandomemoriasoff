@@ -3,12 +3,20 @@ import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 export function InstagramButton() {
   const { settings } = useSiteSettings();
-  const handle = (settings.instagram_handle || "").replace(/^@/, "");
-  const href = `https://instagram.com/${handle}`;
+  const handle = (settings.instagram_handle || "lojatracandomemorias")
+    .replace(/^@/, "")
+    .trim();
+  const href = `https://www.instagram.com/${handle}/`;
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    window.open(href, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <a
       href={href}
+      onClick={handleClick}
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`Visite nosso Instagram @${handle}`}
