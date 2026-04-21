@@ -1,43 +1,26 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useCartStore } from "@/stores/cartStore";
+import { ChevronRight } from "lucide-react";
 import type { FirebaseProduct } from "@/hooks/useProducts";
-import { toast } from "sonner";
 
 interface ProductCardProps {
   product: FirebaseProduct;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const addItem = useCartStore(state => state.addItem);
   const image = product.imagem || (product.imagens && product.imagens[0]);
   const secondImage = product.imagens && product.imagens.length > 1 ? product.imagens[1] : null;
   const name = product.nome || (product as any).name || "Produto";
   const price = product.preco || (product as any).price || 0;
   const originalPrice = (product as any).precoOriginal || (product as any).originalPrice;
-  const description = product.descricao || (product as any).description || "";
   const category = product.categoria || (product as any).category || "";
 
   const installments = price > 0 ? Math.ceil(price / 3) : 0;
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addItem({
-      id: product.id,
-      name,
-      price,
-      image: image || "",
-      quantity: 1,
-    });
-    toast.success("Adicionado ao carrinho!", { position: "top-center" });
-  };
 
   return (
     <Link
       to={`/produto/${product.id}`}
       className="group block rounded-lg overflow-hidden bg-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+      aria-label={`Ver detalhes de ${name}`}
     >
       <div className="relative aspect-[4/5] overflow-hidden bg-muted">
         {image ? (
@@ -45,7 +28,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <img
               src={image}
               alt={name}
-              className={`w-full h-full object-cover transition-all duration-500 ${secondImage ? 'group-hover:opacity-0' : 'group-hover:scale-105'}`}
+              className={`w-full h-full object-cover transition-all duration-500 ${secondImage ? "group-hover:opacity-0" : "group-hover:scale-105"}`}
               loading="lazy"
             />
             {secondImage && (
@@ -68,14 +51,6 @@ export function ProductCard({ product }: ProductCardProps) {
             Oferta
           </span>
         )}
-
-        <Button
-          size="sm"
-          onClick={handleAddToCart}
-          className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all bg-primary text-primary-foreground hover:bg-primary/90 rounded-full h-10 w-10 p-0 shadow-lg"
-        >
-          <ShoppingCart className="h-4 w-4" />
-        </Button>
       </div>
 
       <div className="p-4 space-y-2">
@@ -102,9 +77,10 @@ export function ProductCard({ product }: ProductCardProps) {
             ou 3x de <span className="font-medium">R${installments.toFixed(2)}</span> sem juros
           </p>
         )}
+        <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary pt-1">
+          Personalizar produto <ChevronRight className="h-3.5 w-3.5" />
+        </span>
       </div>
     </Link>
   );
 }
-
-

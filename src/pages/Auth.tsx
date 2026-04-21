@@ -8,6 +8,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Mail, Lock, User, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
+const OWNER_EMAIL = "catharinaferrario@gmail.com";
+
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
@@ -19,10 +21,12 @@ const Auth = () => {
   const { user, loading: authLoading } = useAuth();
   const rawRedirect = searchParams.get("redirect");
   const redirectTo = rawRedirect?.startsWith("/") ? rawRedirect : "/";
+  const destinationFor = (email?: string | null) =>
+    redirectTo !== "/" ? redirectTo : email?.toLowerCase() === OWNER_EMAIL ? "/admin" : "/";
 
   useEffect(() => {
     if (!authLoading && user) {
-      navigate(redirectTo, { replace: true });
+      navigate(destinationFor(user.email), { replace: true });
     }
   }, [authLoading, user, navigate, redirectTo]);
 
@@ -31,10 +35,10 @@ const Auth = () => {
     setLoading(true);
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Login realizado!");
-        navigate(redirectTo, { replace: true });
+        navigate(destinationFor(data.user?.email || email), { replace: true });
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -54,7 +58,7 @@ const Auth = () => {
   const handleGoogle = async () => {
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}${redirectTo}`,
+        redirect_uri: `${window.location.origin}${destinationFor(email)}`,
         extraParams: { prompt: "select_account" },
       });
       if (result.error) {
@@ -63,7 +67,7 @@ const Auth = () => {
         return;
       }
       if (!result.redirected) {
-        navigate(redirectTo, { replace: true });
+        navigate(destinationFor(email), { replace: true });
       }
     } catch (err: any) {
       console.error("Google OAuth exception:", err);

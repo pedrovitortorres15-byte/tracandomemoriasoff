@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,13 +55,15 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
   const { data: campaigns } = useCampaigns(true);
   const pickupEnabled = settings?.pickup_enabled ?? true;
   const pickupWindow = settings?.pickup_window_text || "Retirada das 14h às 17h (combine previamente pelo WhatsApp)";
+  const pickupAddress = settings?.pickup_address?.trim() || "Bairro Antares";
   const deliveryWindow = settings?.delivery_window_text || "Entregas no período da tarde (14h às 17h)";
   const pixActive = settings?.pix_discount_active ?? true;
   const pixPct = settings?.pix_discount_percent ?? 10;
+  const cartMethod = items.find((i) => i.fulfillmentMethod)?.fulfillmentMethod;
 
   const [loading, setLoading] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
-  const [method, setMethod] = useState<"entrega" | "retirada">("entrega");
+  const [method, setMethod] = useState<"entrega" | "retirada">(cartMethod || "entrega");
   const [form, setForm] = useState({
     customer_name: "", customer_email: "", customer_phone: "",
     shipping_zip: "", shipping_address: "", shipping_number: "", shipping_complement: "",
@@ -118,10 +120,20 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
     }
   };
 
+  useEffect(() => {
+    if (cartMethod === "entrega" || cartMethod === "retirada") {
+      setMethod(cartMethod);
+    }
+  }, [cartMethod]);
+
   const handleSubmit = async () => {
-    const allComplete = items.every((i) => isPersonalizationValid(i.personalization) && !!i.deliveryDate);
+    const allComplete = items.every((i) => isPersonalizationValid(i.personalization) && !!i.deliveryDate && !!i.fulfillmentMethod);
     if (!allComplete) {
-      toast.error("Itens incompletos no carrinho — preencha personalização + data de entrega.");
+      toast.error("Itens incompletos no carrinho — preencha personalização, data e entrega/retirada no produto.");
+      return;
+    }
+    if (cartMethod && cartMethod !== method) {
+      toast.error("A forma de recebimento deve ser a mesma escolhida no produto.");
       return;
     }
 
@@ -170,7 +182,7 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
         });
       } else {
         Object.assign(orderPayload, {
-          shipping_address: "Retirada no Bairro Antares",
+          shipping_address: `Retirada: ${pickupAddress}`,
         });
       }
 
@@ -213,7 +225,7 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
       } else {
         methodBlock =
           `\n🏪 *Forma de recebimento: Retirada*\n` +
-          `Local: *Bairro Antares* (endereço completo será combinado por aqui)\n` +
+          `Local: *${pickupAddress}* (endereço completo será combinado por aqui)\n` +
           `${pickupWindow}\n`;
       }
 

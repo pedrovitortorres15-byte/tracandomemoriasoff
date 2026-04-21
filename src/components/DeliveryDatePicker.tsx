@@ -13,9 +13,10 @@ interface Props {
   value?: Date;
   onChange: (d: Date | undefined) => void;
   className?: string;
+  label?: string;
 }
 
-export const DeliveryDatePicker = ({ value, onChange, className }: Props) => {
+export const DeliveryDatePicker = ({ value, onChange, className, label = "Data de Entrega" }: Props) => {
   const [open, setOpen] = useState(false);
   const { data: settings } = useDeliverySettings();
   const minDays = settings?.min_business_days ?? 5;
@@ -45,7 +46,7 @@ export const DeliveryDatePicker = ({ value, onChange, className }: Props) => {
     <div className={cn("space-y-2", className)}>
       <label className="text-sm font-semibold flex items-center gap-2">
         <CalendarIcon className="h-4 w-4 text-primary" />
-        Data de Entrega <span className="text-destructive">*</span>
+        {label} <span className="text-destructive">*</span>
       </label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>

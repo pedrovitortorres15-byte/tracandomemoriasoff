@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
+export type FulfillmentMethod = 'entrega' | 'retirada';
+
 export interface CartItem {
   id: string;
   name: string;
@@ -10,6 +12,8 @@ export interface CartItem {
   personalization?: string;
   /** ISO date YYYY-MM-DD chosen by the customer */
   deliveryDate?: string;
+  /** Chosen before cart so checkout cannot skip delivery/pickup decision */
+  fulfillmentMethod?: FulfillmentMethod;
   /** Optional seasonal campaign slug (e.g. 'dia-das-maes-2026') */
   campaign_slug?: string | null;
 }
@@ -37,6 +41,11 @@ interface CartStore {
   invalidReason: () => string | null;
 }
 
+const hasOneFulfillmentMethod = (items: CartItem[]) => {
+  const methods = Array.from(new Set(items.map((i) => i.fulfillmentMethod).filter(Boolean)));
+  return methods.length === 1;
+};
+
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
@@ -45,9 +54,9 @@ export const useCartStore = create<CartStore>()(
 
       addItem: (item) => {
         const { items } = get();
-        const existing = items.find(i => i.id === item.id);
+        const existing = items.find(i => i.id === item.id && i.personalization === item.personalization && i.deliveryDate === item.deliveryDate && i.fulfillmentMethod === item.fulfillmentMethod);
         if (existing) {
-          set({ items: items.map(i => i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i) });
+          set({ items: items.map(i => i === existing ? { ...i, quantity: i.quantity + item.quantity } : i) });
         } else {
           set({ items: [...items, item] });
         }
@@ -79,7 +88,7 @@ export const useCartStore = create<CartStore>()(
       allValid: () => {
         const { items } = get();
         if (items.length === 0) return false;
-        return items.every((i) => isPersonalizationValid(i.personalization) && !!i.deliveryDate);
+        return items.every((i) => isPersonalizationValid(i.personalization) && !!i.deliveryDate && !!i.fulfillmentMethod) && hasOneFulfillmentMethod(items);
       },
 
       invalidReason: () => {
@@ -90,8 +99,14 @@ export const useCartStore = create<CartStore>()(
             return `Personalização inválida em "${i.name}". Escreva pelo menos ${MIN_PERSONALIZATION_LENGTH} caracteres reais.`;
           }
           if (!i.deliveryDate) {
-            return `Selecione a data de entrega para "${i.name}".`;
+            return `Selecione a data desejada para "${i.name}".`;
           }
+          if (!i.fulfillmentMethod) {
+            return `Escolha entrega ou retirada para "${i.name}".`;
+          }
+        }
+        if (!hasOneFulfillmentMethod(items)) {
+          return "Use apenas entrega ou apenas retirada no mesmo pedido. Separe em dois pedidos para misturar as opções.";
         }
         return null;
       },

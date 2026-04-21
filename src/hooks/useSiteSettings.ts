@@ -106,9 +106,10 @@ export const useSiteSettings = () => {
 
   useEffect(() => {
     load();
-    // realtime: ao salvar no admin, reflete em todas as abas
+    // Nome único evita reutilizar um canal já inscrito pelo React StrictMode ou por outro componente.
+    const channelName = `site_settings_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const channel = (supabase as any)
-      .channel("site_settings")
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "site_settings" },
