@@ -678,7 +678,7 @@ const Admin = () => {
               <div className="bg-card border rounded-lg p-4 space-y-3">
                 <h3 className="font-semibold flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
-                  {editingCampaign ? "Editar Campanha" : "Nova Campanha"}
+                  {editingCampaign ? "Editar Especial" : "Novo Especial"}
                 </h3>
                 <div>
                   <label className="text-xs font-medium block mb-1">Nome *</label>
@@ -707,13 +707,13 @@ const Admin = () => {
                     onChange={(e) => setCampaignForm({ ...campaignForm, delivery_date: e.target.value })}
                   />
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    Todos os pedidos com produtos desta campanha serão entregues nesta data (ex: 08/05/2026).
+                    Todos os pedidos com produtos deste especial serão entregues nesta data (ex: 08/05/2026).
                   </p>
                 </div>
                 <div>
                   <label className="text-xs font-medium block mb-1">Observação (aparece no checkout)</label>
                   <Textarea
-                    placeholder="Ex: Entregas desta campanha serão realizadas em 08/05/2026"
+                    placeholder="Ex: Entregas deste especial serão realizadas em 08/05/2026"
                     value={campaignForm.note}
                     onChange={(e) => setCampaignForm({ ...campaignForm, note: e.target.value })}
                     maxLength={300}
@@ -726,7 +726,7 @@ const Admin = () => {
                     onChange={(e) => setCampaignForm({ ...campaignForm, active: e.target.checked })}
                     className="h-4 w-4 rounded"
                   />
-                  Campanha ativa
+                  Especial ativo
                 </label>
 
                 <div className="flex gap-2 pt-2">
