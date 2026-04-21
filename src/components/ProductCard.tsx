@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ interface ProductCardProps {
   product: FirebaseProduct;
 }
 
-export const ProductCard = ({ product }: ProductCardProps) => {
+export const ProductCard = forwardRef<HTMLAnchorElement, ProductCardProps>(({ product }, ref) => {
   const addItem = useCartStore(state => state.addItem);
   const image = product.imagem || (product.imagens && product.imagens[0]);
   const secondImage = product.imagens && product.imagens.length > 1 ? product.imagens[1] : null;
@@ -36,6 +37,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
   return (
     <Link
+      ref={ref}
       to={`/produto/${product.id}`}
       className="group block rounded-lg overflow-hidden bg-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
     >
@@ -105,4 +107,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       </div>
     </Link>
   );
-};
+});
+ProductCard.displayName = "ProductCard";
+
