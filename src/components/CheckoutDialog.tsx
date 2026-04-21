@@ -149,6 +149,18 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
       return;
     }
 
+    if (method === "entrega") {
+      const cepDigits = form.shipping_zip.replace(/\D/g, "");
+      if (cepDigits.length !== 8 || cepValidated !== cepDigits) {
+        toast.error("Valide o CEP — digite os 8 dígitos e aguarde o preenchimento automático do endereço.");
+        return;
+      }
+      if (!form.shipping_address.trim() || !form.shipping_neighborhood.trim() || !form.shipping_city.trim() || !form.shipping_state.trim()) {
+        toast.error("Endereço incompleto — rua, bairro, cidade e UF são obrigatórios.");
+        return;
+      }
+    }
+
     const schema = method === "entrega" ? deliverySchema : pickupSchema;
     const parsed = schema.safeParse({ ...form, delivery_method: method });
     if (!parsed.success) {
