@@ -3,21 +3,29 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Sparkles, Send, ImagePlus, X, Loader2, Trash2, Lightbulb, Mic, MicOff } from "lucide-react";
+import { Sparkles, Send, ImagePlus, X, Loader2, Trash2, Lightbulb, Mic, MicOff, Wand2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+
+interface ToolEvent {
+  name: string;
+  args: any;
+  result: any;
+}
 
 interface Message {
   role: "user" | "assistant";
   content: string;
   images?: string[]; // data URLs
+  toolEvents?: ToolEvent[];
 }
 
 const QUICK_PROMPTS = [
-  { icon: "📸", label: "Legenda para post", prompt: "Crie uma legenda envolvente para Instagram sobre uma caixa personalizada de presente. Inclua hashtags." },
-  { icon: "🎬", label: "Roteiro de Reels", prompt: "Crie um roteiro de Reels de 30 segundos mostrando o passo a passo de uma encomenda personalizada." },
-  { icon: "💝", label: "Ideia de campanha", prompt: "Me dê 3 ideias de campanha para Dia das Mães com produtos personalizados." },
-  { icon: "💬", label: "Resposta ao cliente", prompt: "Como respondo educadamente um cliente que pede desconto?" },
+  { icon: "🎨", label: "Mudar cor da loja", prompt: "Quero deixar o site com uma vibe mais romântica em tons de rosa antigo. Pode ajustar a cor primária e o accent pra mim?" },
+  { icon: "📸", label: "Legenda + hashtags", prompt: "Crie 3 versões de legenda envolvente para Instagram sobre uma caixa personalizada de presente, com hashtags estratégicas e CTA." },
+  { icon: "🎬", label: "Roteiro de Reels", prompt: "Crie um roteiro de Reels de 30 segundos com hook forte mostrando o passo a passo de uma encomenda personalizada. Inclua sugestão de áudio em alta." },
+  { icon: "🎁", label: "Criar campanha", prompt: "Crie uma campanha de Dia das Mães na loja com data limite de pedido e me sugira 3 produtos pra vincular nela." },
 ];
 
 const STORAGE_KEY = "admin-ai-chat-history";
@@ -153,72 +161,55 @@ export const AIAssistantTab = () => {
     setPendingImages([]);
     setLoading(true);
 
-    let assistantSoFar = "";
-    const upsertAssistant = (chunk: string) => {
-      assistantSoFar += chunk;
-      setMessages((prev) => {
-        const last = prev[prev.length - 1];
-        if (last?.role === "assistant") {
-          return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
-        }
-        return [...prev, { role: "assistant", content: assistantSoFar }];
-      });
-    };
-
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error("Faça login como administradora para usar a IA.");
+        setLoading(false);
+        return;
+      }
+
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`;
       const resp = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({
+          messages: newMessages.map(({ role, content, images }) => ({ role, content, images })),
+        }),
       });
 
-      if (resp.status === 429) {
-        toast.error("Muitas requisições. Aguarde alguns instantes.");
-        setLoading(false);
-        return;
-      }
-      if (resp.status === 402) {
-        toast.error("Créditos da IA esgotados. Adicione créditos no workspace.");
-        setLoading(false);
-        return;
-      }
-      if (!resp.ok || !resp.body) {
-        const err = await resp.json().catch(() => ({ error: "Erro desconhecido" }));
-        toast.error(err.error || "Erro ao falar com a IA.");
+      if (resp.status === 429) { toast.error("Muitas requisições. Aguarde alguns instantes."); setLoading(false); return; }
+      if (resp.status === 402) { toast.error("Créditos da IA esgotados. Adicione créditos no workspace."); setLoading(false); return; }
+      if (resp.status === 401 || resp.status === 403) {
+        const err = await resp.json().catch(() => ({}));
+        toast.error(err.error || "Acesso restrito.");
         setLoading(false);
         return;
       }
 
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let done = false;
-      while (!done) {
-        const { done: d, value } = await reader.read();
-        if (d) break;
-        buffer += decoder.decode(value, { stream: true });
-        let idx: number;
-        while ((idx = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, idx);
-          buffer = buffer.slice(idx + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (!line.startsWith("data: ")) continue;
-          const json = line.slice(6).trim();
-          if (json === "[DONE]") { done = true; break; }
-          try {
-            const parsed = JSON.parse(json);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) upsertAssistant(content);
-          } catch {
-            buffer = line + "\n" + buffer;
-            break;
-          }
-        }
+      const data = await resp.json().catch(() => null);
+      if (!resp.ok || !data) {
+        toast.error(data?.error || "Erro ao falar com a IA.");
+        setLoading(false);
+        return;
       }
+
+      const toolEvents: ToolEvent[] = data.toolEvents || [];
+      const writeTools = toolEvents.filter(
+        (t) => !t.name.startsWith("list_") && !t.name.startsWith("get_") && t.result?.error == null,
+      );
+      if (writeTools.length > 0) {
+        toast.success(`✨ ${writeTools.length} ação(ões) aplicadas no site`);
+      }
+
+      setMessages((prev) => [...prev, {
+        role: "assistant",
+        content: data.content || "✨",
+        toolEvents: toolEvents.length > 0 ? toolEvents : undefined,
+      }]);
     } catch (e) {
       console.error(e);
       toast.error("Falha de conexão com a IA.");
@@ -240,9 +231,9 @@ export const AIAssistantTab = () => {
           <Sparkles className="h-5 w-5" />
         </div>
         <div className="flex-1">
-          <h3 className="font-heading text-lg font-bold">Sua Assistente Pessoal de IA</h3>
+          <h3 className="font-heading text-lg font-bold">Catha AI ✨ — sua copiloto criativa</h3>
           <p className="text-sm text-muted-foreground">
-            Tô aqui pra te ajudar com posts, legendas, roteiros de Reels, ideias de campanha, respostas a clientes e tudo mais. Pode mandar fotos e até vídeos pra eu analisar! ✨
+            Posso mudar cores e textos do site, criar produtos e campanhas, escrever legendas, roteiros, responder clientes e analisar suas fotos e vídeos. É só pedir — eu faço por você. 💝
           </p>
         </div>
         {messages.length > 0 && (
@@ -307,9 +298,26 @@ export const AIAssistantTab = () => {
                     </div>
                   )}
                   {m.role === "assistant" ? (
-                    <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1.5 prose-headings:my-2 prose-ul:my-1.5 prose-ol:my-1.5">
-                      <ReactMarkdown>{m.content}</ReactMarkdown>
-                    </div>
+                    <>
+                      {m.toolEvents && m.toolEvents.length > 0 && (
+                        <div className="mb-2 space-y-1">
+                          {m.toolEvents.map((t, ti) => (
+                            <div key={ti} className="flex items-center gap-1.5 text-[11px] bg-background/60 border rounded-md px-2 py-1">
+                              <Wand2 className="h-3 w-3 text-primary" />
+                              <span className="font-mono text-muted-foreground">{t.name}</span>
+                              {t.result?.error ? (
+                                <span className="text-destructive">· erro</span>
+                              ) : (
+                                <span className="text-primary">· ok</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1.5 prose-headings:my-2 prose-ul:my-1.5 prose-ol:my-1.5">
+                        <ReactMarkdown>{m.content}</ReactMarkdown>
+                      </div>
+                    </>
                   ) : (
                     <p className="whitespace-pre-wrap">{m.content}</p>
                   )}
