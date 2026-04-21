@@ -132,27 +132,27 @@ const Admin = () => {
       if (editingCampaign) {
         const { error } = await (supabase as any).from("campaigns").update(payload).eq("id", editingCampaign.id);
         if (error) throw error;
-        toast.success("Campanha atualizada!");
+        toast.success("Especial atualizado!");
       } else {
         const { error } = await (supabase as any).from("campaigns").insert(payload);
         if (error) throw error;
-        toast.success("Campanha criada!");
+        toast.success("Especial criado!");
       }
       setEditingCampaign(null);
       setNewCampaign(false);
       setCampaignForm(emptyCampaign);
       loadCampaigns();
     } catch (e: any) {
-      toast.error(e.message || "Erro ao salvar campanha");
+      toast.error(e.message || "Erro ao salvar especial");
     } finally {
       setSaving(false);
     }
   };
 
   const deleteCampaign = async (id: string) => {
-    if (!confirm("Excluir esta campanha?")) return;
+    if (!confirm("Excluir este especial?")) return;
     await (supabase as any).from("campaigns").delete().eq("id", id);
-    toast.success("Campanha excluída!");
+    toast.success("Especial excluído!");
     loadCampaigns();
   };
 
