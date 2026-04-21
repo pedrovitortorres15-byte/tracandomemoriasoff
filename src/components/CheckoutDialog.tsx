@@ -158,13 +158,16 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
   }, [cartMethod]);
 
   const handleSubmit = async () => {
-    const allComplete = items.every((i) => isPersonalizationValid(i.personalization) && !!i.deliveryDate && !!i.fulfillmentMethod);
-    if (!allComplete) {
-      toast.error("Itens incompletos no carrinho — preencha personalização, data e entrega/retirada no produto.");
+    // Validação leve: itens precisam ter personalização e data (a forma de recebimento
+    // será sincronizada com a escolha do checkout abaixo, evitando bloqueios).
+    const missingPersonalization = items.find((i) => !isPersonalizationValid(i.personalization));
+    if (missingPersonalization) {
+      toast.error(`Personalização incompleta em "${missingPersonalization.name}". Volte à página do produto.`);
       return;
     }
-    if (cartMethod && cartMethod !== method) {
-      toast.error("A forma de recebimento deve ser a mesma escolhida no produto.");
+    const missingDate = items.find((i) => !i.deliveryDate);
+    if (missingDate) {
+      toast.error(`Selecione a data desejada para "${missingDate.name}".`);
       return;
     }
 
@@ -237,10 +240,16 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
         });
       } else {
         Object.assign(orderPayload, {
-          shipping_address: `Retirada: ${pickupAddress}`,
+          shipping_address: `Retirada: ${pickupAddress || "Bairro Antares"}`.slice(0, 500),
         });
       }
 
+      // Garante que NUNCA vai um shipping_address vazio (RLS exige btrim <> '')
+      if (!orderPayload.shipping_address || !String(orderPayload.shipping_address).trim()) {
+        orderPayload.shipping_address = method === "entrega" ? "Endereço a confirmar pelo WhatsApp" : "Retirada a combinar pelo WhatsApp";
+      }
+
+      console.log("[checkout] inserting order", orderPayload);
       const { data: order, error: orderErr } = await supabase
         .from("orders")
         .insert(orderPayload)
@@ -333,12 +342,17 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
       clearCart();
       onSuccess();
     } catch (err: any) {
-      console.error("[checkout]", err);
+      console.error("[checkout] error", err);
       const msg = err?.message || "";
-      if (msg.includes("row-level security") || msg.includes("violates row-level")) {
-        toast.error("Não foi possível registrar o pedido. Confira se nome, telefone, e-mail e endereço estão corretamente preenchidos e tente novamente.");
+      const details = err?.details || "";
+      const hint = err?.hint || "";
+      if (msg.includes("row-level security") || msg.includes("violates row-level") || msg.includes("check constraint")) {
+        const which = details || hint || "Confira nome, e-mail (válido) e WhatsApp (com DDD) e tente novamente.";
+        toast.error(`Não foi possível registrar o pedido. ${which}`);
+      } else if (msg) {
+        toast.error(`Erro: ${msg}`);
       } else {
-        toast.error(msg || "Erro ao processar pedido. Tente novamente.");
+        toast.error("Erro ao processar pedido. Tente novamente em alguns instantes.");
       }
     } finally {
       setLoading(false);
