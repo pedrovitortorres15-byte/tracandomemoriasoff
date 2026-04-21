@@ -124,7 +124,7 @@ const ProductDetail = () => {
       }
     }
     if (!fulfillmentMethod) return { ok: false, reason: "Escolha entrega ou retirada" };
-    // Para produtos de campanha, a data já vem da campanha; só validamos as outras datas
+    // Para produtos de especial, a data já vem do especial; só validamos as outras datas
     if (!isCampaignProduct && !deliveryDate) {
       return { ok: false, reason: fulfillmentMethod === "retirada" ? "Escolha a data desejada para retirada" : "Escolha a data desejada de entrega" };
     }
