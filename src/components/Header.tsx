@@ -16,8 +16,9 @@ import {
 import { toast } from "sonner";
 import logoIconFallback from "@/assets/logo-icon.jpg";
 
-const CATEGORIES: { label: string; value: string }[] = [
+const CATEGORIES: { label: string; value: string; isCampaigns?: boolean }[] = [
   { label: "Início", value: "" },
+  { label: "Campanhas", value: "__campaigns", isCampaigns: true },
   { label: "Todos", value: "todos" },
   { label: "Canecas", value: "canecas" },
   { label: "Presentes", value: "presentes" },
@@ -40,6 +41,15 @@ export const Header = () => {
   const brandLast = brandRest.length > 0 ? brandRest[brandRest.length - 1] : "";
 
   const goCategory = (value: string) => {
+    if (value === "__campaigns") {
+      if (window.location.pathname !== "/") {
+        navigate("/#campanhas");
+      }
+      setTimeout(() => {
+        document.getElementById("campanhas")?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+      return;
+    }
     if (!value) {
       navigate("/");
     } else {

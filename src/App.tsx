@@ -7,6 +7,7 @@ import { useCartSync } from "@/hooks/useCartSync";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import Index from "./pages/Index.tsx";
 import ProductDetail from "./pages/ProductDetail.tsx";
+import Campaign from "./pages/Campaign.tsx";
 import Auth from "./pages/Auth.tsx";
 import Admin from "./pages/Admin.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -21,6 +22,7 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/produto/:handle" element={<ProductDetail />} />
+        <Route path="/campanha/:slug" element={<Campaign />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<NotFound />} />
