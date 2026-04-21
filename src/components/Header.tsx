@@ -27,7 +27,7 @@ const CATEGORIES: { label: string; value: string }[] = [
 export const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const { settings } = useSiteSettings();
   const OWNER_EMAIL = "catharinaferrario@gmail.com";
   const isOwner = isAdmin && user?.email?.toLowerCase() === OWNER_EMAIL;
