@@ -2,6 +2,7 @@ import { useSiteSettings } from "@/hooks/useSiteSettings";
 import logoIconFallback from "@/assets/logo-icon.jpg";
 import logoFullFallback from "@/assets/logo-full.jpg";
 import { cn } from "@/lib/utils";
+import { forwardRef } from "react";
 
 interface BrandLogoProps {
   variant?: "icon" | "full";
@@ -20,13 +21,13 @@ interface BrandLogoProps {
  * - variant="full" → logo completa (footer, hero, auth, admin)
  * Faz fallback automático se a logo personalizada não tiver sido enviada.
  */
-export const BrandLogo = ({
+export const BrandLogo = forwardRef<HTMLSpanElement, BrandLogoProps>(({
   variant = "icon",
   className,
   showName = false,
   nameClassName,
   wrapperClassName,
-}: BrandLogoProps) => {
+}, ref) => {
   const { settings } = useSiteSettings();
   const fallback = variant === "full" ? logoFullFallback : logoIconFallback;
   const src =
@@ -40,7 +41,7 @@ export const BrandLogo = ({
       : "h-10 w-10 rounded-full object-cover border-2 border-primary/20 shadow-sm";
 
   return (
-    <span className={cn("inline-flex items-center gap-2.5", wrapperClassName)}>
+    <span ref={ref} className={cn("inline-flex items-center gap-2.5", wrapperClassName)}>
       <img
         src={src}
         alt={`Logo ${settings.brand_name}`}
@@ -60,4 +61,6 @@ export const BrandLogo = ({
       )}
     </span>
   );
-};
+});
+
+BrandLogo.displayName = "BrandLogo";
