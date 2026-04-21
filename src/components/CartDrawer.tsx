@@ -1,20 +1,20 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ShoppingCart, Minus, Plus, Trash2, CreditCard, MessageCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ShoppingCart, Minus, Plus, Trash2, CreditCard, MessageCircle, AlertTriangle, CheckCircle2, Pencil } from "lucide-react";
 import { useCartStore, isPersonalizationValid } from "@/stores/cartStore";
 import { toast } from "sonner";
 import { CheckoutDialog, type PaymentChoice } from "./CheckoutDialog";
-import { DeliveryDatePicker } from "./DeliveryDatePicker";
 import { useDeliverySettings } from "@/hooks/useDeliverySettings";
 
 export const CartDrawer = () => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [paymentChoice, setPaymentChoice] = useState<PaymentChoice>("pix");
-  const { items, updateQuantity, updatePersonalization, updateDeliveryDate, removeItem, allValid, invalidReason } = useCartStore();
+  const { items, updateQuantity, removeItem, allValid, invalidReason } = useCartStore();
   const { data: settings } = useDeliverySettings();
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -68,10 +68,19 @@ export const CartDrawer = () => {
                   {items.map((item) => {
                     const persOk = isPersonalizationValid(item.personalization);
                     const dateOk = !!item.deliveryDate;
-                    const itemComplete = persOk && dateOk;
+                    const methodOk = !!item.fulfillmentMethod;
+                    const itemComplete = persOk && dateOk && methodOk;
+                    const personalizationParts = (item.personalization || "")
+                      .split(" | ")
+                      .map((p) => p.trim())
+                      .filter(Boolean);
+                    const goEdit = () => {
+                      setIsOpen(false);
+                      navigate(`/produto/${item.id}`);
+                    };
                     return (
                       <div
-                        key={item.id}
+                        key={item.id + (item.personalization || "") + (item.deliveryDate || "")}
                         className={`p-3 rounded-lg space-y-3 border ${itemComplete ? 'bg-muted/40 border-border' : 'bg-destructive/5 border-destructive/40'}`}
                       >
                         <div className="flex gap-4">
@@ -101,29 +110,40 @@ export const CartDrawer = () => {
                           </div>
                         </div>
 
-                        <div>
-                          <label className="text-xs font-medium flex items-center gap-1 mb-1">
-                            ✨ Personalização <span className="text-destructive">*</span>
-                          </label>
-                          <Textarea
-                            placeholder="Ex: Nome 'Maria Eduarda', cor rosa chá, foto da Júlia em anexo no WhatsApp..."
-                            value={item.personalization || ""}
-                            onChange={(e) => updatePersonalization(item.id, e.target.value)}
-                            className="text-xs min-h-[70px] resize-none"
-                            maxLength={500}
-                          />
-                          {!persOk && (
-                            <p className="text-xs text-destructive flex items-center gap-1 mt-1">
-                              <AlertTriangle className="h-3 w-3" /> Mínimo 5 caracteres reais (não vale ".", " ", letras soltas)
+                        <div className="rounded-md bg-background border border-border p-2.5">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              ✨ Personalização
+                            </span>
+                            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs gap-1" onClick={goEdit}>
+                              <Pencil className="h-3 w-3" /> Editar
+                            </Button>
+                          </div>
+                          {personalizationParts.length > 0 ? (
+                            <ul className="space-y-1 text-xs text-foreground">
+                              {personalizationParts.map((line, idx) => {
+                                const [k, ...rest] = line.split(":");
+                                const v = rest.join(":").trim();
+                                return v ? (
+                                  <li key={idx} className="flex gap-1.5">
+                                    <span className="text-muted-foreground font-medium">{k.trim()}:</span>
+                                    <span className="flex-1 break-words">{v}</span>
+                                  </li>
+                                ) : (
+                                  <li key={idx} className="text-xs">{line}</li>
+                                );
+                              })}
+                            </ul>
+                          ) : (
+                            <p className="text-xs text-muted-foreground italic">Nenhuma personalização preenchida.</p>
+                          )}
+                          {!itemComplete && (
+                            <p className="text-xs text-destructive flex items-center gap-1 mt-2">
+                              <AlertTriangle className="h-3 w-3 flex-shrink-0" />
+                              Personalização incompleta — clique em <strong>Editar</strong> para finalizar.
                             </p>
                           )}
                         </div>
-
-                        <DeliveryDatePicker
-                          value={item.deliveryDate ? new Date(item.deliveryDate + "T12:00:00") : undefined}
-                          onChange={(d) => d && updateDeliveryDate(item.id, d.toISOString().slice(0, 10))}
-                          label={item.fulfillmentMethod === "retirada" ? "Data desejada de retirada" : "Data desejada de entrega"}
-                        />
                       </div>
                     );
                   })}
