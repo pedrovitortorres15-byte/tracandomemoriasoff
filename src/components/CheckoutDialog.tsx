@@ -288,15 +288,29 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
           ? `\n\nAguardo o envio da *chave PIX* aqui pelo WhatsApp para efetuar o pagamento. Obrigada! 💖`
           : `\n\nAguardo a confirmação e o *link de pagamento por cartão* (até 3x sem juros) aqui pelo WhatsApp. Obrigada! 💖`);
 
-      const url = `https://wa.me/${OWNER_WHATSAPP}?text=${encodeURIComponent(msg)}`;
-      // Abre direto (evita bloqueio de popup em mobile)
-      window.location.href = url;
+      // Mensagem encurtada se exceder limite seguro do wa.me
+      const finalMsg = msg.length > MAX_MSG_LEN
+        ? msg.slice(0, MAX_MSG_LEN - 80) + `\n\n…(mensagem completa salva no painel — pedido #${order.id.slice(0,8)})`
+        : msg;
 
+      const encoded = encodeURIComponent(finalMsg);
+      // api.whatsapp.com/send é mais robusto que wa.me em mobile
+      const primaryUrl = `https://api.whatsapp.com/send?phone=${OWNER_WHATSAPP}&text=${encoded}`;
+      const fallbackUrl = `https://wa.me/${OWNER_WHATSAPP}?text=${encoded}`;
+
+      // Tenta abrir em nova aba; se bloqueado, navega direto
+      const win = window.open(primaryUrl, "_blank", "noopener,noreferrer");
+      if (!win || win.closed || typeof win.closed === "undefined") {
+        // Popup bloqueado: navega na própria aba (mais confiável em mobile)
+        window.location.href = fallbackUrl;
+      }
+
+      toast.success("Pedido registrado! Abrindo WhatsApp da loja…");
       clearCart();
       onSuccess();
     } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Erro ao processar pedido");
+      console.error("[checkout]", err);
+      toast.error(err?.message || "Erro ao processar pedido. Tente novamente.");
     } finally {
       setLoading(false);
     }
