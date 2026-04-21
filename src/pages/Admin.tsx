@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { MediaUploader } from "@/components/MediaUploader";
 import { CustomFieldsBuilder } from "@/components/CustomFieldsBuilder";
+import { CategoryPicker } from "@/components/CategoryPicker";
 import { SiteCustomizer } from "@/components/SiteCustomizer";
 import type { CustomField } from "@/lib/customFields";
 import { BrandLogo } from "@/components/BrandLogo";
