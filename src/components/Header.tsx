@@ -18,7 +18,7 @@ import { BrandLogo } from "./BrandLogo";
 
 const CATEGORIES: { label: string; value: string; isCampaigns?: boolean }[] = [
   { label: "Início", value: "" },
-  { label: "Campanhas", value: "__campaigns", isCampaigns: true },
+  { label: "Especiais", value: "__campaigns", isCampaigns: true },
   { label: "Todos", value: "todos" },
   { label: "Canecas", value: "canecas" },
   { label: "Presentes", value: "presentes" },
@@ -112,8 +112,8 @@ export const Header = () => {
             <Search className="h-5 w-5" />
           </Button>
           {isOwner && (
-            <Link to="/admin" aria-label="Painel da dona">
-              <Button variant="ghost" size="icon" className="h-9 w-9 md:h-10 md:w-10 rounded-full text-primary" title="Painel da dona">
+            <Link to="/admin" aria-label="Painel administrativo">
+              <Button variant="ghost" size="icon" className="h-9 w-9 md:h-10 md:w-10 rounded-full text-primary" title="Painel administrativo">
                 <Shield className="h-5 w-5" />
               </Button>
             </Link>
