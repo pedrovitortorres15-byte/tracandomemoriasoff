@@ -397,12 +397,100 @@ export const AIAssistantTab = () => {
             Posso mudar cores e textos do site, criar produtos e campanhas, escrever legendas, roteiros, responder clientes e analisar suas fotos e vídeos. É só pedir — eu faço por você. 💝
           </p>
         </div>
-        {messages.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={clearChat} title="Limpar conversa">
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
+        <Button
+          variant="outline"
+          size="sm"
+          className="lg:hidden gap-1"
+          onClick={() => setSidebarOpen((s) => !s)}
+          title="Histórico de conversas"
+        >
+          <MessagesSquare className="h-4 w-4" />
+          {conversations.length > 0 && (
+            <span className="text-[11px]">{conversations.length}</span>
+          )}
+        </Button>
       </div>
+
+      {/* Layout principal: sidebar + chat */}
+      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
+        {/* Sidebar de histórico */}
+        <aside
+          className={cn(
+            "bg-card border rounded-lg flex flex-col h-[60vh] min-h-[400px]",
+            "lg:flex",
+            sidebarOpen ? "flex" : "hidden",
+          )}
+        >
+          <div className="p-3 border-b flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Conversas
+            </span>
+            <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={newConversation}>
+              <Plus className="h-3.5 w-3.5" /> Nova
+            </Button>
+          </div>
+          <ScrollArea className="flex-1">
+            <div className="p-2 space-y-1">
+              {loadingHistory ? (
+                <div className="text-xs text-muted-foreground text-center py-6 flex items-center justify-center gap-2">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Carregando...
+                </div>
+              ) : conversations.length === 0 ? (
+                <div className="text-xs text-muted-foreground text-center py-6 px-2">
+                  Nenhuma conversa ainda. Comece uma agora! ✨
+                </div>
+              ) : (
+                conversations.map((c) => (
+                  <div
+                    key={c.id}
+                    className={cn(
+                      "group rounded-md flex items-center gap-1 px-1",
+                      activeId === c.id ? "bg-primary/10" : "hover:bg-muted",
+                    )}
+                  >
+                    <button
+                      onClick={() => { setActiveId(c.id); setSidebarOpen(false); }}
+                      className="flex-1 text-left px-2 py-2 text-sm truncate"
+                      title={c.title}
+                    >
+                      <div className="truncate font-medium">{c.title}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {new Date(c.updated_at).toLocaleString("pt-BR", {
+                          day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
+                        })}
+                      </div>
+                    </button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100"
+                          title="Ações"
+                        >
+                          <MoreVertical className="h-3.5 w-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => renameConversation(c.id, c.title)}>
+                          <Pencil className="h-3.5 w-3.5 mr-2" /> Renomear
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => deleteConversation(c.id)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        </aside>
+
+        <div className="space-y-4">
 
       {/* Sugestões rápidas */}
       {messages.length === 0 && (
