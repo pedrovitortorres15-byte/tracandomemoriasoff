@@ -21,7 +21,6 @@ const BodySchema = z.object({
   items: z.array(ItemSchema).min(1).max(50),
   payer: PayerSchema,
   external_reference: z.string().max(80).optional(),
-  installments: z.number().int().min(1).max(12).optional(),
 });
 
 Deno.serve(async (req) => {
@@ -47,17 +46,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { items, payer, external_reference, installments } = parsed.data;
-    const maxInstallments = installments && installments > 0 ? installments : 3;
+    const { items, payer, external_reference } = parsed.data;
 
     const origin = req.headers.get("origin") || req.headers.get("referer") || "";
     const cleanOrigin = origin.replace(/\/$/, "");
     const siteUrl = cleanOrigin || Deno.env.get("SITE_URL") || "https://id-preview--355065c3-fed8-4564-8b72-9da947c21db8.lovable.app";
 
-    // CRITICAL: Mercado Pago só respeita o "parcelamento sem juros do vendedor"
-    // configurado na conta SE não enviarmos payer_costs/installments restritivos
-    // e usarmos auto_return + binary_mode false. O cliente vê automaticamente
-    // as parcelas configuradas no painel MP do vendedor.
+    // IMPORTANTE: Não enviamos NENHUMA configuração de installments / payment_methods.
+    // Assim o Mercado Pago aplica AUTOMATICAMENTE o parcelamento sem juros que a
+    // dona configurou no painel da conta dela ("Seus negócios > Parcelamento sem juros").
+    // Foi essa a orientação do próprio suporte do MP.
     const preference: Record<string, unknown> = {
       items: items.map((item) => ({
         title: item.title,
@@ -72,12 +70,6 @@ Deno.serve(async (req) => {
         pending: `${siteUrl}/?payment=pending`,
       },
       auto_return: "approved",
-      payment_methods: {
-        excluded_payment_types: [],
-        excluded_payment_methods: [],
-        installments: maxInstallments,
-        default_installments: 1,
-      },
       binary_mode: false,
       statement_descriptor: "TRACANDOMEMORIAS",
       metadata: {
