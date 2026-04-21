@@ -399,6 +399,10 @@ export const AIAssistantTab = () => {
       };
       setMessages((prev) => [...prev, assistantMsg]);
       persistMessage(convId, assistantMsg).catch((e) => console.error("persist assistant", e));
+      // Refina o título da conversa após a primeira troca (resumo curto via IA)
+      if (isFirstMessage) {
+        summarizeTitle(convId, userMsg.content).catch((e) => console.error("summarize", e));
+      }
       // reordena a sidebar (move pra topo)
       setConversations((prev) => {
         const idx = prev.findIndex((c) => c.id === convId);
