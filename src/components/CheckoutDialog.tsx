@@ -20,6 +20,25 @@ const OWNER_WHATSAPP = sanitizeWhatsApp(OWNER_WHATSAPP_RAW);
 // Limite seguro de URL para wa.me em mobile (~ 2000 chars total)
 const MAX_MSG_LEN = 1500;
 
+const cleanText = (value: unknown, max: number) =>
+  String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, max);
+
+const cleanOptionalText = (value: unknown, max: number) => {
+  const text = cleanText(value, max);
+  return text || null;
+};
+
+const cleanRequiredText = (value: unknown, max: number, fallback: string) => {
+  const text = cleanText(value, max);
+  return text || cleanText(fallback, max);
+};
+
+const clampMoney = (value: unknown) => Math.max(0, Math.min(100000, Number(value) || 0));
+const clampQuantity = (value: unknown) => Math.max(1, Math.min(100, Math.floor(Number(value) || 1)));
+
 const baseSchema = {
   customer_name: z.string().trim().min(2, "Nome obrigatório").max(120),
   customer_email: z.string().trim().email("E-mail inválido").max(160),
@@ -203,12 +222,12 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
         .join(" | ");
 
       // Sanitiza para garantir que respeita os limites das policies (RLS)
-      const safeName = d.customer_name.trim().slice(0, 120);
-      const safeEmail = d.customer_email.trim().slice(0, 160);
-      const safePhone = d.customer_phone.trim().slice(0, 30);
-      const safeNotes = d.notes ? d.notes.trim().slice(0, 1000) : null;
+      const safeName = cleanRequiredText(d.customer_name, 120, "Cliente WhatsApp");
+      const safeEmail = cleanRequiredText(d.customer_email, 160, "cliente@whatsapp.local");
+      const safePhone = cleanRequiredText(d.customer_phone, 30, "WhatsApp não informado");
+      const safeNotes = cleanOptionalText(d.notes, 1000);
       const safePersonalization = personalizationCombined.slice(0, 5000);
-      const safeTotal = Math.max(0, Math.min(100000, Number(totalFinal) || 0));
+      const safeTotal = clampMoney(totalFinal);
 
       const orderPayload: any = {
         customer_name: safeName,
@@ -226,21 +245,29 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
       if (method === "entrega") {
         const dd = d as z.infer<typeof deliverySchema>;
         Object.assign(orderPayload, {
-          shipping_zip: dd.shipping_zip,
-          shipping_address: dd.shipping_address,
-          shipping_number: dd.shipping_number,
-          shipping_complement: dd.shipping_complement || null,
-          shipping_neighborhood: dd.shipping_neighborhood,
-          shipping_city: dd.shipping_city,
-          shipping_state: dd.shipping_state.toUpperCase(),
-          recipient_name: dd.recipient_name,
-          recipient_phone: dd.recipient_phone || null,
+          shipping_zip: cleanRequiredText(dd.shipping_zip, 10, "00000-000"),
+          shipping_address: cleanRequiredText(dd.shipping_address, 160, "Endereço a confirmar pelo WhatsApp"),
+          shipping_number: cleanRequiredText(dd.shipping_number, 20, "S/N"),
+          shipping_complement: cleanOptionalText(dd.shipping_complement, 80),
+          shipping_neighborhood: cleanRequiredText(dd.shipping_neighborhood, 80, "Bairro a confirmar"),
+          shipping_city: cleanRequiredText(dd.shipping_city, 80, "Cidade a confirmar"),
+          shipping_state: cleanRequiredText(dd.shipping_state, 2, "AL").toUpperCase(),
+          recipient_name: cleanRequiredText(dd.recipient_name, 120, safeName),
+          recipient_phone: cleanOptionalText(dd.recipient_phone, 30),
           notes: [d.notes, form.shipping_reference ? `Ponto de referência: ${form.shipping_reference}` : null]
-            .filter(Boolean).join(" | ") || null,
+            .filter(Boolean).join(" | ").slice(0, 1000) || null,
         });
       } else {
         Object.assign(orderPayload, {
-          shipping_address: `Retirada: ${pickupAddress || "Bairro Antares"}`.slice(0, 500),
+          shipping_address: cleanRequiredText(`Retirada: ${pickupAddress || "Bairro Antares"}`, 500, "Retirada a combinar pelo WhatsApp"),
+          shipping_zip: null,
+          shipping_number: null,
+          shipping_complement: null,
+          shipping_neighborhood: null,
+          shipping_city: null,
+          shipping_state: null,
+          recipient_name: null,
+          recipient_phone: null,
         });
       }
 
@@ -249,7 +276,6 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
         orderPayload.shipping_address = method === "entrega" ? "Endereço a confirmar pelo WhatsApp" : "Retirada a combinar pelo WhatsApp";
       }
 
-      console.log("[checkout] inserting order", orderPayload);
       const { data: order, error: orderErr } = await supabase
         .from("orders")
         .insert(orderPayload)
@@ -260,9 +286,9 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
       const itemsPayload = items.map(i => ({
         order_id: order.id,
         product_id: i.id,
-        product_name: `${i.name} — ${i.personalization || ''}`.trim(),
-        quantity: i.quantity,
-        unit_price: i.price,
+        product_name: cleanRequiredText(`${i.name} — ${i.personalization || ''}`, 500, i.name || "Produto personalizado"),
+        quantity: clampQuantity(i.quantity),
+        unit_price: clampMoney(i.price),
       }));
       const { error: itemsErr } = await supabase.from("order_items").insert(itemsPayload);
       if (itemsErr) throw itemsErr;

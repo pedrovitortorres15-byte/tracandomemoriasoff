@@ -189,6 +189,54 @@ const ProductDetail = () => {
     });
   };
 
+  const receivingSection = (
+    <div className="pt-3 border-t border-border space-y-4">
+      <div>
+        <label className="text-sm font-semibold flex items-center gap-2 mb-2">
+          Como deseja receber? <span className="text-destructive">*</span>
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setFulfillmentMethod("entrega")}
+            className={`flex items-center justify-center gap-2 px-3 py-2.5 border rounded text-sm transition-colors ${fulfillmentMethod === "entrega" ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:border-primary"}`}
+          >
+            <Truck className="h-4 w-4" /> Entrega
+          </button>
+          <button
+            type="button"
+            onClick={() => pickupEnabled && setFulfillmentMethod("retirada")}
+            disabled={!pickupEnabled}
+            className={`flex items-center justify-center gap-2 px-3 py-2.5 border rounded text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${fulfillmentMethod === "retirada" ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:border-primary"}`}
+          >
+            <Store className="h-4 w-4" /> Retirada
+          </button>
+        </div>
+        {fulfillmentMethod === "entrega" && <p className="text-xs text-muted-foreground mt-2">🚚 {deliveryWindow}</p>}
+        {fulfillmentMethod === "retirada" && <p className="text-xs text-muted-foreground mt-2">🏪 {pickupWindow}. Endereço completo combinado pelo WhatsApp.</p>}
+      </div>
+      {isCampaignProduct ? (
+        <div className="rounded-md border border-primary/30 bg-primary/10 p-3 space-y-1.5">
+          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
+            <Sparkles className="h-3.5 w-3.5" /> Produto do especial {productCampaign?.name}
+          </p>
+          {campaignDateISO && (
+            <p className="flex items-center gap-1.5 text-sm text-foreground">
+              <CalendarDays className="h-4 w-4 text-primary" />
+              {fulfillmentMethod === "retirada" ? "Retirada" : "Entrega"} prevista em{" "}
+              <strong>{format(new Date(campaignDateISO + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })}</strong>
+            </p>
+          )}
+          <p className="text-[11px] text-muted-foreground">
+            A data deste especial é fixa. Caso precise de outro dia, a loja pode ajustar com você pelo WhatsApp após o pedido.
+          </p>
+        </div>
+      ) : (
+        <DeliveryDatePicker value={deliveryDate} onChange={setDeliveryDate} label={fulfillmentMethod === "retirada" ? "Data desejada de retirada" : "Data desejada de entrega"} />
+      )}
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -362,51 +410,14 @@ const ProductDetail = () => {
                     )}
                   </div>
 
-                  <div className="pt-3 border-t border-border space-y-4">
-                    <div>
-                      <label className="text-sm font-semibold flex items-center gap-2 mb-2">
-                        Como deseja receber? <span className="text-destructive">*</span>
-                      </label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setFulfillmentMethod("entrega")}
-                          className={`flex items-center justify-center gap-2 px-3 py-2.5 border rounded text-sm transition-colors ${fulfillmentMethod === "entrega" ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:border-primary"}`}
-                        >
-                          <Truck className="h-4 w-4" /> Entrega
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => pickupEnabled && setFulfillmentMethod("retirada")}
-                          disabled={!pickupEnabled}
-                          className={`flex items-center justify-center gap-2 px-3 py-2.5 border rounded text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${fulfillmentMethod === "retirada" ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:border-primary"}`}
-                        >
-                          <Store className="h-4 w-4" /> Retirada
-                        </button>
-                      </div>
-                      {fulfillmentMethod === "entrega" && <p className="text-xs text-muted-foreground mt-2">🚚 {deliveryWindow}</p>}
-                      {fulfillmentMethod === "retirada" && <p className="text-xs text-muted-foreground mt-2">🏪 {pickupWindow}. Endereço completo combinado pelo WhatsApp.</p>}
-                    </div>
-                    {isCampaignProduct ? (
-                      <div className="rounded-md border border-primary/30 bg-primary/10 p-3 space-y-1.5">
-                        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
-                          <Sparkles className="h-3.5 w-3.5" /> Produto do especial {productCampaign?.name}
-                        </p>
-                        {campaignDateISO && (
-                          <p className="flex items-center gap-1.5 text-sm text-foreground">
-                            <CalendarDays className="h-4 w-4 text-primary" />
-                            {fulfillmentMethod === "retirada" ? "Retirada" : "Entrega"} prevista em{" "}
-                            <strong>{format(new Date(campaignDateISO + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })}</strong>
-                          </p>
-                        )}
-                        <p className="text-[11px] text-muted-foreground">
-                          A data deste especial é fixa. Caso precise de outro dia, a loja pode ajustar com você pelo WhatsApp após o pedido.
-                        </p>
-                      </div>
-                    ) : (
-                      <DeliveryDatePicker value={deliveryDate} onChange={setDeliveryDate} label={fulfillmentMethod === "retirada" ? "Data desejada de retirada" : "Data desejada de entrega"} />
-                    )}
-                  </div>
+                  {receivingSection}
+                </div>
+              )}
+
+              {steps.length === 0 && (
+                <div className="bg-cream-50 border border-border rounded-lg p-3 md:p-5 space-y-4 md:space-y-5">
+                  <h3 className="font-heading text-base md:text-lg font-semibold text-foreground">Recebimento</h3>
+                  {receivingSection}
                 </div>
               )}
 
