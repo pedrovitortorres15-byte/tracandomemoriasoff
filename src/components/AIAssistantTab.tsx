@@ -231,9 +231,9 @@ export const AIAssistantTab = () => {
           <Sparkles className="h-5 w-5" />
         </div>
         <div className="flex-1">
-          <h3 className="font-heading text-lg font-bold">Sua Assistente Pessoal de IA</h3>
+          <h3 className="font-heading text-lg font-bold">Catha AI ✨ — sua copiloto criativa</h3>
           <p className="text-sm text-muted-foreground">
-            Tô aqui pra te ajudar com posts, legendas, roteiros de Reels, ideias de campanha, respostas a clientes e tudo mais. Pode mandar fotos e até vídeos pra eu analisar! ✨
+            Posso mudar cores e textos do site, criar produtos e campanhas, escrever legendas, roteiros, responder clientes e analisar suas fotos e vídeos. É só pedir — eu faço por você. 💝
           </p>
         </div>
         {messages.length > 0 && (
