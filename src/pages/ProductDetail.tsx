@@ -7,7 +7,7 @@ import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { DeliveryDatePicker } from "@/components/DeliveryDatePicker";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, ShoppingCart, Minus, Plus, ChevronRight, ChevronLeft, Upload, CreditCard, Check, AlertCircle } from "lucide-react";
+import { ArrowLeft, Loader2, ShoppingCart, Minus, Plus, ChevronRight, ChevronLeft, Upload, Check, AlertCircle } from "lucide-react";
 import { useState, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -168,31 +168,6 @@ const ProductDetail = () => {
       }
     });
     window.open(`https://wa.me/558287060860?text=${encodeURIComponent(text)}`, '_blank');
-  };
-
-  const handleMercadoPagoDirect = async () => {
-    const v = validatePersonalization();
-    if (!v.ok) { toast.error(v.reason || "Complete a personalização"); return; }
-    try {
-      const summary = buildPersonalizationSummary();
-      const { data, error } = await supabase.functions.invoke('mercadopago-checkout', {
-        body: {
-          items: [{
-            title: `${name} - ${summary}`.slice(0, 250),
-            quantity,
-            unit_price: unitPrice,
-            picture_url: images[0] || '',
-          }],
-          installments: 3,
-        },
-      });
-      if (error) throw error;
-      if (data?.init_point) window.location.href = data.init_point;
-      else throw new Error("Sem link de pagamento");
-    } catch (e: any) {
-      console.error(e);
-      toast.error(e.message || 'Erro ao processar pagamento.');
-    }
   };
 
   const isLastStep = currentStep === steps.length - 1;
@@ -434,10 +409,6 @@ const ProductDetail = () => {
                 <Button onClick={handleAddToCart} size="lg" disabled={!validationCheck.ok}
                   className="w-full bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50">
                   <ShoppingCart className="h-5 w-5 mr-2" /> Adicionar ao Carrinho
-                </Button>
-                <Button onClick={handleMercadoPagoDirect} size="lg" disabled={!validationCheck.ok}
-                  className="w-full bg-pay-card text-pay-card-foreground hover:bg-pay-card/90 uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50">
-                  <CreditCard className="h-5 w-5 mr-2" /> Pagar Cartão (3x sem juros)
                 </Button>
                 <Button onClick={handleWhatsAppOrder} size="lg" disabled={!validationCheck.ok} variant="outline"
                   className="w-full border-pay-pix text-pay-pix hover:bg-pay-pix-soft uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50">

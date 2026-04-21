@@ -171,16 +171,16 @@ export const CartDrawer = () => {
                 </div>
                 <Button
                   onClick={handleStartCheckout}
-                  className="w-full bg-[hsl(210,80%,50%)] hover:bg-[hsl(210,80%,45%)] text-[hsl(0,0%,100%)]"
+                  className="w-full bg-pay-card text-pay-card-foreground hover:bg-pay-card/90"
                   size="lg"
                   disabled={!canCheckout}
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
-                  Pagar Cartão (3x sem juros) — R$ {totalPrice.toFixed(2)}
+                  Pagar Cartão — R$ {totalPrice.toFixed(2)}
                 </Button>
                 <Button
                   onClick={handleWhatsAppCheckout}
-                  className="w-full bg-[hsl(140,60%,38%)] hover:bg-[hsl(140,60%,33%)] text-white"
+                  className="w-full bg-pay-pix text-pay-pix-foreground hover:bg-pay-pix/90"
                   size="lg"
                   disabled={!canCheckout}
                 >
