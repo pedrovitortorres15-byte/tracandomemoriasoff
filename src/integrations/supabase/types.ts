@@ -302,6 +302,84 @@ export type Database = {
         }
         Relationships: []
       }
+      site_settings: {
+        Row: {
+          accent_hsl: string
+          background_hsl: string
+          brand_name: string
+          brand_tagline: string
+          font_body: string
+          font_heading: string
+          footer_about: string
+          hero_cta_text: string
+          hero_eyebrow: string
+          hero_image_url: string | null
+          hero_subtitle: string
+          hero_title: string
+          id: string
+          instagram_handle: string
+          logo_full_url: string | null
+          logo_url: string | null
+          pay_card_hsl: string
+          pay_pix_hsl: string
+          primary_foreground_hsl: string
+          primary_hsl: string
+          singleton: boolean
+          updated_at: string
+          whatsapp_number: string
+        }
+        Insert: {
+          accent_hsl?: string
+          background_hsl?: string
+          brand_name?: string
+          brand_tagline?: string
+          font_body?: string
+          font_heading?: string
+          footer_about?: string
+          hero_cta_text?: string
+          hero_eyebrow?: string
+          hero_image_url?: string | null
+          hero_subtitle?: string
+          hero_title?: string
+          id?: string
+          instagram_handle?: string
+          logo_full_url?: string | null
+          logo_url?: string | null
+          pay_card_hsl?: string
+          pay_pix_hsl?: string
+          primary_foreground_hsl?: string
+          primary_hsl?: string
+          singleton?: boolean
+          updated_at?: string
+          whatsapp_number?: string
+        }
+        Update: {
+          accent_hsl?: string
+          background_hsl?: string
+          brand_name?: string
+          brand_tagline?: string
+          font_body?: string
+          font_heading?: string
+          footer_about?: string
+          hero_cta_text?: string
+          hero_eyebrow?: string
+          hero_image_url?: string | null
+          hero_subtitle?: string
+          hero_title?: string
+          id?: string
+          instagram_handle?: string
+          logo_full_url?: string | null
+          logo_url?: string | null
+          pay_card_hsl?: string
+          pay_pix_hsl?: string
+          primary_foreground_hsl?: string
+          primary_hsl?: string
+          singleton?: boolean
+          updated_at?: string
+          whatsapp_number?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
