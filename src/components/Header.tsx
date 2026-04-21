@@ -27,10 +27,10 @@ const CATEGORIES: { label: string; value: string }[] = [
 export const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const { settings } = useSiteSettings();
   const OWNER_EMAIL = "catharinaferrario@gmail.com";
-  const isOwner = isAdmin && user?.email?.toLowerCase() === OWNER_EMAIL;
+  const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const activeCat = searchParams.get("cat") || "";
