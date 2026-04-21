@@ -1,13 +1,13 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useCartStore, isPersonalizationValid } from "@/stores/cartStore";
+import { useCartStore, isPersonalizationValid, type FulfillmentMethod } from "@/stores/cartStore";
 import { useDeliverySettings } from "@/hooks/useDeliverySettings";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { DeliveryDatePicker } from "@/components/DeliveryDatePicker";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, ShoppingCart, Minus, Plus, ChevronRight, ChevronLeft, Upload, Check, AlertCircle } from "lucide-react";
+import { ArrowLeft, Loader2, ShoppingCart, Minus, Plus, ChevronRight, ChevronLeft, Upload, Check, AlertCircle, Truck, Store } from "lucide-react";
 import { useState, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,12 +21,16 @@ const ProductDetail = () => {
   const { data: settings } = useDeliverySettings();
   const pixActive = settings?.pix_discount_active ?? true;
   const pixPct = settings?.pix_discount_percent ?? 10;
+  const pickupEnabled = settings?.pickup_enabled ?? true;
+  const pickupWindow = settings?.pickup_window_text || "Retirada das 14h às 17h (combine previamente pelo WhatsApp)";
+  const deliveryWindow = settings?.delivery_window_text || "Entregas no período da tarde (14h às 17h)";
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [personalization, setPersonalization] = useState<Record<string, string | string[]>>({});
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File | null>>({});
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(undefined);
+  const [fulfillmentMethod, setFulfillmentMethod] = useState<FulfillmentMethod | "">("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: product, isLoading } = useQuery({
@@ -109,7 +113,8 @@ const ProductDetail = () => {
         }
       }
     }
-    if (!deliveryDate) return { ok: false, reason: "Escolha a data de entrega" };
+    if (!fulfillmentMethod) return { ok: false, reason: "Escolha entrega ou retirada" };
+    if (!deliveryDate) return { ok: false, reason: fulfillmentMethod === "retirada" ? "Escolha a data desejada para retirada" : "Escolha a data desejada de entrega" };
     return { ok: true };
   };
 
@@ -122,7 +127,9 @@ const ProductDetail = () => {
         return `${s.title}: ${text}`;
       })
       .filter(Boolean) as string[];
-    if (deliveryDate) parts.push(`Entrega: ${format(deliveryDate, "dd/MM/yyyy", { locale: ptBR })}`);
+    if (deliveryDate) {
+      parts.push(`${fulfillmentMethod === "retirada" ? "Retirada" : "Entrega"}: ${format(deliveryDate, "dd/MM/yyyy", { locale: ptBR })}`);
+    }
     return parts.join(" | ");
   };
 
@@ -137,47 +144,14 @@ const ProductDetail = () => {
       quantity,
       personalization: buildPersonalizationSummary(),
       deliveryDate: deliveryDate ? deliveryDate.toISOString().slice(0, 10) : undefined,
+      fulfillmentMethod: fulfillmentMethod as FulfillmentMethod,
       campaign_slug: product.campaign_slug || null,
     });
-    toast.success("Adicionado ao carrinho!", { position: "top-center" });
+    toast.success("Adicionado ao carrinho! Finalize pelo carrinho para enviar todos os dados.", { position: "top-center" });
   };
 
   const handleFileChange = (stepId: string, file: File | null) => {
     setUploadedFiles(prev => ({ ...prev, [stepId]: file }));
-  };
-
-  const handleWhatsAppOrder = (payment: "pix" | "cartao") => {
-    const v = validatePersonalization();
-    if (!v.ok) { toast.error(v.reason || "Complete a personalização"); return; }
-    const subtotal = unitPrice * quantity;
-    const finalPrice = payment === "pix" && pixActive ? subtotal * (1 - pixPct / 100) : subtotal;
-    const payLabel = payment === "pix"
-      ? `💚 *Pagamento: PIX${pixActive ? ` (${pixPct}% off)` : ""}*`
-      : `💳 *Pagamento: Cartão até 3x sem juros*`;
-
-    let text = `Olá Loja Traçando Memórias! Gostaria de fazer um pedido:\n\n`;
-    text += `📦 *${name}* (x${quantity})\n`;
-    text += `💰 Subtotal: R$ ${subtotal.toFixed(2)}\n`;
-    text += `📅 Data desejada: ${deliveryDate ? format(deliveryDate, "dd/MM/yyyy", { locale: ptBR }) : "—"}\n\n`;
-    text += `✏️ *Personalização:*\n`;
-    Object.entries(personalization).forEach(([key, value]) => {
-      if (!value || (Array.isArray(value) && value.length === 0)) return;
-      const step = steps.find(s => s.id === key);
-      const txt = Array.isArray(value) ? value.join(", ") : value;
-      text += `• ${step?.title || key}: ${txt}\n`;
-    });
-    Object.entries(uploadedFiles).forEach(([key, file]) => {
-      if (file) {
-        const step = steps.find(s => s.id === key);
-        text += `• ${step?.title || key}: (foto anexada separadamente)\n`;
-      }
-    });
-    text += `\n${payLabel}\n`;
-    text += `💰 *Total: R$ ${finalPrice.toFixed(2)}*\n\n`;
-    text += payment === "pix"
-      ? `Aguardo a chave PIX para efetuar o pagamento. Obrigada! 💖`
-      : `Aguardo a confirmação da disponibilidade e o link de pagamento (cartão até 3x sem juros). Obrigada! 💖`;
-    window.location.href = `https://wa.me/558287060860?text=${encodeURIComponent(text)}`;
   };
 
   const isLastStep = currentStep === steps.length - 1;
@@ -287,6 +261,7 @@ const ProductDetail = () => {
                         value={(personalization[currentField.id] as string) || ''}
                         onChange={(e) => setPersonalization(prev => ({ ...prev, [currentField.id]: e.target.value }))}
                         placeholder={currentField.placeholder}
+                        maxLength={120}
                         className="w-full px-4 py-2.5 border border-border rounded bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                       />
                     )}
@@ -297,6 +272,7 @@ const ProductDetail = () => {
                         onChange={(e) => setPersonalization(prev => ({ ...prev, [currentField.id]: e.target.value }))}
                         placeholder={currentField.placeholder}
                         rows={3}
+                        maxLength={500}
                         className="w-full px-4 py-2.5 border border-border rounded bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
                       />
                     )}
@@ -364,8 +340,32 @@ const ProductDetail = () => {
                     )}
                   </div>
 
-                  <div className="pt-3 border-t border-border">
-                    <DeliveryDatePicker value={deliveryDate} onChange={setDeliveryDate} />
+                  <div className="pt-3 border-t border-border space-y-4">
+                    <div>
+                      <label className="text-sm font-semibold flex items-center gap-2 mb-2">
+                        Como deseja receber? <span className="text-destructive">*</span>
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setFulfillmentMethod("entrega")}
+                          className={`flex items-center justify-center gap-2 px-3 py-2.5 border rounded text-sm transition-colors ${fulfillmentMethod === "entrega" ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:border-primary"}`}
+                        >
+                          <Truck className="h-4 w-4" /> Entrega
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => pickupEnabled && setFulfillmentMethod("retirada")}
+                          disabled={!pickupEnabled}
+                          className={`flex items-center justify-center gap-2 px-3 py-2.5 border rounded text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${fulfillmentMethod === "retirada" ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:border-primary"}`}
+                        >
+                          <Store className="h-4 w-4" /> Retirada
+                        </button>
+                      </div>
+                      {fulfillmentMethod === "entrega" && <p className="text-xs text-muted-foreground mt-2">🚚 {deliveryWindow}</p>}
+                      {fulfillmentMethod === "retirada" && <p className="text-xs text-muted-foreground mt-2">🏪 {pickupWindow}. Endereço completo combinado pelo WhatsApp.</p>}
+                    </div>
+                    <DeliveryDatePicker value={deliveryDate} onChange={setDeliveryDate} label={fulfillmentMethod === "retirada" ? "Data desejada de retirada" : "Data desejada de entrega"} />
                   </div>
                 </div>
               )}
@@ -420,16 +420,9 @@ const ProductDetail = () => {
                   className="w-full bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50">
                   <ShoppingCart className="h-5 w-5 mr-2" /> Adicionar ao Carrinho
                 </Button>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <Button onClick={() => handleWhatsAppOrder("cartao")} size="lg" disabled={!validationCheck.ok} variant="outline"
-                    className="w-full border-pay-card text-pay-card hover:bg-pay-card hover:text-pay-card-foreground uppercase tracking-wider text-xs font-semibold rounded-full disabled:opacity-50">
-                    Cartão via WhatsApp
-                  </Button>
-                  <Button onClick={() => handleWhatsAppOrder("pix")} size="lg" disabled={!validationCheck.ok} variant="outline"
-                    className="w-full border-pay-pix text-pay-pix hover:bg-pay-pix hover:text-pay-pix-foreground uppercase tracking-wider text-xs font-semibold rounded-full disabled:opacity-50">
-                    PIX via WhatsApp{pixActive ? ` (${pixPct}% off)` : ""}
-                  </Button>
-                </div>
+                <p className="text-[11px] text-muted-foreground text-center">
+                  Pagamento por PIX ou cartão é finalizado no carrinho pelo WhatsApp com todos os dados do pedido.
+                </p>
               </div>
             </div>
           </div>
