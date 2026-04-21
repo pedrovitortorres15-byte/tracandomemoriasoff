@@ -8,6 +8,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Mail, Lock, User, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
+const OWNER_EMAIL = "catharinaferrario@gmail.com";
+
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
@@ -19,10 +21,12 @@ const Auth = () => {
   const { user, loading: authLoading } = useAuth();
   const rawRedirect = searchParams.get("redirect");
   const redirectTo = rawRedirect?.startsWith("/") ? rawRedirect : "/";
+  const destinationFor = (email?: string | null) =>
+    redirectTo !== "/" ? redirectTo : email?.toLowerCase() === OWNER_EMAIL ? "/admin" : "/";
 
   useEffect(() => {
     if (!authLoading && user) {
-      navigate(redirectTo, { replace: true });
+      navigate(destinationFor(user.email), { replace: true });
     }
   }, [authLoading, user, navigate, redirectTo]);
 
