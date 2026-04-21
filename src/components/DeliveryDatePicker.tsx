@@ -13,9 +13,10 @@ interface Props {
   value?: Date;
   onChange: (d: Date | undefined) => void;
   className?: string;
+  label?: string;
 }
 
-export const DeliveryDatePicker = ({ value, onChange, className }: Props) => {
+export const DeliveryDatePicker = ({ value, onChange, className, label = "Data de Entrega" }: Props) => {
   const [open, setOpen] = useState(false);
   const { data: settings } = useDeliverySettings();
   const minDays = settings?.min_business_days ?? 5;
