@@ -19,8 +19,16 @@ export interface CartItem {
 }
 
 const MIN_PERSONALIZATION_LENGTH = 5;
+const MIN_NAME_LENGTH = 3;
 const MIN_STRUCTURED_FIELDS = 2;
 const INVALID_PATTERNS = [/^\.+$/, /^[\s\-_]+$/, /^[a-z]$/i];
+
+/** Detects fields that should accept short values (names, nicknames). */
+const NAME_FIELD_REGEX = /(nome|apelido|presenteado|presenteada)/i;
+
+export function isShortNameField(title?: string): boolean {
+  return !!title && NAME_FIELD_REGEX.test(title);
+}
 
 export function isPersonalizationValid(text?: string): boolean {
   if (!text) return false;
@@ -31,6 +39,15 @@ export function isPersonalizationValid(text?: string): boolean {
   // This guarantees the item went through the product page personalization flow.
   const parts = trimmed.split(" | ").filter((p) => /[^:]+:\s*\S+/.test(p));
   return parts.length >= MIN_STRUCTURED_FIELDS;
+}
+
+/** Validate a single field value. Name/nickname fields require 3+ chars; other text fields require 5+. */
+export function isFieldValueValid(title: string, value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  if (INVALID_PATTERNS.some((p) => p.test(trimmed))) return false;
+  const min = isShortNameField(title) ? MIN_NAME_LENGTH : MIN_PERSONALIZATION_LENGTH;
+  return trimmed.length >= min;
 }
 
 interface CartStore {
