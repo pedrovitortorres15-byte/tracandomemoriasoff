@@ -158,13 +158,16 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
   }, [cartMethod]);
 
   const handleSubmit = async () => {
-    const allComplete = items.every((i) => isPersonalizationValid(i.personalization) && !!i.deliveryDate && !!i.fulfillmentMethod);
-    if (!allComplete) {
-      toast.error("Itens incompletos no carrinho — preencha personalização, data e entrega/retirada no produto.");
+    // Validação leve: itens precisam ter personalização e data (a forma de recebimento
+    // será sincronizada com a escolha do checkout abaixo, evitando bloqueios).
+    const missingPersonalization = items.find((i) => !isPersonalizationValid(i.personalization));
+    if (missingPersonalization) {
+      toast.error(`Personalização incompleta em "${missingPersonalization.name}". Volte à página do produto.`);
       return;
     }
-    if (cartMethod && cartMethod !== method) {
-      toast.error("A forma de recebimento deve ser a mesma escolhida no produto.");
+    const missingDate = items.find((i) => !i.deliveryDate);
+    if (missingDate) {
+      toast.error(`Selecione a data desejada para "${missingDate.name}".`);
       return;
     }
 
