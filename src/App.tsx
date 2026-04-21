@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useCartSync } from "@/hooks/useCartSync";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import Index from "./pages/Index.tsx";
 import ProductDetail from "./pages/ProductDetail.tsx";
 import Auth from "./pages/Auth.tsx";
@@ -14,6 +15,7 @@ const queryClient = new QueryClient();
 
 const AppContent = () => {
   useCartSync();
+  useSiteSettings();
   return (
     <BrowserRouter>
       <Routes>

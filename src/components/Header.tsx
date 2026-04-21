@@ -3,8 +3,9 @@ import { CartDrawer } from "./CartDrawer";
 import { Search, User, Shield } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Button } from "@/components/ui/button";
-import logoIcon from "@/assets/logo-icon.jpg";
+import logoIconFallback from "@/assets/logo-icon.jpg";
 
 const CATEGORIES: { label: string; value: string }[] = [
   { label: "Início", value: "" },
@@ -18,11 +19,16 @@ export const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const { user, isAdmin } = useAuth();
+  const { settings } = useSiteSettings();
   const OWNER_EMAIL = "catharinaferrario@gmail.com";
   const isOwner = isAdmin && user?.email?.toLowerCase() === OWNER_EMAIL;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const activeCat = searchParams.get("cat") || "";
+  const logoSrc = settings.logo_url || logoIconFallback;
+  const [brandFirst, ...brandRest] = settings.brand_name.split(" ");
+  const brandMiddle = brandRest.length > 1 ? brandRest.slice(0, -1).join(" ") + " " : "";
+  const brandLast = brandRest.length > 0 ? brandRest[brandRest.length - 1] : "";
 
   const goCategory = (value: string) => {
     if (!value) {
@@ -47,10 +53,14 @@ export const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full bg-beige-50/95 backdrop-blur-md shadow-sm">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center gap-3" aria-label="Loja Traçando Memórias - Início">
-          <img src={logoIcon} alt="Logo Loja Traçando Memórias" className="h-11 w-11 rounded-full object-cover border-2 border-primary/20 shadow-sm" />
+        <Link to="/" className="flex items-center gap-3" aria-label={`${settings.brand_name} - Início`}>
+          <img src={logoSrc} alt={`Logo ${settings.brand_name}`} className="h-11 w-11 rounded-full object-cover border-2 border-primary/20 shadow-sm" />
           <span className="font-heading text-base md:text-xl font-bold text-primary tracking-tight">
-            Loja <span className="hidden sm:inline">Traçando </span>Memórias
+            {brandLast ? (
+              <>{brandFirst} <span className="hidden sm:inline">{brandMiddle}</span>{brandLast}</>
+            ) : (
+              settings.brand_name
+            )}
           </span>
         </Link>
 
@@ -125,7 +135,7 @@ export const Header = () => {
           </div>
           <div className="hidden lg:flex items-center gap-1">
             <a
-              href="https://wa.me/558287060860"
+              href={`https://wa.me/${settings.whatsapp_number}`}
               target="_blank"
               rel="noopener"
               className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-foreground/70 hover:text-primary hover:bg-primary/5 rounded-full transition-all whitespace-nowrap"
