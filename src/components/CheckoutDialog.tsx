@@ -280,8 +280,8 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
         (method === "entrega" ? `\n(+ taxa de entrega a partir de R$10,00)` : "") +
         (d.notes ? `\n\n📝 Obs: ${d.notes}` : "") +
         (isPix
-          ? `\n\nAguardo o envio da chave PIX para efetuar o pagamento. Obrigada! 💖`
-          : `\n\nAguardo a confirmação da disponibilidade e o link de pagamento (cartão até 3x sem juros). Obrigada! 💖`);
+          ? `\n\nAguardo o envio da *chave PIX* aqui pelo WhatsApp para efetuar o pagamento. Obrigada! 💖`
+          : `\n\nAguardo a confirmação e o *link de pagamento por cartão* (até 3x sem juros) aqui pelo WhatsApp. Obrigada! 💖`);
 
       const url = `https://wa.me/${OWNER_WHATSAPP}?text=${encodeURIComponent(msg)}`;
       // Abre direto (evita bloqueio de popup em mobile)
