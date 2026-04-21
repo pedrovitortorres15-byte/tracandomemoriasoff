@@ -4,6 +4,7 @@ import { ProductGrid } from "@/components/ProductGrid";
 import { CampaignsSection } from "@/components/CampaignsSection";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { InstagramButton } from "@/components/InstagramButton";
 import { useSearchParams } from "react-router-dom";
 
 const Index = () => {
@@ -20,6 +21,7 @@ const Index = () => {
       </main>
       <Footer />
       <WhatsAppButton />
+      <InstagramButton />
     </div>
   );
 };

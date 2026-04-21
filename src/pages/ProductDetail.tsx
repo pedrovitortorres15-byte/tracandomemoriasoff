@@ -5,6 +5,7 @@ import { useDeliverySettings, useCampaigns } from "@/hooks/useDeliverySettings";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { InstagramButton } from "@/components/InstagramButton";
 import { DeliveryDatePicker } from "@/components/DeliveryDatePicker";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, ShoppingCart, Minus, Plus, ChevronRight, ChevronLeft, Upload, Check, AlertCircle, Truck, Store, Sparkles, CalendarDays } from "lucide-react";
@@ -500,6 +501,7 @@ const ProductDetail = () => {
 
       <Footer />
       <WhatsAppButton />
+      <InstagramButton />
     </div>
   );
 };
