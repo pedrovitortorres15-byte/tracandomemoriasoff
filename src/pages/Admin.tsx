@@ -95,10 +95,10 @@ const Admin = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!loading && (!user || !isAdmin || !isOwner)) {
+    if (!loading && !user) {
       navigate("/auth");
     }
-  }, [user, isAdmin, isOwner, loading, navigate]);
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     if (isAdmin && isOwner) {
@@ -304,8 +304,27 @@ const Admin = () => {
     });
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
-  if (!isAdmin || !isOwner) return null;
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Carregando painel...</div>;
+  if (!user) return null;
+  if (!isOwner || !isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="max-w-md text-center space-y-4 bg-card border rounded-lg p-6">
+          <h1 className="font-heading text-2xl font-bold">Acesso restrito</h1>
+          <p className="text-muted-foreground text-sm">
+            Este painel é exclusivo da dona da loja.
+            {user?.email && (
+              <> Você está logada como <strong>{user.email}</strong>. Saia e entre com <strong>catharinaferrario@gmail.com</strong>.</>
+            )}
+          </p>
+          <div className="flex gap-2 justify-center">
+            <Button variant="outline" onClick={() => navigate("/")}>Voltar à loja</Button>
+            <Button onClick={async () => { await signOut(); navigate("/auth"); }}>Sair e entrar de novo</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const statusColors: Record<string, string> = {
     pendente: "bg-yellow-100 text-yellow-800",
