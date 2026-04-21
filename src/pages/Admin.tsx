@@ -72,7 +72,7 @@ const Admin = () => {
   const OWNER_EMAIL = "catharinaferrario@gmail.com";
   const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL;
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"orders" | "products" | "customers" | "campaigns" | "settings" | "appearance">("orders");
+  const [tab, setTab] = useState<"orders" | "products" | "customers" | "campaigns" | "settings" | "appearance" | "ai">("orders");
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [newCampaign, setNewCampaign] = useState(false);
@@ -404,7 +404,7 @@ const Admin = () => {
         {/* Tabs + busca */}
         <div className="flex flex-col sm:flex-row gap-2 mb-6">
           <div className="flex gap-2 flex-wrap">
-            {([["orders", "Pedidos", ShoppingBag], ["products", "Produtos", Package], ["customers", "Clientes", Users], ["campaigns", "Especiais", Sparkles], ["appearance", "Aparência", Palette], ["settings", "Configurações", SettingsIcon]] as const).map(([key, label, Icon]) => (
+            {([["ai", "Assistente IA", Bot], ["orders", "Pedidos", ShoppingBag], ["products", "Produtos", Package], ["customers", "Clientes", Users], ["campaigns", "Especiais", Sparkles], ["appearance", "Aparência", Palette], ["settings", "Configurações", SettingsIcon]] as const).map(([key, label, Icon]) => (
               <Button
                 key={key}
                 variant={tab === key ? "default" : "outline"}
