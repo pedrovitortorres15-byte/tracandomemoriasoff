@@ -365,6 +365,17 @@ export const AIAssistantTab = () => {
             >
               <ImagePlus className="h-4 w-4" />
             </Button>
+            <Button
+              variant={recording ? "default" : "outline"}
+              size="icon"
+              type="button"
+              onClick={toggleRecording}
+              disabled={loading}
+              title={recording ? "Parar gravação" : "Gravar mensagem por voz"}
+              className={cn(recording && "bg-destructive text-destructive-foreground hover:bg-destructive/90 animate-pulse")}
+            >
+              {recording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            </Button>
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
