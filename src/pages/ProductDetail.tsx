@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useCartStore, isPersonalizationValid, type FulfillmentMethod } from "@/stores/cartStore";
+import { useCartStore, isFieldValueValid, isShortNameField, type FulfillmentMethod } from "@/stores/cartStore";
 import { useDeliverySettings } from "@/hooks/useDeliverySettings";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -108,8 +108,9 @@ const ProductDetail = () => {
       } else {
         const str = typeof v === "string" ? v : "";
         if (!str.trim()) return { ok: false, reason: `Preencha "${s.title}"` };
-        if ((s.type === "text" || s.type === "textarea") && !isPersonalizationValid(str)) {
-          return { ok: false, reason: `"${s.title}" precisa de pelo menos 5 caracteres reais` };
+        if ((s.type === "text" || s.type === "textarea") && !isFieldValueValid(s.title, str)) {
+          const min = isShortNameField(s.title) ? 3 : 5;
+          return { ok: false, reason: `"${s.title}" precisa de pelo menos ${min} caracteres reais` };
         }
       }
     }
