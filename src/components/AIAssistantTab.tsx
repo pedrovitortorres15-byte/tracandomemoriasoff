@@ -308,7 +308,7 @@ export const AIAssistantTab = () => {
                               {t.result?.error ? (
                                 <span className="text-destructive">· erro</span>
                               ) : (
-                                <span className="text-green-600">· ok</span>
+                                <span className="text-primary">· ok</span>
                               )}
                             </div>
                           ))}
