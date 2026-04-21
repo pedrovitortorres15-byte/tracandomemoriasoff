@@ -352,7 +352,7 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
 
           {method === "entrega" && (
             <>
-              <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-md p-2.5 text-xs">
+              <div className="bg-muted border border-border rounded-md p-2.5 text-xs">
                 💰 <strong>Taxa de entrega a partir de R$ 10,00</strong>, podendo variar conforme o bairro/região. O valor final é confirmado com a loja pelo WhatsApp.
               </div>
 
