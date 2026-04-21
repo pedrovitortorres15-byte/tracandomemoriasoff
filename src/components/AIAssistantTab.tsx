@@ -126,15 +126,141 @@ export const AIAssistantTab = () => {
   // Para a gravação ao desmontar
   useEffect(() => () => recognitionRef.current?.stop(), []);
 
-  useEffect(() => {
-    try {
-      // Salva últimas 50 mensagens (sem as imagens base64 para não estourar storage)
-      const slim = messages.slice(-50).map((m) => ({ ...m, images: m.images ? ["[imagem]"] : undefined }));
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(slim));
-    } catch {
-      // ignore quota errors
+  // ============ Histórico no banco ============
+  const loadConversations = async () => {
+    const { data, error } = await supabase
+      .from("ai_conversations")
+      .select("id,title,updated_at")
+      .order("updated_at", { ascending: false });
+    if (error) {
+      console.error(error);
+      return;
     }
-  }, [messages]);
+    setConversations(data || []);
+  };
+
+  const loadMessages = async (conversationId: string) => {
+    setLoadingMessages(true);
+    const { data, error } = await supabase
+      .from("ai_messages")
+      .select("id,role,content,images,tool_events,created_at")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: true });
+    setLoadingMessages(false);
+    if (error) {
+      console.error(error);
+      toast.error("Não consegui carregar o histórico desta conversa.");
+      return;
+    }
+    setMessages(
+      (data || []).map((row: any) => ({
+        id: row.id,
+        role: row.role,
+        content: row.content,
+        images: row.images || undefined,
+        toolEvents: row.tool_events || undefined,
+      })),
+    );
+  };
+
+  // Carrega lista ao montar e mensagens da conversa ativa
+  useEffect(() => {
+    (async () => {
+      setLoadingHistory(true);
+      await loadConversations();
+      setLoadingHistory(false);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (activeId) {
+      localStorage.setItem(ACTIVE_CONV_KEY, activeId);
+      loadMessages(activeId);
+    } else {
+      localStorage.removeItem(ACTIVE_CONV_KEY);
+      setMessages([]);
+    }
+  }, [activeId]);
+
+  const ensureConversation = async (firstUserText: string): Promise<string | null> => {
+    if (activeId) return activeId;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("Faça login como administradora.");
+      return null;
+    }
+    const title = firstUserText.trim().slice(0, 60) || "Nova conversa";
+    const { data, error } = await supabase
+      .from("ai_conversations")
+      .insert({ user_id: user.id, title })
+      .select("id,title,updated_at")
+      .single();
+    if (error || !data) {
+      console.error(error);
+      toast.error("Não consegui criar a conversa.");
+      return null;
+    }
+    setConversations((prev) => [data, ...prev]);
+    setActiveId(data.id);
+    return data.id;
+  };
+
+  const persistMessage = async (conversationId: string, msg: Message) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from("ai_messages").insert({
+      conversation_id: conversationId,
+      user_id: user.id,
+      role: msg.role,
+      content: msg.content,
+      images: msg.images && msg.images.length > 0 ? msg.images : null,
+      tool_events: msg.toolEvents && msg.toolEvents.length > 0 ? (msg.toolEvents as any) : null,
+    });
+    // bump updated_at + reordena
+    await supabase
+      .from("ai_conversations")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", conversationId);
+  };
+
+  const newConversation = () => {
+    setActiveId(null);
+    setMessages([]);
+    setInput("");
+    setPendingImages([]);
+    setSidebarOpen(false);
+  };
+
+  const renameConversation = async (id: string, currentTitle: string) => {
+    const next = window.prompt("Novo nome da conversa:", currentTitle);
+    if (!next || next.trim() === "" || next === currentTitle) return;
+    const title = next.trim().slice(0, 80);
+    const { error } = await supabase
+      .from("ai_conversations")
+      .update({ title })
+      .eq("id", id);
+    if (error) {
+      toast.error("Não consegui renomear.");
+      return;
+    }
+    setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, title } : c)));
+    toast.success("Conversa renomeada.");
+  };
+
+  const deleteConversation = async (id: string) => {
+    if (!confirm("Excluir esta conversa? Essa ação não pode ser desfeita.")) return;
+    const { error } = await supabase.from("ai_conversations").delete().eq("id", id);
+    if (error) {
+      toast.error("Não consegui excluir.");
+      return;
+    }
+    setConversations((prev) => prev.filter((c) => c.id !== id));
+    if (activeId === id) {
+      setActiveId(null);
+      setMessages([]);
+    }
+    toast.success("Conversa excluída.");
+  };
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
