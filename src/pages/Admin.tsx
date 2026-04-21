@@ -13,7 +13,7 @@ import type { CustomField } from "@/lib/customFields";
 import logoIcon from "@/assets/logo-icon.jpg";
 import {
   Package, ShoppingBag, Users, Plus, ArrowLeft, Trash2, Edit2,
-  Eye, ChevronDown, ChevronUp, LogOut, Save, X, Search, Settings as SettingsIcon
+  Eye, ChevronDown, ChevronUp, LogOut, Save, X, Search, Settings as SettingsIcon, Sparkles
 } from "lucide-react";
 
 interface Order {
@@ -49,16 +49,31 @@ interface Product {
   stock: number;
   active: boolean;
   custom_fields?: CustomField[];
+  campaign_slug?: string | null;
 }
 
-const emptyForm = { name: "", description: "", price: 0, category: "", stock: 0, media_urls: [] as string[], custom_fields: [] as CustomField[] };
+interface Campaign {
+  id: string;
+  slug: string;
+  name: string;
+  delivery_date: string | null;
+  active: boolean;
+  note: string | null;
+}
+
+const emptyForm = { name: "", description: "", price: 0, category: "", stock: 0, media_urls: [] as string[], custom_fields: [] as CustomField[], campaign_slug: "" };
+const emptyCampaign = { slug: "", name: "", delivery_date: "", active: true, note: "" };
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
   const OWNER_EMAIL = "catharinaferrario@gmail.com";
   const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL;
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"orders" | "products" | "customers" | "settings">("orders");
+  const [tab, setTab] = useState<"orders" | "products" | "customers" | "campaigns" | "settings">("orders");
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
+  const [newCampaign, setNewCampaign] = useState(false);
+  const [campaignForm, setCampaignForm] = useState(emptyCampaign);
   const [settingsForm, setSettingsForm] = useState({
     daily_order_limit: 10,
     min_business_days: 5,
@@ -90,8 +105,72 @@ const Admin = () => {
       loadOrders();
       loadProducts();
       loadSettings();
+      loadCampaigns();
     }
   }, [isAdmin, isOwner]);
+
+  const loadCampaigns = async () => {
+    const { data } = await (supabase as any).from("campaigns").select("*").order("delivery_date", { ascending: true });
+    if (data) setCampaigns(data as Campaign[]);
+  };
+
+  const saveCampaign = async () => {
+    if (!campaignForm.slug.trim() || !campaignForm.name.trim()) {
+      toast.error("Slug e nome são obrigatórios");
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload: any = {
+        slug: campaignForm.slug.trim().toLowerCase().replace(/\s+/g, "-"),
+        name: campaignForm.name.trim(),
+        delivery_date: campaignForm.delivery_date || null,
+        active: !!campaignForm.active,
+        note: campaignForm.note.trim() || null,
+      };
+      if (editingCampaign) {
+        const { error } = await (supabase as any).from("campaigns").update(payload).eq("id", editingCampaign.id);
+        if (error) throw error;
+        toast.success("Campanha atualizada!");
+      } else {
+        const { error } = await (supabase as any).from("campaigns").insert(payload);
+        if (error) throw error;
+        toast.success("Campanha criada!");
+      }
+      setEditingCampaign(null);
+      setNewCampaign(false);
+      setCampaignForm(emptyCampaign);
+      loadCampaigns();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao salvar campanha");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteCampaign = async (id: string) => {
+    if (!confirm("Excluir esta campanha?")) return;
+    await (supabase as any).from("campaigns").delete().eq("id", id);
+    toast.success("Campanha excluída!");
+    loadCampaigns();
+  };
+
+  const toggleCampaignActive = async (c: Campaign) => {
+    await (supabase as any).from("campaigns").update({ active: !c.active }).eq("id", c.id);
+    loadCampaigns();
+  };
+
+  const startEditCampaign = (c: Campaign) => {
+    setEditingCampaign(c);
+    setNewCampaign(false);
+    setCampaignForm({
+      slug: c.slug,
+      name: c.name,
+      delivery_date: c.delivery_date || "",
+      active: c.active,
+      note: c.note || "",
+    });
+  };
 
   const loadSettings = async () => {
     const { data } = await (supabase as any).from("delivery_settings").select("*").limit(1).maybeSingle();
@@ -176,6 +255,7 @@ const Admin = () => {
         media_urls: productForm.media_urls,
         image_url: productForm.media_urls[0] || null,
         custom_fields: productForm.custom_fields || [],
+        campaign_slug: productForm.campaign_slug?.trim() || null,
       };
       if (editingProduct) {
         const { error } = await supabase.from("products").update(payload).eq("id", editingProduct.id);
@@ -220,6 +300,7 @@ const Admin = () => {
       stock: product.stock,
       media_urls: product.media_urls && product.media_urls.length > 0 ? product.media_urls : (product.image_url ? [product.image_url] : []),
       custom_fields: Array.isArray((product as any).custom_fields) ? (product as any).custom_fields : [],
+      campaign_slug: product.campaign_slug || "",
     });
   };
 
@@ -301,7 +382,7 @@ const Admin = () => {
         {/* Tabs + busca */}
         <div className="flex flex-col sm:flex-row gap-2 mb-6">
           <div className="flex gap-2 flex-wrap">
-            {([["orders", "Pedidos", ShoppingBag], ["products", "Produtos", Package], ["customers", "Clientes", Users], ["settings", "Configurações", SettingsIcon]] as const).map(([key, label, Icon]) => (
+            {([["orders", "Pedidos", ShoppingBag], ["products", "Produtos", Package], ["customers", "Clientes", Users], ["campaigns", "Campanhas", Sparkles], ["settings", "Configurações", SettingsIcon]] as const).map(([key, label, Icon]) => (
               <Button
                 key={key}
                 variant={tab === key ? "default" : "outline"}
@@ -451,6 +532,25 @@ const Admin = () => {
                 />
 
                 <div className="border-t pt-3">
+                  <label className="text-sm font-medium block mb-1.5 flex items-center gap-1.5">
+                    <Sparkles className="h-4 w-4 text-primary" /> Campanha (opcional)
+                  </label>
+                  <select
+                    value={productForm.campaign_slug}
+                    onChange={(e) => setProductForm({ ...productForm, campaign_slug: e.target.value })}
+                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                  >
+                    <option value="">— Sem campanha —</option>
+                    {campaigns.map((c) => (
+                      <option key={c.id} value={c.slug}>
+                        {c.name}{c.delivery_date ? ` (${new Date(c.delivery_date + "T12:00:00").toLocaleDateString("pt-BR")})` : ""}{!c.active ? " [inativa]" : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-muted-foreground mt-1">Produtos vinculados a uma campanha ativam regras especiais no checkout.</p>
+                </div>
+
+                <div className="border-t pt-3">
                   <CustomFieldsBuilder
                     value={productForm.custom_fields}
                     onChange={(fields) => setProductForm({ ...productForm, custom_fields: fields })}
@@ -542,6 +642,112 @@ const Admin = () => {
                 ));
               })()
             )}
+          </div>
+        )}
+
+        {/* Campaigns Tab */}
+        {tab === "campaigns" && (
+          <div className="space-y-4">
+            {!newCampaign && !editingCampaign && (
+              <Button onClick={() => { setNewCampaign(true); setCampaignForm(emptyCampaign); }}>
+                <Plus className="h-4 w-4 mr-2" /> Nova Campanha
+              </Button>
+            )}
+
+            {(newCampaign || editingCampaign) && (
+              <div className="bg-card border rounded-lg p-4 space-y-3">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  {editingCampaign ? "Editar Campanha" : "Nova Campanha"}
+                </h3>
+                <div>
+                  <label className="text-xs font-medium block mb-1">Nome *</label>
+                  <Input
+                    placeholder="Ex: Dia das Mães 2026"
+                    value={campaignForm.name}
+                    onChange={(e) => setCampaignForm({ ...campaignForm, name: e.target.value })}
+                    maxLength={120}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium block mb-1">Slug (identificador único, sem espaços) *</label>
+                  <Input
+                    placeholder="dia-das-maes-2026"
+                    value={campaignForm.slug}
+                    onChange={(e) => setCampaignForm({ ...campaignForm, slug: e.target.value })}
+                    maxLength={60}
+                    disabled={!!editingCampaign}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium block mb-1">Data especial de entrega</label>
+                  <Input
+                    type="date"
+                    value={campaignForm.delivery_date}
+                    onChange={(e) => setCampaignForm({ ...campaignForm, delivery_date: e.target.value })}
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Todos os pedidos com produtos desta campanha serão entregues nesta data (ex: 08/05/2026).
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium block mb-1">Observação (aparece no checkout)</label>
+                  <Textarea
+                    placeholder="Ex: Entregas desta campanha serão realizadas em 08/05/2026"
+                    value={campaignForm.note}
+                    onChange={(e) => setCampaignForm({ ...campaignForm, note: e.target.value })}
+                    maxLength={300}
+                  />
+                </div>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={campaignForm.active}
+                    onChange={(e) => setCampaignForm({ ...campaignForm, active: e.target.checked })}
+                    className="h-4 w-4 rounded"
+                  />
+                  Campanha ativa
+                </label>
+
+                <div className="flex gap-2 pt-2">
+                  <Button onClick={saveCampaign} disabled={saving}>
+                    <Save className="h-4 w-4 mr-2" /> {saving ? "Salvando..." : "Salvar"}
+                  </Button>
+                  <Button variant="outline" onClick={() => { setNewCampaign(false); setEditingCampaign(null); setCampaignForm(emptyCampaign); }}>
+                    <X className="h-4 w-4 mr-2" /> Cancelar
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {campaigns.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">Nenhuma campanha cadastrada</p>
+              ) : campaigns.map((c) => (
+                <div key={c.id} className="bg-card border rounded-lg p-3 flex items-center gap-3 flex-wrap">
+                  <Sparkles className="h-5 w-5 text-primary flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium truncate">{c.name}</h4>
+                    <p className="text-xs text-muted-foreground">
+                      {c.slug}{c.delivery_date ? ` • Entrega: ${new Date(c.delivery_date + "T12:00:00").toLocaleDateString("pt-BR")}` : ""}
+                    </p>
+                    {c.note && <p className="text-[11px] text-muted-foreground mt-0.5">{c.note}</p>}
+                  </div>
+                  <Badge variant={c.active ? "default" : "secondary"}>{c.active ? "Ativa" : "Inativa"}</Badge>
+                  <div className="flex gap-1">
+                    <Button size="icon" variant="ghost" onClick={() => toggleCampaignActive(c)} title={c.active ? "Desativar" : "Ativar"}>
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" onClick={() => startEditCampaign(c)} title="Editar">
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="text-destructive" onClick={() => deleteCampaign(c.id)} title="Excluir">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

@@ -10,6 +10,8 @@ export interface CartItem {
   personalization?: string;
   /** ISO date YYYY-MM-DD chosen by the customer */
   deliveryDate?: string;
+  /** Optional seasonal campaign slug (e.g. 'dia-das-maes-2026') */
+  campaign_slug?: string | null;
 }
 
 const MIN_PERSONALIZATION_LENGTH = 5;

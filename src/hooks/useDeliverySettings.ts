@@ -21,8 +21,8 @@ const DEFAULTS: DeliverySettings = {
   pix_discount_percent: 10,
   pix_discount_active: true,
   pickup_enabled: true,
-  pickup_address: "",
-  pickup_window_text: "Retirada das 14h às 17h",
+  pickup_address: "Bairro Antares",
+  pickup_window_text: "Retirada das 14h às 17h (combine previamente pelo WhatsApp)",
 };
 
 export function useDeliverySettings() {
@@ -60,5 +60,28 @@ export function useDeliveryCapacity(startISO: string, endISO: string) {
       return map;
     },
     staleTime: 1000 * 60,
+  });
+}
+
+export interface Campaign {
+  id: string;
+  slug: string;
+  name: string;
+  delivery_date: string | null;
+  active: boolean;
+  note: string | null;
+}
+
+export function useCampaigns(onlyActive = true) {
+  return useQuery({
+    queryKey: ["campaigns", onlyActive],
+    queryFn: async (): Promise<Campaign[]> => {
+      let q = (supabase as any).from("campaigns").select("*").order("delivery_date", { ascending: true });
+      if (onlyActive) q = q.eq("active", true);
+      const { data, error } = await q;
+      if (error || !data) return [];
+      return data as Campaign[];
+    },
+    staleTime: 1000 * 60 * 5,
   });
 }

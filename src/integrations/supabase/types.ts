@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      campaigns: {
+        Row: {
+          active: boolean
+          created_at: string
+          delivery_date: string | null
+          id: string
+          name: string
+          note: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          delivery_date?: string | null
+          id?: string
+          name: string
+          note?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          delivery_date?: string | null
+          id?: string
+          name?: string
+          note?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       delivery_settings: {
         Row: {
           daily_order_limit: number
@@ -100,6 +133,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          campaign_slug: string | null
           created_at: string
           customer_email: string | null
           customer_name: string
@@ -127,6 +161,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          campaign_slug?: string | null
           created_at?: string
           customer_email?: string | null
           customer_name: string
@@ -154,6 +189,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          campaign_slug?: string | null
           created_at?: string
           customer_email?: string | null
           customer_name?: string
@@ -185,6 +221,7 @@ export type Database = {
       products: {
         Row: {
           active: boolean
+          campaign_slug: string | null
           category: string | null
           created_at: string
           custom_fields: Json
@@ -200,6 +237,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          campaign_slug?: string | null
           category?: string | null
           created_at?: string
           custom_fields?: Json
@@ -215,6 +253,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          campaign_slug?: string | null
           category?: string | null
           created_at?: string
           custom_fields?: Json
