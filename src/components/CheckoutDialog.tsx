@@ -326,11 +326,14 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg w-[calc(100%-1rem)] max-h-[92vh] overflow-y-auto p-4 sm:p-6 rounded-lg">
         <DialogHeader>
-          <DialogTitle className="font-heading flex items-center gap-2">
+          <div className="flex justify-center mb-2">
+            <BrandLogo variant="icon" className="h-14 w-14" />
+          </div>
+          <DialogTitle className="font-heading flex items-center gap-2 justify-center text-center">
             {isPix ? <MessageCircle className="h-5 w-5 text-pay-pix" /> : <CreditCard className="h-5 w-5 text-pay-card" />}
             {title}
           </DialogTitle>
-          <DialogDescription>{subtitle}</DialogDescription>
+          <DialogDescription className="text-center">{subtitle}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3 pt-2">
           {activeCampaign && (
