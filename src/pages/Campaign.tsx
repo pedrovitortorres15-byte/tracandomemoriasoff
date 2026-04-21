@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { InstagramButton } from "@/components/InstagramButton";
 import { ProductCard } from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, CalendarDays, ArrowLeft, PackageOpen } from "lucide-react";
@@ -177,6 +178,7 @@ export default function CampaignPage() {
       </main>
       <Footer />
       <WhatsAppButton />
+      <InstagramButton />
     </div>
   );
 }
