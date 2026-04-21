@@ -1,11 +1,16 @@
 import { MessageCircle } from "lucide-react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 
+const sanitizePhone = (n: string) => (n || "").replace(/\D/g, "");
+
 export function WhatsAppButton() {
   const { settings } = useSiteSettings();
+  const phone = sanitizePhone(settings.whatsapp_number) || "558287060860";
+  const href = `https://api.whatsapp.com/send?phone=${phone}`;
+
   return (
     <a
-      href={`https://wa.me/${settings.whatsapp_number}`}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Fale conosco no WhatsApp"
