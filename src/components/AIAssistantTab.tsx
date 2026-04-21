@@ -341,6 +341,8 @@ export const AIAssistantTab = () => {
     setLoading(true);
 
     try {
+      // Detecta se essa é a primeira mensagem (para gerar o título resumido depois).
+      const isFirstMessage = messages.length === 0 && !activeId;
       // Garante uma conversa criada antes de enviar
       const convId = await ensureConversation(userMsg.content);
       if (!convId) { setLoading(false); return; }
