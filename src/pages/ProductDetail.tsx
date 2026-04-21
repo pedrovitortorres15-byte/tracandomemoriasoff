@@ -418,10 +418,16 @@ const ProductDetail = () => {
                   className="w-full bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50">
                   <ShoppingCart className="h-5 w-5 mr-2" /> Adicionar ao Carrinho
                 </Button>
-                <Button onClick={handleWhatsAppOrder} size="lg" disabled={!validationCheck.ok} variant="outline"
-                  className="w-full border-pay-pix text-pay-pix hover:bg-pay-pix-soft uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50">
-                  PIX via WhatsApp{pixActive ? ` (${pixPct}% off)` : ""}
-                </Button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Button onClick={() => handleWhatsAppOrder("cartao")} size="lg" disabled={!validationCheck.ok} variant="outline"
+                    className="w-full border-pay-card text-pay-card hover:bg-pay-card hover:text-pay-card-foreground uppercase tracking-wider text-xs font-semibold rounded-full disabled:opacity-50">
+                    Cartão via WhatsApp
+                  </Button>
+                  <Button onClick={() => handleWhatsAppOrder("pix")} size="lg" disabled={!validationCheck.ok} variant="outline"
+                    className="w-full border-pay-pix text-pay-pix hover:bg-pay-pix hover:text-pay-pix-foreground uppercase tracking-wider text-xs font-semibold rounded-full disabled:opacity-50">
+                    PIX via WhatsApp{pixActive ? ` (${pixPct}% off)` : ""}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
