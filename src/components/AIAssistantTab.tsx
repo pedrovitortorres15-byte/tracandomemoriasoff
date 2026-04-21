@@ -34,8 +34,64 @@ export const AIAssistantTab = () => {
   const [input, setInput] = useState("");
   const [pendingImages, setPendingImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [recording, setRecording] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+  const baseTextRef = useRef<string>("");
+
+  // Inicia/encerra a gravação de voz (Web Speech API — sem custo, em pt-BR)
+  const toggleRecording = () => {
+    if (recording) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    const SR: any =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) {
+      toast.error("Seu navegador não suporta gravação por voz. Use Chrome ou Edge.");
+      return;
+    }
+    const rec = new SR();
+    rec.lang = "pt-BR";
+    rec.continuous = true;
+    rec.interimResults = true;
+    baseTextRef.current = input ? input.trim() + " " : "";
+
+    rec.onresult = (event: any) => {
+      let finalText = "";
+      let interimText = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) finalText += transcript;
+        else interimText += transcript;
+      }
+      if (finalText) baseTextRef.current += finalText + " ";
+      setInput((baseTextRef.current + interimText).trimStart());
+    };
+    rec.onerror = (e: any) => {
+      console.error("speech error", e);
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+        toast.error("Permissão do microfone negada. Habilite nas configurações do navegador.");
+      } else if (e.error !== "no-speech" && e.error !== "aborted") {
+        toast.error("Erro na gravação de voz.");
+      }
+      setRecording(false);
+    };
+    rec.onend = () => setRecording(false);
+    rec.onstart = () => setRecording(true);
+
+    try {
+      rec.start();
+      recognitionRef.current = rec;
+    } catch (e) {
+      console.error(e);
+      toast.error("Não consegui iniciar a gravação.");
+    }
+  };
+
+  // Para a gravação ao desmontar
+  useEffect(() => () => recognitionRef.current?.stop(), []);
 
   useEffect(() => {
     try {
