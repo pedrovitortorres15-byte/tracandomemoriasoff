@@ -54,7 +54,7 @@ const Auth = () => {
   const handleGoogle = async () => {
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/`,
+        redirect_uri: `${window.location.origin}${redirectTo}`,
         extraParams: { prompt: "select_account" },
       });
       if (result.error) {
@@ -63,7 +63,7 @@ const Auth = () => {
         return;
       }
       if (!result.redirected) {
-        navigate("/");
+        navigate(redirectTo, { replace: true });
       }
     } catch (err: any) {
       console.error("Google OAuth exception:", err);
