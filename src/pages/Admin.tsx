@@ -393,9 +393,9 @@ const Admin = () => {
               <Users className="h-8 w-8 text-primary" />
               <div>
                 <p className="text-2xl font-bold">
-                  R$ {orders.reduce((s, o) => s + Number(o.total), 0).toFixed(2)}
+                  R$ {orders.filter((o) => o.status !== "cancelado").reduce((s, o) => s + Number(o.total), 0).toFixed(2)}
                 </p>
-                <p className="text-sm text-muted-foreground">Receita Total</p>
+                <p className="text-sm text-muted-foreground">Receita Total (sem cancelados)</p>
               </div>
             </div>
           </div>
@@ -702,11 +702,13 @@ const Admin = () => {
                 orders.forEach((o) => {
                   const key = o.customer_phone || o.customer_email || o.customer_name;
                   const existing = customers.get(key);
+                  const isCancelled = o.status === "cancelado";
+                  const spent = isCancelled ? 0 : Number(o.total);
                   if (existing) {
-                    existing.orderCount++;
-                    existing.totalSpent += Number(o.total);
+                    if (!isCancelled) existing.orderCount++;
+                    existing.totalSpent += spent;
                   } else {
-                    customers.set(key, { name: o.customer_name, email: o.customer_email, phone: o.customer_phone, orderCount: 1, totalSpent: Number(o.total), lastOrder: o.created_at });
+                    customers.set(key, { name: o.customer_name, email: o.customer_email, phone: o.customer_phone, orderCount: isCancelled ? 0 : 1, totalSpent: spent, lastOrder: o.created_at });
                   }
                 });
                 const list = Array.from(customers.values()).filter(c =>
