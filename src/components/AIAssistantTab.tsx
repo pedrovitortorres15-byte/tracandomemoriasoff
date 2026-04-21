@@ -672,6 +672,8 @@ export const AIAssistantTab = () => {
             A IA pode cometer erros. Use o bom senso e revise sugestões antes de publicar.
           </p>
         </div>
+        </div>
+        </div>
       </div>
     </div>
   );
