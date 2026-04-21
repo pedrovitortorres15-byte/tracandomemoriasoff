@@ -63,6 +63,7 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
 
   const [loading, setLoading] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
+  const [cepValidated, setCepValidated] = useState<string | null>(null);
   const [method, setMethod] = useState<"entrega" | "retirada">(cartMethod || "entrega");
   const [form, setForm] = useState({
     customer_name: "", customer_email: "", customer_phone: "",
