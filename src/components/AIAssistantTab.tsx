@@ -3,10 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Sparkles, Send, ImagePlus, X, Loader2, Trash2, Lightbulb, Mic, MicOff, Wand2, Copy, Check } from "lucide-react";
+import { Sparkles, Send, ImagePlus, X, Loader2, Trash2, Lightbulb, Mic, MicOff, Wand2, Copy, Check, Plus, MessagesSquare, Pencil, MoreVertical } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ToolEvent {
   name: string;
@@ -15,10 +21,17 @@ interface ToolEvent {
 }
 
 interface Message {
+  id?: string;
   role: "user" | "assistant";
   content: string;
   images?: string[]; // data URLs
   toolEvents?: ToolEvent[];
+}
+
+interface Conversation {
+  id: string;
+  title: string;
+  updated_at: string;
 }
 
 const QUICK_PROMPTS = [
@@ -28,17 +41,16 @@ const QUICK_PROMPTS = [
   { icon: "🎁", label: "Criar campanha", prompt: "Crie uma campanha de Dia das Mães na loja com data limite de pedido e me sugira 3 produtos pra vincular nela." },
 ];
 
-const STORAGE_KEY = "admin-ai-chat-history";
+const ACTIVE_CONV_KEY = "admin-ai-active-conversation";
 
 export const AIAssistantTab = () => {
-  const [messages, setMessages] = useState<Message[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(
+    () => localStorage.getItem(ACTIVE_CONV_KEY)
+  );
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [input, setInput] = useState("");
   const [pendingImages, setPendingImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -48,6 +60,7 @@ export const AIAssistantTab = () => {
   const recognitionRef = useRef<any>(null);
   const baseTextRef = useRef<string>("");
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const copyMessage = async (text: string, idx: number) => {
     try {
