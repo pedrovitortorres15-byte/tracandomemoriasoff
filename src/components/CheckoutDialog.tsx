@@ -257,8 +257,8 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
       }
 
       const payLabel = isPix
-        ? `💚 *Pagamento: PIX${pixActive ? ` (${pixPct}% off)` : ""}*`
-        : `💳 *Pagamento: Cartão até 3x sem juros*`;
+        ? `💚 *Pagamento escolhido: PIX${pixActive ? ` (${pixPct}% off)` : ""}*\n_A dona enviará a chave PIX por aqui para você pagar._`
+        : `💳 *Pagamento escolhido: Cartão (até 3x sem juros)*\n_A dona enviará o link de pagamento por aqui para você concluir a compra._`;
 
       const campaignBlock = activeCampaign
         ? `\n🌸 *Campanha: ${activeCampaign.name}*\n📅 Data especial: ${
@@ -280,8 +280,8 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
         (method === "entrega" ? `\n(+ taxa de entrega a partir de R$10,00)` : "") +
         (d.notes ? `\n\n📝 Obs: ${d.notes}` : "") +
         (isPix
-          ? `\n\nAguardo o envio da chave PIX para efetuar o pagamento. Obrigada! 💖`
-          : `\n\nAguardo a confirmação da disponibilidade e o link de pagamento (cartão até 3x sem juros). Obrigada! 💖`);
+          ? `\n\nAguardo o envio da *chave PIX* aqui pelo WhatsApp para efetuar o pagamento. Obrigada! 💖`
+          : `\n\nAguardo a confirmação e o *link de pagamento por cartão* (até 3x sem juros) aqui pelo WhatsApp. Obrigada! 💖`);
 
       const url = `https://wa.me/${OWNER_WHATSAPP}?text=${encodeURIComponent(msg)}`;
       // Abre direto (evita bloqueio de popup em mobile)
@@ -299,8 +299,8 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
 
   const title = isPix ? "Finalizar por PIX via WhatsApp" : "Finalizar por Cartão via WhatsApp";
   const subtitle = isPix
-    ? `Enviaremos seu pedido pelo WhatsApp. A loja responde com a chave PIX${pixActive ? ` (${pixPct}% off)` : ""}.`
-    : "Enviaremos seu pedido pelo WhatsApp. A loja confirma a disponibilidade e envia o link de pagamento (cartão até 3x sem juros).";
+    ? `Seu pedido será enviado pelo WhatsApp da loja. A dona confirma a disponibilidade e envia a chave PIX${pixActive ? ` (${pixPct}% off)` : ""} para você pagar por aqui.`
+    : "Seu pedido será enviado pelo WhatsApp da loja. A dona confirma a disponibilidade e envia o link de pagamento (cartão até 3x sem juros) para você concluir a compra.";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
