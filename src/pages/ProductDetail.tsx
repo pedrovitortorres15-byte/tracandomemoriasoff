@@ -397,14 +397,14 @@ const ProductDetail = () => {
                 )}
               </div>
 
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-foreground uppercase tracking-wide">Quantidade</span>
-                <div className="flex items-center border border-border rounded">
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-none" onClick={() => setQuantity(q => Math.max(1, q - 1))}>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs md:text-sm font-medium text-foreground uppercase tracking-wide">Quantidade</span>
+                <div className="flex items-center border border-border rounded-full">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => setQuantity(q => Math.max(1, q - 1))}>
                     <Minus className="h-4 w-4" />
                   </Button>
-                  <span className="w-12 text-center text-sm font-medium border-x border-border">{quantity}</span>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-none" onClick={() => setQuantity(q => q + 1)}>
+                  <span className="w-10 text-center text-sm font-medium">{quantity}</span>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => setQuantity(q => q + 1)}>
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
@@ -417,8 +417,9 @@ const ProductDetail = () => {
                     <p className="text-xs text-destructive font-medium">{validationCheck.reason}</p>
                   </div>
                 )}
+                {/* Botão inline (oculto em mobile - usa barra fixa abaixo) */}
                 <Button onClick={handleAddToCart} size="lg" disabled={!validationCheck.ok}
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50">
+                  className="hidden md:inline-flex w-full bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50">
                   <ShoppingCart className="h-5 w-5 mr-2" /> Adicionar ao Carrinho
                 </Button>
                 <p className="text-[11px] text-muted-foreground text-center">
@@ -429,6 +430,24 @@ const ProductDetail = () => {
           </div>
         </div>
       </main>
+
+      {/* Barra fixa de checkout em mobile */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-lg p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="container flex items-center gap-2 px-0">
+          <div className="flex-1 min-w-0 px-2">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide leading-none">Total</p>
+            <p className="text-base font-bold text-primary leading-tight">R${(unitPrice * quantity).toFixed(2)}</p>
+          </div>
+          <Button
+            onClick={handleAddToCart}
+            disabled={!validationCheck.ok}
+            className="flex-[2] bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-xs font-semibold rounded-full h-11 disabled:opacity-50"
+          >
+            <ShoppingCart className="h-4 w-4 mr-1.5" /> Adicionar
+          </Button>
+        </div>
+      </div>
+
       <Footer />
       <WhatsAppButton />
     </div>
