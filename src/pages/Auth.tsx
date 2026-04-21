@@ -67,7 +67,7 @@ const Auth = () => {
         return;
       }
       if (!result.redirected) {
-        navigate(redirectTo, { replace: true });
+        navigate(destinationFor(email), { replace: true });
       }
     } catch (err: any) {
       console.error("Google OAuth exception:", err);
