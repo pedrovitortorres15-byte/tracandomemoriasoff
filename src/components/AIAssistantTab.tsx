@@ -391,34 +391,38 @@ export const AIAssistantTab = () => {
         <div className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
           <Sparkles className="h-5 w-5" />
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <h3 className="font-heading text-lg font-bold">Catha AI ✨ — sua copiloto criativa</h3>
           <p className="text-sm text-muted-foreground">
             Posso mudar cores e textos do site, criar produtos e campanhas, escrever legendas, roteiros, responder clientes e analisar suas fotos e vídeos. É só pedir — eu faço por você. 💝
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="lg:hidden gap-1"
-          onClick={() => setSidebarOpen((s) => !s)}
-          title="Histórico de conversas"
-        >
-          <MessagesSquare className="h-4 w-4" />
-          {conversations.length > 0 && (
-            <span className="text-[11px]">{conversations.length}</span>
-          )}
-        </Button>
+        <div className="flex flex-col gap-2 shrink-0 xl:hidden">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            onClick={() => setSidebarOpen((s) => !s)}
+            title="Histórico de conversas"
+          >
+            <MessagesSquare className="h-4 w-4" />
+            <span className="text-[11px]">
+              {sidebarOpen ? "Fechar" : "Histórico"}
+              {conversations.length > 0 && ` (${conversations.length})`}
+            </span>
+          </Button>
+        </div>
       </div>
 
-      {/* Layout principal: sidebar + chat */}
-      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
+      {/* Layout principal: sidebar + chat
+          Em telas grandes (xl+) sidebar fica fixo ao lado.
+          Em telas menores, sidebar é toggleável e ocupa a largura toda quando aberto. */}
+      <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr] gap-4">
         {/* Sidebar de histórico */}
         <aside
           className={cn(
-            "bg-card border rounded-lg flex flex-col h-[60vh] min-h-[400px]",
-            "lg:flex",
-            sidebarOpen ? "flex" : "hidden",
+            "bg-card border rounded-lg flex-col h-[65vh] min-h-[420px] xl:flex",
+            sidebarOpen ? "flex" : "hidden xl:flex",
           )}
         >
           <div className="p-3 border-b flex items-center justify-between gap-2">
@@ -490,7 +494,7 @@ export const AIAssistantTab = () => {
           </ScrollArea>
         </aside>
 
-        <div className="space-y-4">
+        <div className={cn("space-y-4", sidebarOpen && "hidden xl:block")}>
 
       {/* Sugestões rápidas */}
       {messages.length === 0 && (
@@ -514,10 +518,28 @@ export const AIAssistantTab = () => {
       )}
 
       {/* Chat */}
-      <div className="bg-card border rounded-lg flex flex-col h-[60vh] min-h-[400px]">
+      <div className="bg-card border rounded-lg flex flex-col h-[65vh] min-h-[420px]">
+        {/* Header do chat com nome da conversa ativa */}
+        <div className="border-b px-3 py-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span className="text-xs font-medium truncate">
+              {activeId
+                ? conversations.find((c) => c.id === activeId)?.title || "Conversa"
+                : "Nova conversa"}
+            </span>
+          </div>
+          <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs shrink-0" onClick={newConversation}>
+            <Plus className="h-3.5 w-3.5" /> Nova
+          </Button>
+        </div>
         <ScrollArea className="flex-1 p-4" ref={scrollRef as any}>
           <div ref={scrollRef} className="space-y-4">
-            {messages.length === 0 && (
+            {loadingMessages ? (
+              <div className="text-center text-muted-foreground text-sm py-12 flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" /> Carregando conversa...
+              </div>
+            ) : messages.length === 0 && (
               <div className="text-center text-muted-foreground text-sm py-12">
                 Comece uma conversa! Escreva uma pergunta ou clique numa sugestão acima.
               </div>
