@@ -12,7 +12,12 @@ import { useDeliverySettings, useCampaigns } from "@/hooks/useDeliverySettings";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const OWNER_WHATSAPP = "558287060860";
+const OWNER_WHATSAPP_RAW = "558287060860";
+// Sanitiza qualquer número WhatsApp (remove +, espaços, parênteses, traços)
+const sanitizeWhatsApp = (n: string) => (n || "").replace(/\D/g, "");
+const OWNER_WHATSAPP = sanitizeWhatsApp(OWNER_WHATSAPP_RAW);
+// Limite seguro de URL para wa.me em mobile (~ 2000 chars total)
+const MAX_MSG_LEN = 1500;
 
 const baseSchema = {
   customer_name: z.string().trim().min(2, "Nome obrigatório").max(120),
