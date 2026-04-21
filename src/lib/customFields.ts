@@ -89,7 +89,8 @@ export const DEFAULT_FALLBACK_FIELDS: CustomField[] = [
 /** Read custom_fields safely from a product row */
 export function readCustomFields(product: any): CustomField[] {
   const cf = product?.custom_fields ?? product?.customFields;
-  if (Array.isArray(cf) && cf.length > 0) return cf as CustomField[];
+  // Empty array means the shop owner intentionally removed personalization fields.
+  if (Array.isArray(cf)) return cf as CustomField[];
   return DEFAULT_FALLBACK_FIELDS;
 }
 
