@@ -519,7 +519,51 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { messages } = (await req.json()) as { messages: IncomingMessage[] };
+    const body = (await req.json()) as { messages?: IncomingMessage[]; action?: string; text?: string };
+
+    // ===== Ação: gerar título resumido para uma conversa (3-6 palavras) =====
+    if (body.action === "summarize_title") {
+      const text = (body.text || "").slice(0, 4000).trim();
+      if (!text) {
+        return new Response(JSON.stringify({ title: "Nova conversa" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      try {
+        const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-lite",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "Você gera títulos curtos (3 a 6 palavras, em português, sem aspas, sem emojis, sem ponto final) que resumem o ASSUNTO de uma conversa. Responda APENAS com o título.",
+              },
+              { role: "user", content: `Resuma o assunto desta mensagem em um título curto:\n\n${text}` },
+            ],
+          }),
+        });
+        const j = await r.json();
+        let title = (j.choices?.[0]?.message?.content || "").trim();
+        title = title.replace(/^["'`]+|["'`.]+$/g, "").slice(0, 60);
+        if (!title) title = text.slice(0, 60);
+        return new Response(JSON.stringify({ title }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } catch (e) {
+        console.error("summarize_title error", e);
+        return new Response(JSON.stringify({ title: text.slice(0, 60) }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    const messages = body.messages;
     if (!Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: "messages é obrigatório" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
