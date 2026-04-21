@@ -63,6 +63,7 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
 
   const [loading, setLoading] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
+  const [cepValidated, setCepValidated] = useState<string | null>(null);
   const [method, setMethod] = useState<"entrega" | "retirada">(cartMethod || "entrega");
   const [form, setForm] = useState({
     customer_name: "", customer_email: "", customer_phone: "",
@@ -98,24 +99,34 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
     const onlyDigits = raw.replace(/\D/g, "").slice(0, 8);
     const masked = onlyDigits.length > 5 ? `${onlyDigits.slice(0, 5)}-${onlyDigits.slice(5)}` : onlyDigits;
     set("shipping_zip", masked);
+    setCepValidated(null);
     if (onlyDigits.length !== 8) return;
     setCepLoading(true);
     try {
       const res = await fetch(`https://viacep.com.br/ws/${onlyDigits}/json/`);
       const data = await res.json();
       if (data.erro) {
-        toast.error("CEP não encontrado");
+        toast.error("CEP não encontrado — confira o número");
+        return;
+      }
+      const logradouro = (data.logradouro || "").trim();
+      const bairro = (data.bairro || "").trim();
+      const cidade = (data.localidade || "").trim();
+      const uf = (data.uf || "").trim().toUpperCase();
+      if (!cidade || !uf) {
+        toast.error("CEP não retornou cidade/UF — preencha manualmente");
         return;
       }
       setForm(p => ({
         ...p,
-        shipping_address: data.logradouro || p.shipping_address,
-        shipping_neighborhood: data.bairro || p.shipping_neighborhood,
-        shipping_city: data.localidade || p.shipping_city,
-        shipping_state: (data.uf || p.shipping_state).toUpperCase(),
+        shipping_address: logradouro || p.shipping_address,
+        shipping_neighborhood: bairro || p.shipping_neighborhood,
+        shipping_city: cidade,
+        shipping_state: uf,
       }));
+      setCepValidated(onlyDigits);
     } catch {
-      toast.error("Não consegui buscar o CEP, preencha manualmente");
+      toast.error("Não consegui buscar o CEP, tente novamente");
     } finally {
       setCepLoading(false);
     }
@@ -136,6 +147,18 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
     if (cartMethod && cartMethod !== method) {
       toast.error("A forma de recebimento deve ser a mesma escolhida no produto.");
       return;
+    }
+
+    if (method === "entrega") {
+      const cepDigits = form.shipping_zip.replace(/\D/g, "");
+      if (cepDigits.length !== 8 || cepValidated !== cepDigits) {
+        toast.error("Valide o CEP — digite os 8 dígitos e aguarde o preenchimento automático do endereço.");
+        return;
+      }
+      if (!form.shipping_address.trim() || !form.shipping_neighborhood.trim() || !form.shipping_city.trim() || !form.shipping_state.trim()) {
+        toast.error("Endereço incompleto — rua, bairro, cidade e UF são obrigatórios.");
+        return;
+      }
     }
 
     const schema = method === "entrega" ? deliverySchema : pickupSchema;
@@ -362,9 +385,17 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
                   value={form.shipping_zip}
                   onChange={(e) => handleCepChange(e.target.value)}
                   inputMode="numeric"
+                  className={
+                    form.shipping_zip.replace(/\D/g, "").length === 8 && cepValidated !== form.shipping_zip.replace(/\D/g, "") && !cepLoading
+                      ? "border-destructive focus-visible:ring-destructive"
+                      : ""
+                  }
                 />
                 {cepLoading && <Loader2 className="h-4 w-4 animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />}
               </div>
+              {form.shipping_zip.replace(/\D/g, "").length === 8 && cepValidated !== form.shipping_zip.replace(/\D/g, "") && !cepLoading && (
+                <p className="text-[11px] text-destructive -mt-1">CEP inválido ou não localizado. Confira os 8 dígitos.</p>
+              )}
               <Input placeholder="Rua / Avenida" value={form.shipping_address} onChange={(e) => set('shipping_address', e.target.value)} />
               <div className="grid grid-cols-[100px_1fr] gap-2">
                 <Input placeholder="Nº *" value={form.shipping_number} onChange={(e) => set('shipping_number', e.target.value)} />
