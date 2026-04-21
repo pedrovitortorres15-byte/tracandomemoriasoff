@@ -387,7 +387,25 @@ const ProductDetail = () => {
                       {fulfillmentMethod === "entrega" && <p className="text-xs text-muted-foreground mt-2">🚚 {deliveryWindow}</p>}
                       {fulfillmentMethod === "retirada" && <p className="text-xs text-muted-foreground mt-2">🏪 {pickupWindow}. Endereço completo combinado pelo WhatsApp.</p>}
                     </div>
-                    <DeliveryDatePicker value={deliveryDate} onChange={setDeliveryDate} label={fulfillmentMethod === "retirada" ? "Data desejada de retirada" : "Data desejada de entrega"} />
+                    {isCampaignProduct ? (
+                      <div className="rounded-md border border-primary/30 bg-primary/10 p-3 space-y-1.5">
+                        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
+                          <Sparkles className="h-3.5 w-3.5" /> Produto da campanha {productCampaign?.name}
+                        </p>
+                        {campaignDateISO && (
+                          <p className="flex items-center gap-1.5 text-sm text-foreground">
+                            <CalendarDays className="h-4 w-4 text-primary" />
+                            {fulfillmentMethod === "retirada" ? "Retirada" : "Entrega"} prevista em{" "}
+                            <strong>{format(new Date(campaignDateISO + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })}</strong>
+                          </p>
+                        )}
+                        <p className="text-[11px] text-muted-foreground">
+                          A data desta campanha é fixa. Caso precise de outro dia, a dona pode ajustar com você pelo WhatsApp após o pedido.
+                        </p>
+                      </div>
+                    ) : (
+                      <DeliveryDatePicker value={deliveryDate} onChange={setDeliveryDate} label={fulfillmentMethod === "retirada" ? "Data desejada de retirada" : "Data desejada de entrega"} />
+                    )}
                   </div>
                 </div>
               )}
