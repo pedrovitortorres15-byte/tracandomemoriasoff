@@ -46,6 +46,19 @@ const pickupSchema = z.object({
   delivery_method: z.literal("retirada"),
 });
 
+const fieldLabels: Record<string, string> = {
+  customer_name: "Nome completo",
+  customer_email: "E-mail",
+  customer_phone: "WhatsApp",
+  shipping_zip: "CEP",
+  shipping_address: "Rua / Avenida",
+  shipping_number: "Número",
+  shipping_neighborhood: "Bairro",
+  shipping_city: "Cidade",
+  shipping_state: "UF",
+  recipient_name: "Nome de quem recebe",
+};
+
 export type PaymentChoice = "pix" | "cartao";
 
 interface Props {
@@ -157,8 +170,8 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
 
     if (method === "entrega") {
       const cepDigits = form.shipping_zip.replace(/\D/g, "");
-      if (cepDigits.length !== 8 || cepValidated !== cepDigits) {
-        toast.error("Valide o CEP — digite os 8 dígitos e aguarde o preenchimento automático do endereço.");
+      if (cepDigits.length !== 8) {
+        toast.error("CEP inválido — informe os 8 dígitos do endereço de entrega.");
         return;
       }
       if (!form.shipping_address.trim() || !form.shipping_neighborhood.trim() || !form.shipping_city.trim() || !form.shipping_state.trim()) {
@@ -170,8 +183,10 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
     const schema = method === "entrega" ? deliverySchema : pickupSchema;
     const parsed = schema.safeParse({ ...form, delivery_method: method });
     if (!parsed.success) {
-      const first = Object.values(parsed.error.flatten().fieldErrors)[0]?.[0];
-      toast.error(first || "Preencha os dados corretamente");
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      const firstField = Object.keys(fieldErrors)[0];
+      const first = firstField ? fieldErrors[firstField]?.[0] : undefined;
+      toast.error(firstField ? `${fieldLabels[firstField] || "Campo"}: ${first}` : first || "Preencha os dados corretamente");
       return;
     }
     const d = parsed.data;
@@ -271,15 +286,15 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
       }
 
       const payLabel = isPix
-        ? `💚 *Pagamento escolhido: PIX${pixActive ? ` (${pixPct}% off)` : ""}*\n_A dona enviará a chave PIX por aqui para você pagar._`
-        : `💳 *Pagamento escolhido: Cartão (até 3x sem juros)*\n_A dona enviará o link de pagamento por aqui para você concluir a compra._`;
+        ? `💚 *Pagamento escolhido: PIX${pixActive ? ` (${pixPct}% off)` : ""}*\n_A loja enviará a chave PIX por aqui para você pagar._`
+        : `💳 *Pagamento escolhido: Cartão (até 3x sem juros)*\n_A loja enviará o link de pagamento por aqui para você concluir a compra._`;
 
       const campaignBlock = activeCampaign
-        ? `\n🌸 *Campanha: ${activeCampaign.name}*\n📅 Data especial: ${
+        ? `\n✨ *Especial: ${activeCampaign.name}*\n📅 Entregas deste especial serão realizadas em ${
             activeCampaign.delivery_date
               ? format(new Date(activeCampaign.delivery_date + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })
               : "—"
-          }\n${activeCampaign.note ? activeCampaign.note + "\n" : ""}`
+          }\n`
         : "";
 
       const msg =
@@ -332,8 +347,8 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
 
   const title = isPix ? "Finalizar por PIX via WhatsApp" : "Finalizar por Cartão via WhatsApp";
   const subtitle = isPix
-    ? `Seu pedido será enviado pelo WhatsApp da loja. A dona confirma a disponibilidade e envia a chave PIX${pixActive ? ` (${pixPct}% off)` : ""} para você pagar por aqui.`
-    : "Seu pedido será enviado pelo WhatsApp da loja. A dona confirma a disponibilidade e envia o link de pagamento (cartão até 3x sem juros) para você concluir a compra.";
+    ? `Seu pedido será enviado pelo WhatsApp da loja. A loja confirma a disponibilidade e envia a chave PIX${pixActive ? ` (${pixPct}% off)` : ""} para você pagar por aqui.`
+    : "Seu pedido será enviado pelo WhatsApp da loja. A loja confirma a disponibilidade e envia o link de pagamento (cartão até 3x sem juros) para você concluir a compra.";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -352,17 +367,16 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
           {activeCampaign && (
             <div className="bg-primary/10 border border-primary/30 rounded-md p-2.5 text-xs space-y-0.5">
               <p className="flex items-center gap-1.5 font-semibold text-primary">
-                <Sparkles className="h-3.5 w-3.5" /> Campanha: {activeCampaign.name}
+                <Sparkles className="h-3.5 w-3.5" /> Especial: {activeCampaign.name}
               </p>
               {activeCampaign.delivery_date && (
                 <p>
-                  📅 Entregas desta campanha serão realizadas em{" "}
+                  📅 Entregas deste especial serão realizadas em{" "}
                   <strong>
                     {format(new Date(activeCampaign.delivery_date + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })}
                   </strong>
                 </p>
               )}
-              {activeCampaign.note && <p className="text-muted-foreground">{activeCampaign.note}</p>}
             </div>
           )}
 
@@ -397,7 +411,7 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
             {method === "retirada" && (
               <div className="mt-2 bg-muted/50 border border-border rounded p-2.5 text-xs space-y-1">
                 <p>📍 <strong>Retirada no Bairro Antares.</strong></p>
-                <p className="text-muted-foreground">O endereço completo será informado depois, pelo WhatsApp.</p>
+                <p className="text-muted-foreground">O endereço completo será informado através do WhatsApp.</p>
                 <p>🕐 Retiradas das <strong>14h às 17h</strong> — <strong>combine previamente</strong> com a loja pelo WhatsApp.</p>
               </div>
             )}
