@@ -313,6 +313,12 @@ export const AIAssistantTab = () => {
     setLoading(true);
 
     try {
+      // Garante uma conversa criada antes de enviar
+      const convId = await ensureConversation(userMsg.content);
+      if (!convId) { setLoading(false); return; }
+      // Persiste a mensagem do usuário em paralelo com a chamada à IA
+      persistMessage(convId, userMsg).catch((e) => console.error("persist user", e));
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         toast.error("Faça login como administradora para usar a IA.");
@@ -356,11 +362,20 @@ export const AIAssistantTab = () => {
         toast.success(`✨ ${writeTools.length} ação(ões) aplicadas no site`);
       }
 
-      setMessages((prev) => [...prev, {
+      const assistantMsg: Message = {
         role: "assistant",
         content: data.content || "✨",
         toolEvents: toolEvents.length > 0 ? toolEvents : undefined,
-      }]);
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
+      persistMessage(convId, assistantMsg).catch((e) => console.error("persist assistant", e));
+      // reordena a sidebar (move pra topo)
+      setConversations((prev) => {
+        const idx = prev.findIndex((c) => c.id === convId);
+        if (idx === -1) return prev;
+        const updated = { ...prev[idx], updated_at: new Date().toISOString() };
+        return [updated, ...prev.filter((c) => c.id !== convId)];
+      });
     } catch (e) {
       console.error(e);
       toast.error("Falha de conexão com a IA.");
@@ -369,11 +384,6 @@ export const AIAssistantTab = () => {
     }
   };
 
-  const clearChat = () => {
-    if (!confirm("Limpar toda a conversa?")) return;
-    setMessages([]);
-    localStorage.removeItem(STORAGE_KEY);
-  };
 
   return (
     <div className="space-y-4">
