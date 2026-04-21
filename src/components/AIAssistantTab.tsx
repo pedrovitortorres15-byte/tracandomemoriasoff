@@ -494,7 +494,7 @@ export const AIAssistantTab = () => {
           </ScrollArea>
         </aside>
 
-        <div className="space-y-4">
+        <div className={cn("space-y-4", sidebarOpen && "hidden xl:block")}>
 
       {/* Sugestões rápidas */}
       {messages.length === 0 && (
@@ -518,10 +518,28 @@ export const AIAssistantTab = () => {
       )}
 
       {/* Chat */}
-      <div className="bg-card border rounded-lg flex flex-col h-[60vh] min-h-[400px]">
+      <div className="bg-card border rounded-lg flex flex-col h-[65vh] min-h-[420px]">
+        {/* Header do chat com nome da conversa ativa */}
+        <div className="border-b px-3 py-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span className="text-xs font-medium truncate">
+              {activeId
+                ? conversations.find((c) => c.id === activeId)?.title || "Conversa"
+                : "Nova conversa"}
+            </span>
+          </div>
+          <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs shrink-0" onClick={newConversation}>
+            <Plus className="h-3.5 w-3.5" /> Nova
+          </Button>
+        </div>
         <ScrollArea className="flex-1 p-4" ref={scrollRef as any}>
           <div ref={scrollRef} className="space-y-4">
-            {messages.length === 0 && (
+            {loadingMessages ? (
+              <div className="text-center text-muted-foreground text-sm py-12 flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" /> Carregando conversa...
+              </div>
+            ) : messages.length === 0 && (
               <div className="text-center text-muted-foreground text-sm py-12">
                 Comece uma conversa! Escreva uma pergunta ou clique numa sugestão acima.
               </div>
