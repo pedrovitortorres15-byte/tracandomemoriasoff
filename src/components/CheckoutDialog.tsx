@@ -68,8 +68,9 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
     customer_name: "", customer_email: "", customer_phone: "",
     shipping_zip: "", shipping_address: "", shipping_number: "", shipping_complement: "",
     shipping_neighborhood: "", shipping_city: "", shipping_state: "", notes: "",
-    recipient_name: "", recipient_phone: "",
+    recipient_name: "", recipient_phone: "", shipping_reference: "",
   });
+  const [recipientType, setRecipientType] = useState<"presenteada" | "eu" | "outra">("presenteada");
 
   const set = (k: keyof typeof form, v: string) => setForm(p => ({ ...p, [k]: v }));
 
