@@ -313,7 +313,7 @@ const Admin = () => {
         <div className="max-w-md text-center space-y-4 bg-card border rounded-lg p-6">
           <h1 className="font-heading text-2xl font-bold">Acesso restrito</h1>
           <p className="text-muted-foreground text-sm">
-            Este painel é exclusivo da dona da loja.
+            Este painel é exclusivo da administração da loja.
             {user?.email && (
               <> Você está logada como <strong>{user.email}</strong>. Saia e entre com <strong>catharinaferrario@gmail.com</strong>.</>
             )}
@@ -355,7 +355,7 @@ const Admin = () => {
             </button>
             <BrandLogo variant="icon" className="h-9 w-9 border-primary/30" />
             <div>
-              <h1 className="font-heading text-base md:text-lg font-bold leading-tight">Painel da Dona</h1>
+              <h1 className="font-heading text-base md:text-lg font-bold leading-tight">Painel Administrativo</h1>
               <p className="text-[10px] text-muted-foreground -mt-0.5">Loja Traçando Memórias</p>
             </div>
           </div>
@@ -402,7 +402,7 @@ const Admin = () => {
         {/* Tabs + busca */}
         <div className="flex flex-col sm:flex-row gap-2 mb-6">
           <div className="flex gap-2 flex-wrap">
-            {([["orders", "Pedidos", ShoppingBag], ["products", "Produtos", Package], ["customers", "Clientes", Users], ["campaigns", "Campanhas", Sparkles], ["appearance", "Aparência", Palette], ["settings", "Configurações", SettingsIcon]] as const).map(([key, label, Icon]) => (
+            {([["orders", "Pedidos", ShoppingBag], ["products", "Produtos", Package], ["customers", "Clientes", Users], ["campaigns", "Especiais", Sparkles], ["appearance", "Aparência", Palette], ["settings", "Configurações", SettingsIcon]] as const).map(([key, label, Icon]) => (
               <Button
                 key={key}
                 variant={tab === key ? "default" : "outline"}
@@ -553,21 +553,21 @@ const Admin = () => {
 
                 <div className="border-t pt-3">
                   <label className="text-sm font-medium block mb-1.5 flex items-center gap-1.5">
-                    <Sparkles className="h-4 w-4 text-primary" /> Campanha (opcional)
+                    <Sparkles className="h-4 w-4 text-primary" /> Especial (opcional)
                   </label>
                   <select
                     value={productForm.campaign_slug}
                     onChange={(e) => setProductForm({ ...productForm, campaign_slug: e.target.value })}
                     className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                   >
-                    <option value="">— Sem campanha —</option>
+                    <option value="">— Sem especial —</option>
                     {campaigns.map((c) => (
                       <option key={c.id} value={c.slug}>
                         {c.name}{c.delivery_date ? ` (${new Date(c.delivery_date + "T12:00:00").toLocaleDateString("pt-BR")})` : ""}{!c.active ? " [inativa]" : ""}
                       </option>
                     ))}
                   </select>
-                  <p className="text-[11px] text-muted-foreground mt-1">Produtos vinculados a uma campanha ativam regras especiais no checkout.</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">Produtos vinculados a um especial ativam regras especiais no checkout.</p>
                 </div>
 
                 <div className="border-t pt-3">
