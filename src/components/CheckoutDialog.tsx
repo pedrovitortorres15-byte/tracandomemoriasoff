@@ -180,6 +180,8 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
           shipping_state: dd.shipping_state.toUpperCase(),
           recipient_name: dd.recipient_name,
           recipient_phone: dd.recipient_phone || null,
+          notes: [d.notes, form.shipping_reference ? `Ponto de referência: ${form.shipping_reference}` : null]
+            .filter(Boolean).join(" | ") || null,
         });
       } else {
         Object.assign(orderPayload, {
