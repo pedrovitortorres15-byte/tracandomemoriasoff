@@ -1,10 +1,9 @@
-import logoFullFallback from "@/assets/logo-full.jpg";
 import { Instagram, Phone, Shield } from "lucide-react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { BrandLogo } from "./BrandLogo";
 
 export const Footer = () => {
   const { settings } = useSiteSettings();
-  const logoSrc = settings.logo_full_url || settings.logo_url || logoFullFallback;
   const phoneDisplay = settings.whatsapp_number.replace(/^55/, "+55 ").replace(/(\d{2})(\d{4,5})(\d{4})$/, "$1 $2-$3");
   return (
     <footer id="sobre" className="bg-primary text-primary-foreground py-14">
@@ -12,7 +11,10 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           <div className="space-y-4 md:col-span-2">
             <div className="flex items-center gap-3">
-              <img src={logoSrc} alt={`Logo ${settings.brand_name}`} className="h-16 w-16 rounded-full shadow-md object-cover border-2 border-primary-foreground/20" />
+              <BrandLogo
+                variant="icon"
+                className="h-16 w-16 border-primary-foreground/20 shadow-md"
+              />
               <div>
                 <h3 className="font-heading text-2xl font-bold leading-tight">{settings.brand_name}</h3>
                 <p className="text-xs opacity-70 uppercase tracking-widest">{settings.brand_tagline}</p>

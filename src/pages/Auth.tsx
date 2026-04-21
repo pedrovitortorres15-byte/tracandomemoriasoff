@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Mail, Lock, User, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { BrandLogo } from "@/components/BrandLogo";
 
 const OWNER_EMAIL = "catharinaferrario@gmail.com";
 
@@ -81,11 +82,14 @@ const Auth = () => {
         <button onClick={() => navigate("/")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm">
           <ArrowLeft className="h-4 w-4" /> Voltar à loja
         </button>
-        <div className="text-center">
+        <div className="text-center space-y-3">
+          <div className="flex justify-center">
+            <BrandLogo variant="icon" className="h-20 w-20" />
+          </div>
           <h1 className="font-heading text-3xl font-bold text-foreground">
             {isLogin ? "Entrar" : "Criar Conta"}
           </h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-muted-foreground">
             {isLogin ? "Acesse sua conta" : "Crie sua conta para comprar"}
           </p>
         </div>

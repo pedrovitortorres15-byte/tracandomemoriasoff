@@ -1,4 +1,5 @@
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { BrandLogo } from "./BrandLogo";
 import heroBgFallback from "@/assets/hero-bg.jpg";
 
 export const Hero = () => {
@@ -19,6 +20,12 @@ export const Hero = () => {
       </div>
       <div className="container relative z-10 py-14 sm:py-20 md:py-36 lg:py-44">
         <div className="max-w-xl space-y-4 md:space-y-8 animate-fade-in text-center md:text-left mx-auto md:mx-0">
+          <div className="flex justify-center md:justify-start">
+            <BrandLogo
+              variant="icon"
+              className="h-16 w-16 md:h-20 md:w-20 border-beige-200/40 shadow-xl ring-4 ring-beige-50/10"
+            />
+          </div>
           <span className="inline-block text-[10px] md:text-xs uppercase tracking-[0.3em] text-beige-200 font-medium">
             {settings.hero_eyebrow}
           </span>

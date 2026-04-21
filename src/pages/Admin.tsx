@@ -11,7 +11,7 @@ import { MediaUploader } from "@/components/MediaUploader";
 import { CustomFieldsBuilder } from "@/components/CustomFieldsBuilder";
 import { SiteCustomizer } from "@/components/SiteCustomizer";
 import type { CustomField } from "@/lib/customFields";
-import logoIcon from "@/assets/logo-icon.jpg";
+import { BrandLogo } from "@/components/BrandLogo";
 import {
   Package, ShoppingBag, Users, Plus, ArrowLeft, Trash2, Edit2,
   Eye, ChevronDown, ChevronUp, LogOut, Save, X, Search, Settings as SettingsIcon, Sparkles, Palette
@@ -353,7 +353,7 @@ const Admin = () => {
             <button onClick={() => navigate("/")} className="text-muted-foreground hover:text-foreground">
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <img src={logoIcon} alt="Loja Traçando Memórias" className="h-9 w-9 rounded-full object-cover border border-primary/30" />
+            <BrandLogo variant="icon" className="h-9 w-9 border-primary/30" />
             <div>
               <h1 className="font-heading text-base md:text-lg font-bold leading-tight">Painel da Dona</h1>
               <p className="text-[10px] text-muted-foreground -mt-0.5">Loja Traçando Memórias</p>

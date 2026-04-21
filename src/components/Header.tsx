@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import logoIconFallback from "@/assets/logo-icon.jpg";
+import { BrandLogo } from "./BrandLogo";
 
 const CATEGORIES: { label: string; value: string; isCampaigns?: boolean }[] = [
   { label: "Início", value: "" },
@@ -35,7 +35,7 @@ export const Header = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const activeCat = searchParams.get("cat") || "";
-  const logoSrc = settings.logo_url || logoIconFallback;
+  // logo handled via <BrandLogo />
   const [brandFirst, ...brandRest] = settings.brand_name.split(" ");
   const brandMiddle = brandRest.length > 1 ? brandRest.slice(0, -1).join(" ") + " " : "";
   const brandLast = brandRest.length > 0 ? brandRest[brandRest.length - 1] : "";
@@ -73,10 +73,9 @@ export const Header = () => {
     <header className="sticky top-0 z-50 w-full bg-beige-50/95 backdrop-blur-md shadow-sm">
       <div className="container flex h-14 md:h-16 items-center justify-between gap-2">
         <Link to="/" className="flex items-center gap-2 md:gap-3 min-w-0" aria-label={`${settings.brand_name} - Início`}>
-          <img
-            src={logoSrc}
-            alt={`Logo ${settings.brand_name}`}
-            className="h-9 w-9 md:h-11 md:w-11 rounded-full object-cover border-2 border-primary/20 shadow-sm flex-shrink-0"
+          <BrandLogo
+            variant="icon"
+            className="h-9 w-9 md:h-11 md:w-11"
           />
           <span className="font-heading text-sm md:text-xl font-bold text-primary tracking-tight truncate">
             {brandLast ? (
