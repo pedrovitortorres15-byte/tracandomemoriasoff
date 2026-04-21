@@ -257,8 +257,8 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
       }
 
       const payLabel = isPix
-        ? `💚 *Pagamento: PIX${pixActive ? ` (${pixPct}% off)` : ""}*`
-        : `💳 *Pagamento: Cartão até 3x sem juros*`;
+        ? `💚 *Pagamento escolhido: PIX${pixActive ? ` (${pixPct}% off)` : ""}*\n_A dona enviará a chave PIX por aqui para você pagar._`
+        : `💳 *Pagamento escolhido: Cartão (até 3x sem juros)*\n_A dona enviará o link de pagamento por aqui para você concluir a compra._`;
 
       const campaignBlock = activeCampaign
         ? `\n🌸 *Campanha: ${activeCampaign.name}*\n📅 Data especial: ${
