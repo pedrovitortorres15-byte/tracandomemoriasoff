@@ -13,7 +13,7 @@ import type { CustomField } from "@/lib/customFields";
 import logoIcon from "@/assets/logo-icon.jpg";
 import {
   Package, ShoppingBag, Users, Plus, ArrowLeft, Trash2, Edit2,
-  Eye, ChevronDown, ChevronUp, LogOut, Save, X, Search, Settings as SettingsIcon
+  Eye, ChevronDown, ChevronUp, LogOut, Save, X, Search, Settings as SettingsIcon, Sparkles
 } from "lucide-react";
 
 interface Order {
@@ -49,16 +49,31 @@ interface Product {
   stock: number;
   active: boolean;
   custom_fields?: CustomField[];
+  campaign_slug?: string | null;
 }
 
-const emptyForm = { name: "", description: "", price: 0, category: "", stock: 0, media_urls: [] as string[], custom_fields: [] as CustomField[] };
+interface Campaign {
+  id: string;
+  slug: string;
+  name: string;
+  delivery_date: string | null;
+  active: boolean;
+  note: string | null;
+}
+
+const emptyForm = { name: "", description: "", price: 0, category: "", stock: 0, media_urls: [] as string[], custom_fields: [] as CustomField[], campaign_slug: "" };
+const emptyCampaign = { slug: "", name: "", delivery_date: "", active: true, note: "" };
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
   const OWNER_EMAIL = "catharinaferrario@gmail.com";
   const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL;
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"orders" | "products" | "customers" | "settings">("orders");
+  const [tab, setTab] = useState<"orders" | "products" | "customers" | "campaigns" | "settings">("orders");
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
+  const [newCampaign, setNewCampaign] = useState(false);
+  const [campaignForm, setCampaignForm] = useState(emptyCampaign);
   const [settingsForm, setSettingsForm] = useState({
     daily_order_limit: 10,
     min_business_days: 5,
@@ -90,8 +105,72 @@ const Admin = () => {
       loadOrders();
       loadProducts();
       loadSettings();
+      loadCampaigns();
     }
   }, [isAdmin, isOwner]);
+
+  const loadCampaigns = async () => {
+    const { data } = await (supabase as any).from("campaigns").select("*").order("delivery_date", { ascending: true });
+    if (data) setCampaigns(data as Campaign[]);
+  };
+
+  const saveCampaign = async () => {
+    if (!campaignForm.slug.trim() || !campaignForm.name.trim()) {
+      toast.error("Slug e nome são obrigatórios");
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload: any = {
+        slug: campaignForm.slug.trim().toLowerCase().replace(/\s+/g, "-"),
+        name: campaignForm.name.trim(),
+        delivery_date: campaignForm.delivery_date || null,
+        active: !!campaignForm.active,
+        note: campaignForm.note.trim() || null,
+      };
+      if (editingCampaign) {
+        const { error } = await (supabase as any).from("campaigns").update(payload).eq("id", editingCampaign.id);
+        if (error) throw error;
+        toast.success("Campanha atualizada!");
+      } else {
+        const { error } = await (supabase as any).from("campaigns").insert(payload);
+        if (error) throw error;
+        toast.success("Campanha criada!");
+      }
+      setEditingCampaign(null);
+      setNewCampaign(false);
+      setCampaignForm(emptyCampaign);
+      loadCampaigns();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao salvar campanha");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteCampaign = async (id: string) => {
+    if (!confirm("Excluir esta campanha?")) return;
+    await (supabase as any).from("campaigns").delete().eq("id", id);
+    toast.success("Campanha excluída!");
+    loadCampaigns();
+  };
+
+  const toggleCampaignActive = async (c: Campaign) => {
+    await (supabase as any).from("campaigns").update({ active: !c.active }).eq("id", c.id);
+    loadCampaigns();
+  };
+
+  const startEditCampaign = (c: Campaign) => {
+    setEditingCampaign(c);
+    setNewCampaign(false);
+    setCampaignForm({
+      slug: c.slug,
+      name: c.name,
+      delivery_date: c.delivery_date || "",
+      active: c.active,
+      note: c.note || "",
+    });
+  };
 
   const loadSettings = async () => {
     const { data } = await (supabase as any).from("delivery_settings").select("*").limit(1).maybeSingle();
