@@ -127,9 +127,13 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
   }, [cartMethod]);
 
   const handleSubmit = async () => {
-    const allComplete = items.every((i) => isPersonalizationValid(i.personalization) && !!i.deliveryDate);
+    const allComplete = items.every((i) => isPersonalizationValid(i.personalization) && !!i.deliveryDate && !!i.fulfillmentMethod);
     if (!allComplete) {
-      toast.error("Itens incompletos no carrinho — preencha personalização + data desejada.");
+      toast.error("Itens incompletos no carrinho — preencha personalização, data e entrega/retirada no produto.");
+      return;
+    }
+    if (cartMethod && cartMethod !== method) {
+      toast.error("A forma de recebimento deve ser a mesma escolhida no produto.");
       return;
     }
 
@@ -178,7 +182,7 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
         });
       } else {
         Object.assign(orderPayload, {
-          shipping_address: "Retirada no Bairro Antares",
+          shipping_address: `Retirada: ${pickupAddress}`,
         });
       }
 
@@ -221,7 +225,7 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
       } else {
         methodBlock =
           `\n🏪 *Forma de recebimento: Retirada*\n` +
-          `Local: *Bairro Antares* (endereço completo será combinado por aqui)\n` +
+          `Local: *${pickupAddress}* (endereço completo será combinado por aqui)\n` +
           `${pickupWindow}\n`;
       }
 

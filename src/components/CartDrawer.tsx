@@ -122,6 +122,7 @@ export const CartDrawer = () => {
                         <DeliveryDatePicker
                           value={item.deliveryDate ? new Date(item.deliveryDate + "T12:00:00") : undefined}
                           onChange={(d) => d && updateDeliveryDate(item.id, d.toISOString().slice(0, 10))}
+                          label={item.fulfillmentMethod === "retirada" ? "Data desejada de retirada" : "Data desejada de entrega"}
                         />
                       </div>
                     );
