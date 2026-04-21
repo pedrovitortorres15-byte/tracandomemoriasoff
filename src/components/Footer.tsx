@@ -22,6 +22,28 @@ export const Footer = () => {
     }
   };
 
+  const scrollToSection = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    const doScroll = () => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    if (window.location.pathname !== "/") {
+      navigate("/");
+      setTimeout(doScroll, 150);
+    } else {
+      doScroll();
+    }
+  };
+
+  const goHome = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (window.location.pathname !== "/") {
+      navigate("/");
+    }
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
+  };
+
   return (
     <footer id="sobre" className="bg-primary text-primary-foreground py-14">
       <div className="container">
