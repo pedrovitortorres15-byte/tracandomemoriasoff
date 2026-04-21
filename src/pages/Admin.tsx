@@ -10,12 +10,13 @@ import { toast } from "sonner";
 import { MediaUploader } from "@/components/MediaUploader";
 import { CustomFieldsBuilder } from "@/components/CustomFieldsBuilder";
 import { CategoryPicker } from "@/components/CategoryPicker";
+import { AIAssistantTab } from "@/components/AIAssistantTab";
 import { SiteCustomizer } from "@/components/SiteCustomizer";
 import type { CustomField } from "@/lib/customFields";
 import { BrandLogo } from "@/components/BrandLogo";
 import {
   Package, ShoppingBag, Users, Plus, ArrowLeft, Trash2, Edit2,
-  Eye, ChevronDown, ChevronUp, LogOut, Save, X, Search, Settings as SettingsIcon, Sparkles, Palette
+  Eye, ChevronDown, ChevronUp, LogOut, Save, X, Search, Settings as SettingsIcon, Sparkles, Palette, Bot
 } from "lucide-react";
 
 interface Order {
