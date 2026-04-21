@@ -56,6 +56,7 @@ export const SiteCustomizer = ({ onSaved }: Props) => {
   const [saving, setSaving] = useState(false);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
   const logoRef = useRef<HTMLInputElement>(null);
+  const logoFullRef = useRef<HTMLInputElement>(null);
   const heroRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
