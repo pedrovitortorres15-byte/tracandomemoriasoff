@@ -161,72 +161,55 @@ export const AIAssistantTab = () => {
     setPendingImages([]);
     setLoading(true);
 
-    let assistantSoFar = "";
-    const upsertAssistant = (chunk: string) => {
-      assistantSoFar += chunk;
-      setMessages((prev) => {
-        const last = prev[prev.length - 1];
-        if (last?.role === "assistant") {
-          return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
-        }
-        return [...prev, { role: "assistant", content: assistantSoFar }];
-      });
-    };
-
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error("Faça login como administradora para usar a IA.");
+        setLoading(false);
+        return;
+      }
+
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`;
       const resp = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({
+          messages: newMessages.map(({ role, content, images }) => ({ role, content, images })),
+        }),
       });
 
-      if (resp.status === 429) {
-        toast.error("Muitas requisições. Aguarde alguns instantes.");
-        setLoading(false);
-        return;
-      }
-      if (resp.status === 402) {
-        toast.error("Créditos da IA esgotados. Adicione créditos no workspace.");
-        setLoading(false);
-        return;
-      }
-      if (!resp.ok || !resp.body) {
-        const err = await resp.json().catch(() => ({ error: "Erro desconhecido" }));
-        toast.error(err.error || "Erro ao falar com a IA.");
+      if (resp.status === 429) { toast.error("Muitas requisições. Aguarde alguns instantes."); setLoading(false); return; }
+      if (resp.status === 402) { toast.error("Créditos da IA esgotados. Adicione créditos no workspace."); setLoading(false); return; }
+      if (resp.status === 401 || resp.status === 403) {
+        const err = await resp.json().catch(() => ({}));
+        toast.error(err.error || "Acesso restrito.");
         setLoading(false);
         return;
       }
 
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let done = false;
-      while (!done) {
-        const { done: d, value } = await reader.read();
-        if (d) break;
-        buffer += decoder.decode(value, { stream: true });
-        let idx: number;
-        while ((idx = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, idx);
-          buffer = buffer.slice(idx + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (!line.startsWith("data: ")) continue;
-          const json = line.slice(6).trim();
-          if (json === "[DONE]") { done = true; break; }
-          try {
-            const parsed = JSON.parse(json);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) upsertAssistant(content);
-          } catch {
-            buffer = line + "\n" + buffer;
-            break;
-          }
-        }
+      const data = await resp.json().catch(() => null);
+      if (!resp.ok || !data) {
+        toast.error(data?.error || "Erro ao falar com a IA.");
+        setLoading(false);
+        return;
       }
+
+      const toolEvents: ToolEvent[] = data.toolEvents || [];
+      const writeTools = toolEvents.filter(
+        (t) => !t.name.startsWith("list_") && !t.name.startsWith("get_") && t.result?.error == null,
+      );
+      if (writeTools.length > 0) {
+        toast.success(`✨ ${writeTools.length} ação(ões) aplicadas no site`);
+      }
+
+      setMessages((prev) => [...prev, {
+        role: "assistant",
+        content: data.content || "✨",
+        toolEvents: toolEvents.length > 0 ? toolEvents : undefined,
+      }]);
     } catch (e) {
       console.error(e);
       toast.error("Falha de conexão com a IA.");
