@@ -61,10 +61,14 @@ export const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full bg-beige-50/95 backdrop-blur-md shadow-sm">
-      <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center gap-3" aria-label={`${settings.brand_name} - Início`}>
-          <img src={logoSrc} alt={`Logo ${settings.brand_name}`} className="h-11 w-11 rounded-full object-cover border-2 border-primary/20 shadow-sm" />
-          <span className="font-heading text-base md:text-xl font-bold text-primary tracking-tight">
+      <div className="container flex h-14 md:h-16 items-center justify-between gap-2">
+        <Link to="/" className="flex items-center gap-2 md:gap-3 min-w-0" aria-label={`${settings.brand_name} - Início`}>
+          <img
+            src={logoSrc}
+            alt={`Logo ${settings.brand_name}`}
+            className="h-9 w-9 md:h-11 md:w-11 rounded-full object-cover border-2 border-primary/20 shadow-sm flex-shrink-0"
+          />
+          <span className="font-heading text-sm md:text-xl font-bold text-primary tracking-tight truncate">
             {brandLast ? (
               <>{brandFirst} <span className="hidden sm:inline">{brandMiddle}</span>{brandLast}</>
             ) : (
@@ -88,13 +92,19 @@ export const Header = () => {
           </div>
         </form>
 
-        <div className="flex items-center gap-2">
-          <button className="md:hidden text-foreground" onClick={() => setSearchOpen(!searchOpen)} aria-label="Abrir busca">
+        <div className="flex items-center gap-0.5 md:gap-2 flex-shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden h-9 w-9 rounded-full"
+            onClick={() => setSearchOpen(!searchOpen)}
+            aria-label="Abrir busca"
+          >
             <Search className="h-5 w-5" />
-          </button>
+          </Button>
           {isOwner && (
             <Link to="/admin" aria-label="Painel da dona">
-              <Button variant="ghost" size="icon" className="rounded-full text-primary" title="Painel da dona">
+              <Button variant="ghost" size="icon" className="h-9 w-9 md:h-10 md:w-10 rounded-full text-primary" title="Painel da dona">
                 <Shield className="h-5 w-5" />
               </Button>
             </Link>
@@ -102,7 +112,7 @@ export const Header = () => {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full" aria-label="Minha conta">
+                <Button variant="ghost" size="icon" className="h-9 w-9 md:h-10 md:w-10 rounded-full" aria-label="Minha conta">
                   <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
@@ -126,7 +136,7 @@ export const Header = () => {
             </DropdownMenu>
           ) : (
             <Link to="/auth" aria-label="Entrar">
-              <Button variant="ghost" size="icon" className="rounded-full">
+              <Button variant="ghost" size="icon" className="h-9 w-9 md:h-10 md:w-10 rounded-full">
                 <User className="h-5 w-5" />
               </Button>
             </Link>
@@ -148,8 +158,8 @@ export const Header = () => {
       )}
 
       <nav className="border-t border-border/60 bg-beige-50/80 backdrop-blur-sm">
-        <div className="container flex items-center justify-between overflow-x-auto">
-          <div className="flex items-center gap-1">
+        <div className="container flex items-center justify-between overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-1 py-1 md:py-0">
             {CATEGORIES.map((cat) => {
               const isActive =
                 activeCat === cat.value ||
@@ -158,7 +168,7 @@ export const Header = () => {
                 <button
                   key={cat.label}
                   onClick={() => goCategory(cat.value)}
-                  className={`px-4 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-full transition-all whitespace-nowrap ${
+                  className={`px-3 md:px-4 py-2 md:py-2.5 text-[11px] md:text-xs font-semibold uppercase tracking-wider rounded-full transition-all whitespace-nowrap ${
                     isActive
                       ? "bg-primary text-primary-foreground"
                       : "text-foreground/70 hover:text-primary hover:bg-primary/5"
