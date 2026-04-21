@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Mail, Lock, User, ArrowLeft } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,6 +15,16 @@ const Auth = () => {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user, loading: authLoading } = useAuth();
+  const rawRedirect = searchParams.get("redirect");
+  const redirectTo = rawRedirect?.startsWith("/") ? rawRedirect : "/";
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate(redirectTo, { replace: true });
+    }
+  }, [authLoading, user, navigate, redirectTo]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +34,7 @@ const Auth = () => {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Login realizado!");
-        navigate("/");
+        navigate(redirectTo, { replace: true });
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -43,7 +54,7 @@ const Auth = () => {
   const handleGoogle = async () => {
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/`,
+        redirect_uri: `${window.location.origin}${redirectTo}`,
         extraParams: { prompt: "select_account" },
       });
       if (result.error) {
@@ -52,7 +63,7 @@ const Auth = () => {
         return;
       }
       if (!result.redirected) {
-        navigate("/");
+        navigate(redirectTo, { replace: true });
       }
     } catch (err: any) {
       console.error("Google OAuth exception:", err);

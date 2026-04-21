@@ -97,7 +97,7 @@ const Admin = () => {
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate("/auth");
+      navigate("/auth?redirect=/admin", { replace: true });
     }
   }, [user, loading, navigate]);
 
