@@ -124,7 +124,10 @@ const ProductDetail = () => {
       }
     }
     if (!fulfillmentMethod) return { ok: false, reason: "Escolha entrega ou retirada" };
-    if (!deliveryDate) return { ok: false, reason: fulfillmentMethod === "retirada" ? "Escolha a data desejada para retirada" : "Escolha a data desejada de entrega" };
+    // Para produtos de campanha, a data já vem da campanha; só validamos as outras datas
+    if (!isCampaignProduct && !deliveryDate) {
+      return { ok: false, reason: fulfillmentMethod === "retirada" ? "Escolha a data desejada para retirada" : "Escolha a data desejada de entrega" };
+    }
     return { ok: true };
   };
 
@@ -137,8 +140,14 @@ const ProductDetail = () => {
         return `${s.title}: ${text}`;
       })
       .filter(Boolean) as string[];
-    if (deliveryDate) {
-      parts.push(`${fulfillmentMethod === "retirada" ? "Retirada" : "Entrega"}: ${format(deliveryDate, "dd/MM/yyyy", { locale: ptBR })}`);
+    const finalDate = isCampaignProduct && campaignDateISO
+      ? new Date(campaignDateISO + "T12:00:00")
+      : deliveryDate;
+    if (finalDate) {
+      const label = isCampaignProduct
+        ? `Data da campanha "${productCampaign?.name}"`
+        : (fulfillmentMethod === "retirada" ? "Retirada" : "Entrega");
+      parts.push(`${label}: ${format(finalDate, "dd/MM/yyyy", { locale: ptBR })}`);
     }
     return parts.join(" | ");
   };
