@@ -176,7 +176,7 @@ export const CartDrawer = () => {
                     <span className="text-base font-semibold">Total cartão</span>
                     <span className="text-lg font-bold text-primary">R$ {totalPrice.toFixed(2)}</span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground text-right">A dona envia o link de pagamento por WhatsApp (cartão até 3x sem juros)</p>
+                  <p className="text-[10px] text-muted-foreground text-right">A loja envia o link de pagamento por WhatsApp (cartão até 3x sem juros)</p>
                 </div>
                 <Button
                   onClick={() => openCheckout("cartao")}

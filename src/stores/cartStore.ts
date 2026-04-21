@@ -38,7 +38,7 @@ export function isPersonalizationValid(text?: string): boolean {
   // Require structured personalization summary (at least N "Title: value" pairs separated by " | ")
   // This guarantees the item went through the product page personalization flow.
   const parts = trimmed.split(" | ").filter((p) => /[^:]+:\s*\S+/.test(p));
-  return parts.length >= MIN_STRUCTURED_FIELDS;
+  return parts.length >= MIN_STRUCTURED_FIELDS || (parts.length >= 1 && /(?:Entrega|Retirada|Data|Especial)/i.test(trimmed));
 }
 
 /** Validate a single field value. Name/nickname fields require 3+ chars; other text fields require 5+. */

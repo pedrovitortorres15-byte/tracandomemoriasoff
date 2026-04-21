@@ -14,14 +14,14 @@ export const CampaignsSection = () => {
       <div className="container">
         <div className="text-center mb-8 md:mb-10 animate-fade-in">
           <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.3em] text-primary font-semibold">
-            <Sparkles className="h-3.5 w-3.5" /> Campanhas Especiais
+            <Sparkles className="h-3.5 w-3.5" /> Especiais da loja
           </span>
           <h2 className="font-heading text-2xl md:text-4xl font-bold text-foreground mt-2 mb-3">
             Datas e coleções para presentear
           </h2>
           <div className="w-12 h-0.5 bg-primary mx-auto mb-3 rounded-full" />
           <p className="text-muted-foreground max-w-xl mx-auto text-sm leading-relaxed">
-            Selecionamos peças exclusivas para cada momento especial. Toque em uma campanha para ver os produtos disponíveis.
+            Selecionamos peças exclusivas para cada momento especial. Toque em um especial para ver os produtos disponíveis.
           </p>
         </div>
 
@@ -35,7 +35,7 @@ export const CampaignsSection = () => {
               <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors" />
               <div className="relative space-y-3">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/15 text-primary text-[10px] font-semibold uppercase tracking-wider">
-                  <Sparkles className="h-3 w-3" /> Campanha
+                  <Sparkles className="h-3 w-3" /> Especial
                 </div>
                 <h3 className="font-heading text-xl md:text-2xl font-bold text-foreground leading-tight">
                   {c.name}

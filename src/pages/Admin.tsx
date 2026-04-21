@@ -132,27 +132,27 @@ const Admin = () => {
       if (editingCampaign) {
         const { error } = await (supabase as any).from("campaigns").update(payload).eq("id", editingCampaign.id);
         if (error) throw error;
-        toast.success("Campanha atualizada!");
+        toast.success("Especial atualizado!");
       } else {
         const { error } = await (supabase as any).from("campaigns").insert(payload);
         if (error) throw error;
-        toast.success("Campanha criada!");
+        toast.success("Especial criado!");
       }
       setEditingCampaign(null);
       setNewCampaign(false);
       setCampaignForm(emptyCampaign);
       loadCampaigns();
     } catch (e: any) {
-      toast.error(e.message || "Erro ao salvar campanha");
+      toast.error(e.message || "Erro ao salvar especial");
     } finally {
       setSaving(false);
     }
   };
 
   const deleteCampaign = async (id: string) => {
-    if (!confirm("Excluir esta campanha?")) return;
+    if (!confirm("Excluir este especial?")) return;
     await (supabase as any).from("campaigns").delete().eq("id", id);
-    toast.success("Campanha excluída!");
+    toast.success("Especial excluído!");
     loadCampaigns();
   };
 
@@ -313,7 +313,7 @@ const Admin = () => {
         <div className="max-w-md text-center space-y-4 bg-card border rounded-lg p-6">
           <h1 className="font-heading text-2xl font-bold">Acesso restrito</h1>
           <p className="text-muted-foreground text-sm">
-            Este painel é exclusivo da dona da loja.
+            Este painel é exclusivo da administração da loja.
             {user?.email && (
               <> Você está logada como <strong>{user.email}</strong>. Saia e entre com <strong>catharinaferrario@gmail.com</strong>.</>
             )}
@@ -355,7 +355,7 @@ const Admin = () => {
             </button>
             <BrandLogo variant="icon" className="h-9 w-9 border-primary/30" />
             <div>
-              <h1 className="font-heading text-base md:text-lg font-bold leading-tight">Painel da Dona</h1>
+              <h1 className="font-heading text-base md:text-lg font-bold leading-tight">Painel Administrativo</h1>
               <p className="text-[10px] text-muted-foreground -mt-0.5">Loja Traçando Memórias</p>
             </div>
           </div>
@@ -402,7 +402,7 @@ const Admin = () => {
         {/* Tabs + busca */}
         <div className="flex flex-col sm:flex-row gap-2 mb-6">
           <div className="flex gap-2 flex-wrap">
-            {([["orders", "Pedidos", ShoppingBag], ["products", "Produtos", Package], ["customers", "Clientes", Users], ["campaigns", "Campanhas", Sparkles], ["appearance", "Aparência", Palette], ["settings", "Configurações", SettingsIcon]] as const).map(([key, label, Icon]) => (
+            {([["orders", "Pedidos", ShoppingBag], ["products", "Produtos", Package], ["customers", "Clientes", Users], ["campaigns", "Especiais", Sparkles], ["appearance", "Aparência", Palette], ["settings", "Configurações", SettingsIcon]] as const).map(([key, label, Icon]) => (
               <Button
                 key={key}
                 variant={tab === key ? "default" : "outline"}
@@ -553,21 +553,21 @@ const Admin = () => {
 
                 <div className="border-t pt-3">
                   <label className="text-sm font-medium block mb-1.5 flex items-center gap-1.5">
-                    <Sparkles className="h-4 w-4 text-primary" /> Campanha (opcional)
+                    <Sparkles className="h-4 w-4 text-primary" /> Especial (opcional)
                   </label>
                   <select
                     value={productForm.campaign_slug}
                     onChange={(e) => setProductForm({ ...productForm, campaign_slug: e.target.value })}
                     className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                   >
-                    <option value="">— Sem campanha —</option>
+                    <option value="">— Sem especial —</option>
                     {campaigns.map((c) => (
                       <option key={c.id} value={c.slug}>
                         {c.name}{c.delivery_date ? ` (${new Date(c.delivery_date + "T12:00:00").toLocaleDateString("pt-BR")})` : ""}{!c.active ? " [inativa]" : ""}
                       </option>
                     ))}
                   </select>
-                  <p className="text-[11px] text-muted-foreground mt-1">Produtos vinculados a uma campanha ativam regras especiais no checkout.</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">Produtos vinculados a um especial ativam regras especiais no checkout.</p>
                 </div>
 
                 <div className="border-t pt-3">
@@ -670,7 +670,7 @@ const Admin = () => {
           <div className="space-y-4">
             {!newCampaign && !editingCampaign && (
               <Button onClick={() => { setNewCampaign(true); setCampaignForm(emptyCampaign); }}>
-                <Plus className="h-4 w-4 mr-2" /> Nova Campanha
+                <Plus className="h-4 w-4 mr-2" /> Novo Especial
               </Button>
             )}
 
@@ -678,7 +678,7 @@ const Admin = () => {
               <div className="bg-card border rounded-lg p-4 space-y-3">
                 <h3 className="font-semibold flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
-                  {editingCampaign ? "Editar Campanha" : "Nova Campanha"}
+                  {editingCampaign ? "Editar Especial" : "Novo Especial"}
                 </h3>
                 <div>
                   <label className="text-xs font-medium block mb-1">Nome *</label>
@@ -707,13 +707,13 @@ const Admin = () => {
                     onChange={(e) => setCampaignForm({ ...campaignForm, delivery_date: e.target.value })}
                   />
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    Todos os pedidos com produtos desta campanha serão entregues nesta data (ex: 08/05/2026).
+                    Todos os pedidos com produtos deste especial serão entregues nesta data (ex: 08/05/2026).
                   </p>
                 </div>
                 <div>
                   <label className="text-xs font-medium block mb-1">Observação (aparece no checkout)</label>
                   <Textarea
-                    placeholder="Ex: Entregas desta campanha serão realizadas em 08/05/2026"
+                    placeholder="Ex: Entregas deste especial serão realizadas em 08/05/2026"
                     value={campaignForm.note}
                     onChange={(e) => setCampaignForm({ ...campaignForm, note: e.target.value })}
                     maxLength={300}
@@ -726,7 +726,7 @@ const Admin = () => {
                     onChange={(e) => setCampaignForm({ ...campaignForm, active: e.target.checked })}
                     className="h-4 w-4 rounded"
                   />
-                  Campanha ativa
+                  Especial ativo
                 </label>
 
                 <div className="flex gap-2 pt-2">
@@ -742,7 +742,7 @@ const Admin = () => {
 
             <div className="space-y-2">
               {campaigns.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">Nenhuma campanha cadastrada</p>
+                <p className="text-center text-muted-foreground py-8">Nenhum especial cadastrado</p>
               ) : campaigns.map((c) => (
                 <div key={c.id} className="bg-card border rounded-lg p-3 flex items-center gap-3 flex-wrap">
                   <Sparkles className="h-5 w-5 text-primary flex-shrink-0" />
