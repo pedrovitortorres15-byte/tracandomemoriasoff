@@ -10,12 +10,13 @@ import { toast } from "sonner";
 import { MediaUploader } from "@/components/MediaUploader";
 import { CustomFieldsBuilder } from "@/components/CustomFieldsBuilder";
 import { CategoryPicker } from "@/components/CategoryPicker";
+import { AIAssistantTab } from "@/components/AIAssistantTab";
 import { SiteCustomizer } from "@/components/SiteCustomizer";
 import type { CustomField } from "@/lib/customFields";
 import { BrandLogo } from "@/components/BrandLogo";
 import {
   Package, ShoppingBag, Users, Plus, ArrowLeft, Trash2, Edit2,
-  Eye, ChevronDown, ChevronUp, LogOut, Save, X, Search, Settings as SettingsIcon, Sparkles, Palette
+  Eye, ChevronDown, ChevronUp, LogOut, Save, X, Search, Settings as SettingsIcon, Sparkles, Palette, Bot
 } from "lucide-react";
 
 interface Order {
@@ -71,7 +72,7 @@ const Admin = () => {
   const OWNER_EMAIL = "catharinaferrario@gmail.com";
   const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL;
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"orders" | "products" | "customers" | "campaigns" | "settings" | "appearance">("orders");
+  const [tab, setTab] = useState<"orders" | "products" | "customers" | "campaigns" | "settings" | "appearance" | "ai">("orders");
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [newCampaign, setNewCampaign] = useState(false);
@@ -403,7 +404,7 @@ const Admin = () => {
         {/* Tabs + busca */}
         <div className="flex flex-col sm:flex-row gap-2 mb-6">
           <div className="flex gap-2 flex-wrap">
-            {([["orders", "Pedidos", ShoppingBag], ["products", "Produtos", Package], ["customers", "Clientes", Users], ["campaigns", "Especiais", Sparkles], ["appearance", "Aparência", Palette], ["settings", "Configurações", SettingsIcon]] as const).map(([key, label, Icon]) => (
+            {([["ai", "Assistente IA", Bot], ["orders", "Pedidos", ShoppingBag], ["products", "Produtos", Package], ["customers", "Clientes", Users], ["campaigns", "Especiais", Sparkles], ["appearance", "Aparência", Palette], ["settings", "Configurações", SettingsIcon]] as const).map(([key, label, Icon]) => (
               <Button
                 key={key}
                 variant={tab === key ? "default" : "outline"}
@@ -424,6 +425,9 @@ const Admin = () => {
             />
           </div>
         </div>
+
+        {/* AI Assistant Tab */}
+        {tab === "ai" && <AIAssistantTab />}
 
         {/* Orders Tab */}
         {tab === "orders" && (
