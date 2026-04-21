@@ -73,6 +73,14 @@ const ProductDetail = () => {
   const unitPrice = basePrice + addonTotal;
   const installments = unitPrice > 0 ? unitPrice / 3 : 0;
 
+  // Produtos de campanha têm data FIXA (definida pela dona) — cliente não escolhe.
+  const productCampaign = useMemo(() => {
+    if (!product?.campaign_slug || !campaigns) return null;
+    return campaigns.find((c: any) => c.slug === product.campaign_slug) || null;
+  }, [product?.campaign_slug, campaigns]);
+  const isCampaignProduct = !!productCampaign;
+  const campaignDateISO = productCampaign?.delivery_date || null;
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
