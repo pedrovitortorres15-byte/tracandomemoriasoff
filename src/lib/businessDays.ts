@@ -1,5 +1,5 @@
 // Feriados nacionais fixos brasileiros (sem cálculos de Páscoa por simplicidade)
-// A dona pode ajustar manualmente datas lotadas, então essa lista é só baseline.
+// A loja pode ajustar manualmente datas lotadas, então essa lista é só baseline.
 const FIXED_HOLIDAYS_MMDD = new Set<string>([
   "01-01", // Confraternização Universal
   "04-21", // Tiradentes
