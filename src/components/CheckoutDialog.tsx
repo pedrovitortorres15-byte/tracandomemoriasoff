@@ -276,15 +276,14 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
         orderPayload.shipping_address = method === "entrega" ? "Endereço a confirmar pelo WhatsApp" : "Retirada a combinar pelo WhatsApp";
       }
 
-      const { data: order, error: orderErr } = await supabase
+      const orderId = crypto.randomUUID();
+      const { error: orderErr } = await supabase
         .from("orders")
-        .insert(orderPayload)
-        .select()
-        .single();
-      if (orderErr || !order) throw orderErr || new Error("Pedido não criado");
+        .insert({ ...orderPayload, id: orderId });
+      if (orderErr) throw orderErr;
 
       const itemsPayload = items.map(i => ({
-        order_id: order.id,
+        order_id: orderId,
         product_id: i.id,
         product_name: cleanRequiredText(`${i.name} — ${i.personalization || ''}`, 500, i.name || "Produto personalizado"),
         quantity: clampQuantity(i.quantity),
@@ -334,7 +333,7 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
 
       const msg =
         `🛒 *Novo pedido — Loja Traçando Memórias*\n` +
-        `Pedido #${order.id.slice(0, 8)}\n` +
+        `Pedido #${orderId.slice(0, 8)}\n` +
         campaignBlock +
         `\n👤 *Cliente*\n${d.customer_name}\n📱 ${d.customer_phone}\n📧 ${d.customer_email}\n` +
         methodBlock +
@@ -349,7 +348,7 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
 
       // Mensagem encurtada se exceder limite seguro do wa.me
       const finalMsg = msg.length > MAX_MSG_LEN
-        ? msg.slice(0, MAX_MSG_LEN - 80) + `\n\n…(mensagem completa salva no painel — pedido #${order.id.slice(0,8)})`
+        ? msg.slice(0, MAX_MSG_LEN - 80) + `\n\n…(mensagem completa salva no painel — pedido #${orderId.slice(0,8)})`
         : msg;
 
       const encoded = encodeURIComponent(finalMsg);
