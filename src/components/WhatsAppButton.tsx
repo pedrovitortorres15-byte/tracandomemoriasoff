@@ -1,9 +1,11 @@
 import { MessageCircle } from "lucide-react";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 export function WhatsAppButton() {
+  const { settings } = useSiteSettings();
   return (
     <a
-      href="https://wa.me/558287060860"
+      href={`https://wa.me/${settings.whatsapp_number}`}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Fale conosco no WhatsApp"

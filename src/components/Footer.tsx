@@ -1,21 +1,25 @@
-import logoFull from "@/assets/logo-full.jpg";
+import logoFullFallback from "@/assets/logo-full.jpg";
 import { Instagram, Phone, Shield } from "lucide-react";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 export const Footer = () => {
+  const { settings } = useSiteSettings();
+  const logoSrc = settings.logo_full_url || settings.logo_url || logoFullFallback;
+  const phoneDisplay = settings.whatsapp_number.replace(/^55/, "+55 ").replace(/(\d{2})(\d{4,5})(\d{4})$/, "$1 $2-$3");
   return (
     <footer id="sobre" className="bg-primary text-primary-foreground py-14">
       <div className="container">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           <div className="space-y-4 md:col-span-2">
             <div className="flex items-center gap-3">
-              <img src={logoFull} alt="Logo Loja Traçando Memórias" className="h-16 w-16 rounded-full shadow-md object-cover border-2 border-primary-foreground/20" />
+              <img src={logoSrc} alt={`Logo ${settings.brand_name}`} className="h-16 w-16 rounded-full shadow-md object-cover border-2 border-primary-foreground/20" />
               <div>
-                <h3 className="font-heading text-2xl font-bold leading-tight">Loja Traçando Memórias</h3>
-                <p className="text-xs opacity-70 uppercase tracking-widest">Presentes feitos à mão</p>
+                <h3 className="font-heading text-2xl font-bold leading-tight">{settings.brand_name}</h3>
+                <p className="text-xs opacity-70 uppercase tracking-widest">{settings.brand_tagline}</p>
               </div>
             </div>
             <p className="text-sm opacity-80 leading-relaxed max-w-md">
-              Transformamos seus momentos mais especiais em peças personalizadas e únicas. Cada produto é criado com amor e dedicação.
+              {settings.footer_about}
             </p>
           </div>
           <div className="space-y-4">
@@ -33,20 +37,20 @@ export const Footer = () => {
             <div className="w-10 h-0.5 bg-primary-foreground/30 rounded-full" />
             <ul className="space-y-2 text-sm opacity-80">
               <li>
-                <a href="https://wa.me/558287060860" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity inline-flex items-center gap-2">
-                  <Phone className="h-3 w-3" /> +55 82 8706-0860
+                <a href={`https://wa.me/${settings.whatsapp_number}`} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity inline-flex items-center gap-2">
+                  <Phone className="h-3 w-3" /> {phoneDisplay}
                 </a>
               </li>
               <li>
-                <a href="https://instagram.com/lojatracandomemorias" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity inline-flex items-center gap-2">
-                  <Instagram className="h-3 w-3" /> @lojatracandomemorias
+                <a href={`https://instagram.com/${settings.instagram_handle}`} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity inline-flex items-center gap-2">
+                  <Instagram className="h-3 w-3" /> @{settings.instagram_handle}
                 </a>
               </li>
             </ul>
           </div>
         </div>
         <div className="border-t border-primary-foreground/20 mt-10 pt-6 flex flex-col md:flex-row items-center justify-between gap-3 text-xs opacity-60">
-          <span>&copy; {new Date().getFullYear()} Loja Traçando Memórias. Todos os direitos reservados.</span>
+          <span>&copy; {new Date().getFullYear()} {settings.brand_name}. Todos os direitos reservados.</span>
           <span className="inline-flex items-center gap-1.5">
             <Shield className="h-3 w-3" /> Site protegido com criptografia ponta a ponta
           </span>
