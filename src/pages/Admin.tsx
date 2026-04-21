@@ -529,7 +529,13 @@ const Admin = () => {
         {tab === "products" && (
           <div className="space-y-4">
             {!newProduct && !editingProduct && (
-              <Button onClick={() => { setNewProduct(true); setProductForm(emptyForm); }}>
+              <Button onClick={() => {
+                // Pré-preenche os campos personalizados com o mesmo modelo do primeiro produto cadastrado
+                const template = products.find((p) => Array.isArray((p as any).custom_fields) && (p as any).custom_fields.length > 0);
+                const templateFields: CustomField[] = template ? JSON.parse(JSON.stringify((template as any).custom_fields)) : [];
+                setNewProduct(true);
+                setProductForm({ ...emptyForm, custom_fields: templateFields });
+              }}>
                 <Plus className="h-4 w-4 mr-2" /> Novo Produto
               </Button>
             )}
