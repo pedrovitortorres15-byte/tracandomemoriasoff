@@ -11,6 +11,7 @@ import { useCartStore, isPersonalizationValid } from "@/stores/cartStore";
 import { useDeliverySettings, useCampaigns } from "@/hooks/useDeliverySettings";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { BrandLogo } from "./BrandLogo";
 
 const OWNER_WHATSAPP_RAW = "558287060860";
 // Sanitiza qualquer número WhatsApp (remove +, espaços, parênteses, traços)
