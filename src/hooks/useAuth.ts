@@ -20,7 +20,7 @@ export function useAuth() {
         }
         return;
       }
-      // 1) shortcut: e-mail da dona é sempre admin (resiliente a falha de migração)
+      // 1) shortcut: e-mail administrativo é sempre admin (resiliente a falha de migração)
       const ownerShortcut = ADMIN_EMAILS.includes(u.email?.toLowerCase() || '');
       if (ownerShortcut && mounted) setIsAdmin(true);
       // 2) valida no banco
