@@ -50,6 +50,7 @@ const ProductDetail = () => {
         ativo: d.active,
         estoque: d.stock,
         custom_fields: d.custom_fields || [],
+        campaign_slug: d.campaign_slug || null,
       };
     },
     enabled: !!handle,
@@ -136,6 +137,7 @@ const ProductDetail = () => {
       quantity,
       personalization: buildPersonalizationSummary(),
       deliveryDate: deliveryDate ? deliveryDate.toISOString().slice(0, 10) : undefined,
+      campaign_slug: product.campaign_slug || null,
     });
     toast.success("Adicionado ao carrinho!", { position: "top-center" });
   };
