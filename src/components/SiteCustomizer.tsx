@@ -244,7 +244,7 @@ export const SiteCustomizer = ({ onSaved }: Props) => {
           label="Logo completa (rodapé)"
           currentUrl={form.logo_full_url}
           onPick={(f) => uploadImage(f, "logo_full_url")}
-          refEl={{ current: null } as any}
+          refEl={logoFullRef}
           fieldKey="logo_full_url"
           hint="Se vazio, usa a logo redonda."
         />
