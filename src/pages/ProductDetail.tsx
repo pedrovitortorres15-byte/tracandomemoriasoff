@@ -73,7 +73,7 @@ const ProductDetail = () => {
   const unitPrice = basePrice + addonTotal;
   const installments = unitPrice > 0 ? unitPrice / 3 : 0;
 
-  // Produtos de campanha têm data FIXA (definida pela dona) — cliente não escolhe.
+  // Produtos de especial têm data fixa definida pela loja — cliente não escolhe.
   const productCampaign = useMemo(() => {
     if (!product?.campaign_slug || !campaigns) return null;
     return campaigns.find((c: any) => c.slug === product.campaign_slug) || null;
@@ -145,7 +145,7 @@ const ProductDetail = () => {
       : deliveryDate;
     if (finalDate) {
       const label = isCampaignProduct
-        ? `Data da campanha "${productCampaign?.name}"`
+        ? `Data do especial "${productCampaign?.name}"`
         : (fulfillmentMethod === "retirada" ? "Retirada" : "Entrega");
       parts.push(`${label}: ${format(finalDate, "dd/MM/yyyy", { locale: ptBR })}`);
     }
@@ -390,7 +390,7 @@ const ProductDetail = () => {
                     {isCampaignProduct ? (
                       <div className="rounded-md border border-primary/30 bg-primary/10 p-3 space-y-1.5">
                         <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
-                          <Sparkles className="h-3.5 w-3.5" /> Produto da campanha {productCampaign?.name}
+                          <Sparkles className="h-3.5 w-3.5" /> Produto do especial {productCampaign?.name}
                         </p>
                         {campaignDateISO && (
                           <p className="flex items-center gap-1.5 text-sm text-foreground">
@@ -400,7 +400,7 @@ const ProductDetail = () => {
                           </p>
                         )}
                         <p className="text-[11px] text-muted-foreground">
-                          A data desta campanha é fixa. Caso precise de outro dia, a dona pode ajustar com você pelo WhatsApp após o pedido.
+                          A data deste especial é fixa. Caso precise de outro dia, a loja pode ajustar com você pelo WhatsApp após o pedido.
                         </p>
                       </div>
                     ) : (
