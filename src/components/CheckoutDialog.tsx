@@ -304,7 +304,7 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg w-[calc(100%-1rem)] max-h-[92vh] overflow-y-auto p-4 sm:p-6 rounded-lg">
         <DialogHeader>
           <DialogTitle className="font-heading flex items-center gap-2">
             {isPix ? <MessageCircle className="h-5 w-5 text-pay-pix" /> : <CreditCard className="h-5 w-5 text-pay-card" />}
@@ -410,7 +410,7 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
 
               <div className="bg-accent/30 border border-border rounded p-2.5 space-y-2">
                 <p className="text-xs font-semibold">📨 Quem vai receber o pedido?</p>
-                <div className="grid grid-cols-3 gap-1.5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
                   {([
                     { id: "presenteada", label: "A presenteada" },
                     { id: "eu", label: "Eu mesmo(a)" },
@@ -429,7 +429,7 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
                           }));
                         }
                       }}
-                      className={`text-[11px] px-2 py-1.5 border rounded transition-colors ${
+                      className={`text-xs px-3 py-2 border rounded transition-colors ${
                         recipientType === opt.id
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-background border-border hover:border-primary"

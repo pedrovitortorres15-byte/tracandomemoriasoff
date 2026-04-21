@@ -171,14 +171,14 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1">
-        <div className="container py-6 md:py-10">
-          <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6 text-sm">
+      <main className="flex-1 pb-24 md:pb-0">
+        <div className="container py-4 md:py-10">
+          <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-3 md:mb-6 text-sm">
             <ArrowLeft className="h-4 w-4" />
             Voltar
           </Link>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 lg:gap-12">
             <div className="flex gap-3">
               {images.length > 1 && (
                 <div className="hidden md:flex flex-col gap-2 w-16 flex-shrink-0">
@@ -192,15 +192,15 @@ const ProductDetail = () => {
               )}
 
               <div className="flex-1">
-                <div className="aspect-[3/4] rounded overflow-hidden bg-muted">
+                <div className="aspect-square md:aspect-[3/4] rounded-lg overflow-hidden bg-muted">
                   {images[selectedImage] ? (
                     <img src={images[selectedImage]} alt={name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">Sem imagem</div>
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">Sem imagem</div>
                   )}
                 </div>
                 {images.length > 1 && (
-                  <div className="flex gap-2 mt-3 md:hidden overflow-x-auto">
+                  <div className="flex gap-2 mt-3 md:hidden overflow-x-auto pb-1">
                     {images.map((img, i) => (
                       <button key={i} onClick={() => setSelectedImage(i)}
                         className={`w-14 h-14 rounded overflow-hidden flex-shrink-0 border-2 transition-colors ${i === selectedImage ? 'border-primary' : 'border-transparent'}`}>
@@ -212,17 +212,17 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               <div>
-                <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground uppercase tracking-wide mb-3">{name}</h1>
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl font-bold text-primary">R${unitPrice.toFixed(2)}</span>
+                <h1 className="font-heading text-xl sm:text-2xl md:text-3xl font-bold text-foreground uppercase tracking-wide mb-2 md:mb-3">{name}</h1>
+                <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+                  <span className="text-2xl md:text-2xl font-bold text-primary">R${unitPrice.toFixed(2)}</span>
                   {addonTotal > 0 && (
                     <span className="text-xs text-muted-foreground">(+R${addonTotal.toFixed(2)} em adicionais)</span>
                   )}
                 </div>
                 {installments > 0 && (
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-xs md:text-sm text-muted-foreground mt-1">
                     ou 3x de <span className="font-medium">R${installments.toFixed(2)}</span> sem juros
                   </p>
                 )}
@@ -238,8 +238,8 @@ const ProductDetail = () => {
               )}
 
               {steps.length > 0 && currentField && (
-                <div className="bg-cream-50 border border-border rounded-lg p-5 space-y-5">
-                  <h3 className="font-heading text-lg font-semibold text-foreground">Personalização</h3>
+                <div className="bg-cream-50 border border-border rounded-lg p-3 md:p-5 space-y-4 md:space-y-5">
+                  <h3 className="font-heading text-base md:text-lg font-semibold text-foreground">Personalização</h3>
 
                   <div className="flex items-center gap-1">
                     {steps.map((_, i) => (
@@ -325,18 +325,18 @@ const ProductDetail = () => {
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between pt-2">
-                    <Button variant="outline" size="sm" onClick={() => setCurrentStep(s => Math.max(0, s - 1))} disabled={currentStep === 0} className="gap-1">
-                      <ChevronLeft className="h-4 w-4" /> Voltar
+                  <div className="flex items-center justify-between gap-2 pt-2">
+                    <Button variant="outline" size="sm" onClick={() => setCurrentStep(s => Math.max(0, s - 1))} disabled={currentStep === 0} className="gap-1 h-9 px-3">
+                      <ChevronLeft className="h-4 w-4" /> <span className="hidden sm:inline">Voltar</span>
                     </Button>
-                    <span className="text-xs text-muted-foreground">{currentStep + 1} de {steps.length}</span>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">{currentStep + 1} de {steps.length}</span>
                     {!isLastStep ? (
-                      <Button size="sm" onClick={() => setCurrentStep(s => Math.min(steps.length - 1, s + 1))} className="gap-1 bg-primary text-primary-foreground">
-                        Próximo <ChevronRight className="h-4 w-4" />
+                      <Button size="sm" onClick={() => setCurrentStep(s => Math.min(steps.length - 1, s + 1))} className="gap-1 h-9 px-3 bg-primary text-primary-foreground">
+                        <span className="hidden sm:inline">Próximo</span> <ChevronRight className="h-4 w-4" />
                       </Button>
                     ) : (
                       <span className="text-xs text-pay-pix font-medium flex items-center gap-1">
-                        <Check className="h-3 w-3" /> Última etapa
+                        <Check className="h-3 w-3" /> Última
                       </span>
                     )}
                   </div>
@@ -397,14 +397,14 @@ const ProductDetail = () => {
                 )}
               </div>
 
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-foreground uppercase tracking-wide">Quantidade</span>
-                <div className="flex items-center border border-border rounded">
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-none" onClick={() => setQuantity(q => Math.max(1, q - 1))}>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs md:text-sm font-medium text-foreground uppercase tracking-wide">Quantidade</span>
+                <div className="flex items-center border border-border rounded-full">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => setQuantity(q => Math.max(1, q - 1))}>
                     <Minus className="h-4 w-4" />
                   </Button>
-                  <span className="w-12 text-center text-sm font-medium border-x border-border">{quantity}</span>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-none" onClick={() => setQuantity(q => q + 1)}>
+                  <span className="w-10 text-center text-sm font-medium">{quantity}</span>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => setQuantity(q => q + 1)}>
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
@@ -417,8 +417,9 @@ const ProductDetail = () => {
                     <p className="text-xs text-destructive font-medium">{validationCheck.reason}</p>
                   </div>
                 )}
+                {/* Botão inline (oculto em mobile - usa barra fixa abaixo) */}
                 <Button onClick={handleAddToCart} size="lg" disabled={!validationCheck.ok}
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50">
+                  className="hidden md:inline-flex w-full bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-sm font-semibold rounded-full disabled:opacity-50">
                   <ShoppingCart className="h-5 w-5 mr-2" /> Adicionar ao Carrinho
                 </Button>
                 <p className="text-[11px] text-muted-foreground text-center">
@@ -429,6 +430,24 @@ const ProductDetail = () => {
           </div>
         </div>
       </main>
+
+      {/* Barra fixa de checkout em mobile */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-lg p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="container flex items-center gap-2 px-0">
+          <div className="flex-1 min-w-0 px-2">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide leading-none">Total</p>
+            <p className="text-base font-bold text-primary leading-tight">R${(unitPrice * quantity).toFixed(2)}</p>
+          </div>
+          <Button
+            onClick={handleAddToCart}
+            disabled={!validationCheck.ok}
+            className="flex-[2] bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-xs font-semibold rounded-full h-11 disabled:opacity-50"
+          >
+            <ShoppingCart className="h-4 w-4 mr-1.5" /> Adicionar
+          </Button>
+        </div>
+      </div>
+
       <Footer />
       <WhatsAppButton />
     </div>
