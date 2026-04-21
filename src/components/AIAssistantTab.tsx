@@ -391,34 +391,38 @@ export const AIAssistantTab = () => {
         <div className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
           <Sparkles className="h-5 w-5" />
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <h3 className="font-heading text-lg font-bold">Catha AI ✨ — sua copiloto criativa</h3>
           <p className="text-sm text-muted-foreground">
             Posso mudar cores e textos do site, criar produtos e campanhas, escrever legendas, roteiros, responder clientes e analisar suas fotos e vídeos. É só pedir — eu faço por você. 💝
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="lg:hidden gap-1"
-          onClick={() => setSidebarOpen((s) => !s)}
-          title="Histórico de conversas"
-        >
-          <MessagesSquare className="h-4 w-4" />
-          {conversations.length > 0 && (
-            <span className="text-[11px]">{conversations.length}</span>
-          )}
-        </Button>
+        <div className="flex flex-col gap-2 shrink-0 xl:hidden">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            onClick={() => setSidebarOpen((s) => !s)}
+            title="Histórico de conversas"
+          >
+            <MessagesSquare className="h-4 w-4" />
+            <span className="text-[11px]">
+              {sidebarOpen ? "Fechar" : "Histórico"}
+              {conversations.length > 0 && ` (${conversations.length})`}
+            </span>
+          </Button>
+        </div>
       </div>
 
-      {/* Layout principal: sidebar + chat */}
-      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
+      {/* Layout principal: sidebar + chat
+          Em telas grandes (xl+) sidebar fica fixo ao lado.
+          Em telas menores, sidebar é toggleável e ocupa a largura toda quando aberto. */}
+      <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr] gap-4">
         {/* Sidebar de histórico */}
         <aside
           className={cn(
-            "bg-card border rounded-lg flex flex-col h-[60vh] min-h-[400px]",
-            "lg:flex",
-            sidebarOpen ? "flex" : "hidden",
+            "bg-card border rounded-lg flex-col h-[65vh] min-h-[420px] xl:flex",
+            sidebarOpen ? "flex" : "hidden xl:flex",
           )}
         >
           <div className="p-3 border-b flex items-center justify-between gap-2">
