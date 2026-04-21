@@ -279,7 +279,7 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
       const orderId = crypto.randomUUID();
       const { error: orderErr } = await supabase
         .from("orders")
-        .insert({ ...orderPayload, id: orderId }, { returning: "minimal" });
+        .insert({ ...orderPayload, id: orderId });
       if (orderErr) throw orderErr;
 
       const itemsPayload = items.map(i => ({
