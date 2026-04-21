@@ -144,16 +144,19 @@ const ProductDetail = () => {
     setUploadedFiles(prev => ({ ...prev, [stepId]: file }));
   };
 
-  const handleWhatsAppOrder = () => {
+  const handleWhatsAppOrder = (payment: "pix" | "cartao") => {
     const v = validatePersonalization();
     if (!v.ok) { toast.error(v.reason || "Complete a personalização"); return; }
-    let text = `Olá Loja Traçando Memórias! Gostaria de fazer um pedido${pixActive ? ` (PIX ${pixPct}% off)` : ""}:\n\n`;
     const subtotal = unitPrice * quantity;
-    const finalPrice = pixActive ? subtotal * (1 - pixPct / 100) : subtotal;
+    const finalPrice = payment === "pix" && pixActive ? subtotal * (1 - pixPct / 100) : subtotal;
+    const payLabel = payment === "pix"
+      ? `💚 *Pagamento: PIX${pixActive ? ` (${pixPct}% off)` : ""}*`
+      : `💳 *Pagamento: Cartão até 3x sem juros*`;
+
+    let text = `Olá Loja Traçando Memórias! Gostaria de fazer um pedido:\n\n`;
     text += `📦 *${name}* (x${quantity})\n`;
     text += `💰 Subtotal: R$ ${subtotal.toFixed(2)}\n`;
-    if (pixActive) text += `💚 Total PIX (${pixPct}% off): R$ ${finalPrice.toFixed(2)}\n`;
-    text += `📅 Entrega: ${deliveryDate ? format(deliveryDate, "dd/MM/yyyy", { locale: ptBR }) : "—"}\n\n`;
+    text += `📅 Data desejada: ${deliveryDate ? format(deliveryDate, "dd/MM/yyyy", { locale: ptBR }) : "—"}\n\n`;
     text += `✏️ *Personalização:*\n`;
     Object.entries(personalization).forEach(([key, value]) => {
       if (!value || (Array.isArray(value) && value.length === 0)) return;
@@ -167,7 +170,12 @@ const ProductDetail = () => {
         text += `• ${step?.title || key}: (foto anexada separadamente)\n`;
       }
     });
-    window.open(`https://wa.me/558287060860?text=${encodeURIComponent(text)}`, '_blank');
+    text += `\n${payLabel}\n`;
+    text += `💰 *Total: R$ ${finalPrice.toFixed(2)}*\n\n`;
+    text += payment === "pix"
+      ? `Aguardo a chave PIX para efetuar o pagamento. Obrigada! 💖`
+      : `Aguardo a confirmação da disponibilidade e o link de pagamento (cartão até 3x sem juros). Obrigada! 💖`;
+    window.location.href = `https://wa.me/558287060860?text=${encodeURIComponent(text)}`;
   };
 
   const isLastStep = currentStep === steps.length - 1;
