@@ -698,15 +698,37 @@ const Admin = () => {
               <p className="text-center text-muted-foreground py-12">Nenhum cliente ainda</p>
             ) : (
               (() => {
+                const normPhone = (p: string | null) => (p || "").replace(/\D/g, "");
+                const normEmail = (e: string | null) => (e || "").trim().toLowerCase();
+                const normName = (n: string) => (n || "").trim().toLowerCase().replace(/\s+/g, " ");
                 const customers = new Map<string, { name: string; email: string | null; phone: string | null; orderCount: number; totalSpent: number; lastOrder: string }>();
+                // Index helpers to merge across orders that share phone OR email
+                const phoneIndex = new Map<string, string>();
+                const emailIndex = new Map<string, string>();
                 orders.forEach((o) => {
-                  const key = o.customer_phone || o.customer_email || o.customer_name;
-                  const existing = customers.get(key);
+                  const phone = normPhone(o.customer_phone);
+                  const email = normEmail(o.customer_email);
+                  const name = normName(o.customer_name);
+                  // Try to find an existing customer key by phone or email
+                  let key = (phone && phoneIndex.get(phone)) || (email && emailIndex.get(email)) || "";
+                  if (!key) {
+                    key = phone ? `p:${phone}` : email ? `e:${email}` : `n:${name}`;
+                  }
+                  if (phone) phoneIndex.set(phone, key);
+                  if (email) emailIndex.set(email, key);
+
                   const isCancelled = o.status === "cancelado";
                   const spent = isCancelled ? 0 : Number(o.total);
+                  const existing = customers.get(key);
                   if (existing) {
                     if (!isCancelled) existing.orderCount++;
                     existing.totalSpent += spent;
+                    if (!existing.email && o.customer_email) existing.email = o.customer_email;
+                    if (!existing.phone && o.customer_phone) existing.phone = o.customer_phone;
+                    if (new Date(o.created_at) > new Date(existing.lastOrder)) {
+                      existing.lastOrder = o.created_at;
+                      existing.name = o.customer_name;
+                    }
                   } else {
                     customers.set(key, { name: o.customer_name, email: o.customer_email, phone: o.customer_phone, orderCount: isCancelled ? 0 : 1, totalSpent: spent, lastOrder: o.created_at });
                   }
