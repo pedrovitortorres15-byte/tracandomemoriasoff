@@ -1,13 +1,13 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useCartStore, isFieldValueValid, isShortNameField, type FulfillmentMethod } from "@/stores/cartStore";
-import { useDeliverySettings } from "@/hooks/useDeliverySettings";
+import { useDeliverySettings, useCampaigns } from "@/hooks/useDeliverySettings";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { DeliveryDatePicker } from "@/components/DeliveryDatePicker";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, ShoppingCart, Minus, Plus, ChevronRight, ChevronLeft, Upload, Check, AlertCircle, Truck, Store } from "lucide-react";
+import { ArrowLeft, Loader2, ShoppingCart, Minus, Plus, ChevronRight, ChevronLeft, Upload, Check, AlertCircle, Truck, Store, Sparkles, CalendarDays } from "lucide-react";
 import { useState, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,7 @@ const ProductDetail = () => {
   const { handle } = useParams<{ handle: string }>();
   const addItem = useCartStore(state => state.addItem);
   const { data: settings } = useDeliverySettings();
+  const { data: campaigns } = useCampaigns(true);
   const pixActive = settings?.pix_discount_active ?? true;
   const pixPct = settings?.pix_discount_percent ?? 10;
   const pickupEnabled = settings?.pickup_enabled ?? true;
@@ -72,6 +73,14 @@ const ProductDetail = () => {
   const unitPrice = basePrice + addonTotal;
   const installments = unitPrice > 0 ? unitPrice / 3 : 0;
 
+  // Produtos de campanha têm data FIXA (definida pela dona) — cliente não escolhe.
+  const productCampaign = useMemo(() => {
+    if (!product?.campaign_slug || !campaigns) return null;
+    return campaigns.find((c: any) => c.slug === product.campaign_slug) || null;
+  }, [product?.campaign_slug, campaigns]);
+  const isCampaignProduct = !!productCampaign;
+  const campaignDateISO = productCampaign?.delivery_date || null;
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
@@ -115,7 +124,10 @@ const ProductDetail = () => {
       }
     }
     if (!fulfillmentMethod) return { ok: false, reason: "Escolha entrega ou retirada" };
-    if (!deliveryDate) return { ok: false, reason: fulfillmentMethod === "retirada" ? "Escolha a data desejada para retirada" : "Escolha a data desejada de entrega" };
+    // Para produtos de campanha, a data já vem da campanha; só validamos as outras datas
+    if (!isCampaignProduct && !deliveryDate) {
+      return { ok: false, reason: fulfillmentMethod === "retirada" ? "Escolha a data desejada para retirada" : "Escolha a data desejada de entrega" };
+    }
     return { ok: true };
   };
 
@@ -128,8 +140,14 @@ const ProductDetail = () => {
         return `${s.title}: ${text}`;
       })
       .filter(Boolean) as string[];
-    if (deliveryDate) {
-      parts.push(`${fulfillmentMethod === "retirada" ? "Retirada" : "Entrega"}: ${format(deliveryDate, "dd/MM/yyyy", { locale: ptBR })}`);
+    const finalDate = isCampaignProduct && campaignDateISO
+      ? new Date(campaignDateISO + "T12:00:00")
+      : deliveryDate;
+    if (finalDate) {
+      const label = isCampaignProduct
+        ? `Data da campanha "${productCampaign?.name}"`
+        : (fulfillmentMethod === "retirada" ? "Retirada" : "Entrega");
+      parts.push(`${label}: ${format(finalDate, "dd/MM/yyyy", { locale: ptBR })}`);
     }
     return parts.join(" | ");
   };
@@ -137,6 +155,9 @@ const ProductDetail = () => {
   const handleAddToCart = () => {
     const v = validatePersonalization();
     if (!v.ok) { toast.error(v.reason || "Complete a personalização"); return; }
+    const finalISO = isCampaignProduct && campaignDateISO
+      ? campaignDateISO
+      : (deliveryDate ? deliveryDate.toISOString().slice(0, 10) : undefined);
     addItem({
       id: product.id,
       name,
@@ -144,7 +165,7 @@ const ProductDetail = () => {
       image: images[0] || "",
       quantity,
       personalization: buildPersonalizationSummary(),
-      deliveryDate: deliveryDate ? deliveryDate.toISOString().slice(0, 10) : undefined,
+      deliveryDate: finalISO,
       fulfillmentMethod: fulfillmentMethod as FulfillmentMethod,
       campaign_slug: product.campaign_slug || null,
     });
@@ -366,7 +387,25 @@ const ProductDetail = () => {
                       {fulfillmentMethod === "entrega" && <p className="text-xs text-muted-foreground mt-2">🚚 {deliveryWindow}</p>}
                       {fulfillmentMethod === "retirada" && <p className="text-xs text-muted-foreground mt-2">🏪 {pickupWindow}. Endereço completo combinado pelo WhatsApp.</p>}
                     </div>
-                    <DeliveryDatePicker value={deliveryDate} onChange={setDeliveryDate} label={fulfillmentMethod === "retirada" ? "Data desejada de retirada" : "Data desejada de entrega"} />
+                    {isCampaignProduct ? (
+                      <div className="rounded-md border border-primary/30 bg-primary/10 p-3 space-y-1.5">
+                        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
+                          <Sparkles className="h-3.5 w-3.5" /> Produto da campanha {productCampaign?.name}
+                        </p>
+                        {campaignDateISO && (
+                          <p className="flex items-center gap-1.5 text-sm text-foreground">
+                            <CalendarDays className="h-4 w-4 text-primary" />
+                            {fulfillmentMethod === "retirada" ? "Retirada" : "Entrega"} prevista em{" "}
+                            <strong>{format(new Date(campaignDateISO + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })}</strong>
+                          </p>
+                        )}
+                        <p className="text-[11px] text-muted-foreground">
+                          A data desta campanha é fixa. Caso precise de outro dia, a dona pode ajustar com você pelo WhatsApp após o pedido.
+                        </p>
+                      </div>
+                    ) : (
+                      <DeliveryDatePicker value={deliveryDate} onChange={setDeliveryDate} label={fulfillmentMethod === "retirada" ? "Data desejada de retirada" : "Data desejada de entrega"} />
+                    )}
                   </div>
                 </div>
               )}
