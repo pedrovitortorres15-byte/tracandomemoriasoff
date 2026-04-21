@@ -426,6 +426,9 @@ const Admin = () => {
           </div>
         </div>
 
+        {/* AI Assistant Tab */}
+        {tab === "ai" && <AIAssistantTab />}
+
         {/* Orders Tab */}
         {tab === "orders" && (
           <div className="space-y-3">
