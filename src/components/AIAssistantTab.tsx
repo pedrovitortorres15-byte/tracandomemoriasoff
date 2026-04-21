@@ -329,6 +329,23 @@ export const AIAssistantTab = () => {
                       <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1.5 prose-headings:my-2 prose-ul:my-1.5 prose-ol:my-1.5">
                         <ReactMarkdown>{m.content}</ReactMarkdown>
                       </div>
+                      {m.content && (
+                        <div className="mt-2 flex justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyMessage(m.content, i)}
+                            className="h-7 px-2 text-[11px] gap-1 text-muted-foreground hover:text-foreground"
+                            title="Copiar resposta"
+                          >
+                            {copiedIdx === i ? (
+                              <><Check className="h-3 w-3" /> Copiado</>
+                            ) : (
+                              <><Copy className="h-3 w-3" /> Copiar</>
+                            )}
+                          </Button>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <p className="whitespace-pre-wrap">{m.content}</p>
