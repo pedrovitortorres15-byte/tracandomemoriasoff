@@ -385,9 +385,17 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
                   value={form.shipping_zip}
                   onChange={(e) => handleCepChange(e.target.value)}
                   inputMode="numeric"
+                  className={
+                    form.shipping_zip.replace(/\D/g, "").length === 8 && cepValidated !== form.shipping_zip.replace(/\D/g, "") && !cepLoading
+                      ? "border-destructive focus-visible:ring-destructive"
+                      : ""
+                  }
                 />
                 {cepLoading && <Loader2 className="h-4 w-4 animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />}
               </div>
+              {form.shipping_zip.replace(/\D/g, "").length === 8 && cepValidated !== form.shipping_zip.replace(/\D/g, "") && !cepLoading && (
+                <p className="text-[11px] text-destructive -mt-1">CEP inválido ou não localizado. Confira os 8 dígitos.</p>
+              )}
               <Input placeholder="Rua / Avenida" value={form.shipping_address} onChange={(e) => set('shipping_address', e.target.value)} />
               <div className="grid grid-cols-[100px_1fr] gap-2">
                 <Input placeholder="Nº *" value={form.shipping_number} onChange={(e) => set('shipping_number', e.target.value)} />
