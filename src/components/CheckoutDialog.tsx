@@ -342,12 +342,17 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
       clearCart();
       onSuccess();
     } catch (err: any) {
-      console.error("[checkout]", err);
+      console.error("[checkout] error", err);
       const msg = err?.message || "";
-      if (msg.includes("row-level security") || msg.includes("violates row-level")) {
-        toast.error("Não foi possível registrar o pedido. Confira se nome, telefone, e-mail e endereço estão corretamente preenchidos e tente novamente.");
+      const details = err?.details || "";
+      const hint = err?.hint || "";
+      if (msg.includes("row-level security") || msg.includes("violates row-level") || msg.includes("check constraint")) {
+        const which = details || hint || "Confira nome, e-mail (válido) e WhatsApp (com DDD) e tente novamente.";
+        toast.error(`Não foi possível registrar o pedido. ${which}`);
+      } else if (msg) {
+        toast.error(`Erro: ${msg}`);
       } else {
-        toast.error(msg || "Erro ao processar pedido. Tente novamente.");
+        toast.error("Erro ao processar pedido. Tente novamente em alguns instantes.");
       }
     } finally {
       setLoading(false);
