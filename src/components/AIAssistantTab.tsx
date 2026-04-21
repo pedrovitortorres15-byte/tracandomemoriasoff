@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Sparkles, Send, ImagePlus, X, Loader2, Trash2, Lightbulb, Mic, MicOff, Wand2 } from "lucide-react";
+import { Sparkles, Send, ImagePlus, X, Loader2, Trash2, Lightbulb, Mic, MicOff, Wand2, Copy, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +47,18 @@ export const AIAssistantTab = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const baseTextRef = useRef<string>("");
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+
+  const copyMessage = async (text: string, idx: number) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedIdx(idx);
+      toast.success("Texto copiado!");
+      setTimeout(() => setCopiedIdx((c) => (c === idx ? null : c)), 2000);
+    } catch {
+      toast.error("Não consegui copiar. Selecione e copie manualmente.");
+    }
+  };
 
   // Inicia/encerra a gravação de voz (Web Speech API — sem custo, em pt-BR)
   const toggleRecording = () => {
