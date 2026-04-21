@@ -18,6 +18,8 @@ export const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const { user, isAdmin } = useAuth();
+  const OWNER_EMAIL = "catharinaferrario@gmail.com";
+  const isOwner = isAdmin && user?.email?.toLowerCase() === OWNER_EMAIL;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const activeCat = searchParams.get("cat") || "";
@@ -71,7 +73,7 @@ export const Header = () => {
           <button className="md:hidden text-foreground" onClick={() => setSearchOpen(!searchOpen)} aria-label="Abrir busca">
             <Search className="h-5 w-5" />
           </button>
-          {isAdmin && (
+          {isOwner && (
             <Link to="/admin" aria-label="Painel da dona">
               <Button variant="ghost" size="icon" className="rounded-full text-primary" title="Painel da dona">
                 <Shield className="h-5 w-5" />
