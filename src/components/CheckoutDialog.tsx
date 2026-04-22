@@ -449,9 +449,9 @@ export const CheckoutDialog = ({ open, onOpenChange, onSuccess, paymentMethod }:
 
             {method === "retirada" && (
               <div className="mt-2 bg-muted/50 border border-border rounded p-2.5 text-xs space-y-1">
-                <p>📍 <strong>Retirada no Bairro Antares.</strong></p>
+                <p>📍 <strong>Retirada em {pickupAddress}.</strong></p>
                 <p className="text-muted-foreground">O endereço completo será informado através do WhatsApp.</p>
-                <p>🕐 Retiradas das <strong>14h às 17h</strong> — <strong>combine previamente</strong> com a loja pelo WhatsApp.</p>
+                <p>🕐 {pickupWindow} — <strong>combine previamente</strong> com a loja pelo WhatsApp.</p>
               </div>
             )}
           </div>
