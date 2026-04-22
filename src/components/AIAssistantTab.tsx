@@ -37,8 +37,8 @@ interface Conversation {
 const QUICK_PROMPTS = [
   { icon: "🎨", label: "Mudar cor da loja", prompt: "Quero deixar o site com uma vibe mais romântica em tons de rosa antigo. Pode ajustar a cor primária e o accent pra mim?" },
   { icon: "📸", label: "Legenda + hashtags", prompt: "Crie 3 versões de legenda envolvente para Instagram sobre uma caixa personalizada de presente, com hashtags estratégicas e CTA." },
-  { icon: "🎬", label: "Roteiro de Reels", prompt: "Crie um roteiro de Reels de 30 segundos com hook forte mostrando o passo a passo de uma encomenda personalizada. Inclua sugestão de áudio em alta." },
-  { icon: "🎁", label: "Criar campanha", prompt: "Crie uma campanha de Dia das Mães na loja com data limite de pedido e me sugira 3 produtos pra vincular nela." },
+  { icon: "🎬", label: "Roteiro completo", prompt: "Crie um roteiro de Reels de 30 segundos para uma encomenda personalizada. Quero passo a passo com cenas, detalhes da foto, sombras, cor, fundo, brilho, luz, enquadramento, texto na tela, áudio, edição no CapCut e legenda pronta." },
+  { icon: "✨", label: "Analisar foto/vídeo", prompt: "Vou enviar uma foto ou vídeo de produto. Analise como diretora criativa: o que melhorar na luz, sombra, cor, fundo, brilho, composição e me dê um passo a passo de edição para deixar mais profissional." },
 ];
 
 const ACTIVE_CONV_KEY = "admin-ai-active-conversation";
