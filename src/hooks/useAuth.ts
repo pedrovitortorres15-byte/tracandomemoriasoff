@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
 const ADMIN_EMAILS = ['catharinaferrario@gmail.com'];
+const isMissingRefreshToken = (message?: string) =>
+  !!message && /refresh token.*not found|invalid refresh token/i.test(message);
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -46,7 +48,16 @@ export function useAuth() {
       setTimeout(() => checkRole(u), 0);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      if (error && isMissingRefreshToken(error.message)) {
+        await supabase.auth.signOut({ scope: 'local' });
+        if (mounted) {
+          setUser(null);
+          setIsAdmin(false);
+          setLoading(false);
+        }
+        return;
+      }
       const u = session?.user ?? null;
       if (!mounted) return;
       setUser(u);
