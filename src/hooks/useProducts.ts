@@ -17,10 +17,17 @@ export interface Product {
 
 export type FirebaseProduct = Product;
 
+const normalizeSearchText = (value: unknown) =>
+  String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
 async function fetchAllProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from('products')
-    .select('id,name,description,price,image_url,media_urls,video_url,category,active,stock,created_at')
+    .select('id,name,description,price,image_url,media_urls,video_url,category,active,stock,campaign_slug,created_at')
     .eq('active', true)
     .order('created_at', { ascending: false });
 
@@ -39,6 +46,8 @@ async function fetchAllProducts(): Promise<Product[]> {
     categoria: p.category || '',
     ativo: p.active,
     estoque: p.stock,
+    searchText: normalizeSearchText(`${p.name || ''} ${p.description || ''} ${p.category || ''}`),
+    campaign_slug: p.campaign_slug || null,
   }));
 }
 

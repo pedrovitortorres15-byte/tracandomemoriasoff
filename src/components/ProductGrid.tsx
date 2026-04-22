@@ -4,20 +4,28 @@ import { Loader2, PackageOpen } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { useMemo } from "react";
 
+const normalizeSearchText = (value: unknown) =>
+  String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
 export const ProductGrid = () => {
   const { data: products, isLoading, error } = useProducts();
   const [searchParams] = useSearchParams();
-  const cat = (searchParams.get("cat") || "").toLowerCase();
-  const q = (searchParams.get("q") || "").toLowerCase();
+  const cat = normalizeSearchText(searchParams.get("cat") || "");
+  const q = normalizeSearchText(searchParams.get("q") || "");
 
   const filtered = useMemo(() => {
     if (!products) return [];
     return products.filter((p: any) => {
-      const name = (p.nome || p.name || "").toLowerCase();
-      const category = (p.categoria || p.category || "").toLowerCase();
-      const desc = (p.descricao || p.description || "").toLowerCase();
+      const name = normalizeSearchText(p.nome || p.name || "");
+      const category = normalizeSearchText(p.categoria || p.category || "");
+      const desc = normalizeSearchText(p.descricao || p.description || "");
+      const searchText = normalizeSearchText((p as any).searchText || `${name} ${desc} ${category}`);
       const matchCat = !cat || cat === "todos" || category.includes(cat) || name.includes(cat);
-      const matchQ = !q || name.includes(q) || desc.includes(q) || category.includes(q);
+      const matchQ = !q || searchText.includes(q);
       return matchCat && matchQ;
     });
   }, [products, cat, q]);

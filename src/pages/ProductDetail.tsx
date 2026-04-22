@@ -42,8 +42,10 @@ const ProductDetail = () => {
         .from('products')
         .select('*')
         .eq('id', handle!)
-        .single();
-      if (error || !data) return null;
+        .eq('active', true)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
       const d: any = data;
       return {
         id: d.id,
